@@ -37,19 +37,19 @@ jcms.vectorOne = Vector(1, 1, 1)
 
 	function jcms.printf(str, ...)
 		local args = { ... }
-		
+
 		if #args > 0 then
 			for i, arg in ipairs(args) do
 				args[i] = tostring(arg)
 			end
-			
+
 			print("[ Map Sweepers ] "..tostring(str):format( unpack(args) ))
 		else
 			print("[ Map Sweepers ] "..tostring(str))
 		end
 	end
 
-	--Prevent lag spikes during-play when npcs spawn for the first time. 
+	--Prevent lag spikes during-play when npcs spawn for the first time.
 	jcms.precacheModels = {}
 	hook.Add("InitPostEntity", "jcms_precache", function()
 		for i, modelStr in ipairs(jcms.precacheModels) do
@@ -65,7 +65,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 	jcms.LOCATOR_SIGNAL = 1
 	jcms.LOCATOR_WARNING = 2
 	jcms.LOCATOR_TIMED = 3
-	
+
 	jcms.SPAWNCAT_TURRETS = 0
 	jcms.SPAWNCAT_UTILITY = 1
 	jcms.SPAWNCAT_MINES = 2
@@ -86,7 +86,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 -- }}}
 
 -- // ConVars {{{
-	
+
 	local FCVAR_JCMS_NOTIFY_AND_SAVE = bit.bor(FCVAR_ARCHIVE, FCVAR_NOTIFY)
 	local FCVAR_JCMS_SHARED_SAVED = bit.bor(FCVAR_REPLICATED, FCVAR_JCMS_NOTIFY_AND_SAVE) --TODO: More of these should probably be replicated, I've just done the obvious ones currently.
 	jcms.cvar_ffmul = CreateConVar("jcms_friendlyfire_multiplier", "1", FCVAR_JCMS_SHARED_SAVED, "Friendly fire damage is multiplied by this number. 0 disables friendly fire. This applies to turrets and orbitals!", 0, 100)
@@ -95,7 +95,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 	jcms.cvar_map_excludecurrent = CreateConVar("jcms_map_excludecurrent", "0", FCVAR_JCMS_SHARED_SAVED, "Excludes the current server map from the post-mission vote, ensuring that every mission is on a new map. Unless there's no other valid map.")
 	jcms.cvar_map_iswhitelist = CreateConVar("jcms_map_iswhitelist", "0", FCVAR_JCMS_SHARED_SAVED, "Alters the behaviour of jcms_map_list. If this is 1, the list of maps will be a 'whitelist' (ONLY those maps will be picked). If this is 0, the list of maps will be a 'blacklist' (those maps will be EXCLUDED)")
 	jcms.cvar_map_list = CreateConVar("jcms_map_list", "gm_flatgrass", FCVAR_JCMS_NOTIFY_AND_SAVE, "A comma-separated list of maps. This is either a whitelist or a blacklist, depending on the convar 'jcms_map_iswhitelist'")
-	jcms.cvar_map_votecount = CreateConVar("jcms_map_votecount", "6", FCVAR_JCMS_NOTIFY_AND_SAVE, "How many maps will be offered as options in the post-mission vote, provided that the server has this many available. Capped at 15.")	
+	jcms.cvar_map_votecount = CreateConVar("jcms_map_votecount", "6", FCVAR_JCMS_NOTIFY_AND_SAVE, "How many maps will be offered as options in the post-mission vote, provided that the server has this many available. Capped at 15.")
 
 	jcms.cvar_cash_start = CreateConVar("jcms_cash_start", "600", FCVAR_JCMS_NOTIFY_AND_SAVE, "The amount of cash a new sweeper spawns with.", 0, 10000)
 	jcms.cvar_cash_evac = CreateConVar("jcms_cash_evac", "75", FCVAR_JCMS_NOTIFY_AND_SAVE, "This amount of cash is given to the sweeper a successful evacuation.", 0, 10000)
@@ -117,6 +117,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 	jcms.cvar_distance_very_far = CreateConVar("jcms_distance_very_far", "5000", FCVAR_JCMS_NOTIFY_AND_SAVE, "A distance that counts as an impressive sniping distance for a cash multiplier. Ideally, only players with long-range scopes should be able to get kills over this range.", 0, 100000)
 
 	-- Replicated
+	jcms.cvar_announcer_type = CreateConVar("jcms_announcer_type", "default", FCVAR_JCMS_SHARED_SAVED, "Selects the current announcer by name.")
 	jcms.cvar_noepisodes = CreateConVar("jcms_noepisodes", "0", FCVAR_JCMS_SHARED_SAVED, "If set to 1, Half-Life 2: Episode One & Two content will never appear in-game. Useful if you don't want your poor friends to see errors.")
 
 -- // }}}
@@ -126,18 +127,18 @@ jcms.vectorOne = Vector(1, 1, 1)
 	hook.Add("InitPostEntity", "jcms_matOverride", function()
 		Material("models/humans/male/group03/citizen_sheet"):SetTexture("$basetexture", "models/jcms/rgg_male")
 		Material("models/humans/female/group03/citizen_sheet"):SetTexture("$basetexture", "models/jcms/rgg_female")
-		
+
 		for classname, data in pairs(jcms.classes) do
 			if data.matOverrides then
 				for matname, newtexture in pairs(data.matOverrides) do
 					local mat = Material(matname)
 					mat:SetTexture("$basetexture", newtexture)
-					
+
 					if newtexture:find("glow") then
 						local flags = mat:GetInt("$flags")
 						local newFlags = bit.bor(64, 128, 16384)
 						mat:SetInt("$flags", newFlags)
-						
+
 						mat:SetInt("$translucent", 0)
 						mat:SetInt("$nocull", 0)
 						mat:SetUndefined("$envmap")
@@ -150,7 +151,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 			end
 		end
 	end)
-	
+
 -- }}}
 
 -- Gun Stats {{{
@@ -173,7 +174,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 			WorldModel = "models/weapons/w_physics.mdl",
 			Primary = { Ammo = false, Damage = 1, RPM = 1.5*60, ClipSize = -1, Cone = 0 }
 		},
-		
+
 		weapon_pistol = {
 			Slot = 1,
 			Spawnable = true,
@@ -182,7 +183,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 			WorldModel = "models/weapons/w_pistol.mdl",
 			Primary = { Ammo = "Pistol", Damage = 5, RPM = 550, ClipSize = 18, Cone = math.rad(0.8) }
 		},
-		
+
 		weapon_smg1 = {
 			Slot = 2,
 			Spawnable = true,
@@ -191,7 +192,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 			WorldModel = "models/weapons/w_smg1.mdl",
 			Primary = { Ammo = "SMG1", Damage = 4, RPM = 800, ClipSize = 45, Cone = math.rad(1.5) }
 		},
-		
+
 		weapon_357 = {
 			Slot = 1,
 			Spawnable = true,
@@ -200,7 +201,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 			WorldModel = "models/weapons/w_357.mdl",
 			Primary = { Ammo = "357", Damage = 40, RPM = 80, ClipSize = 6, Cone = 0 }
 		},
-		
+
 		weapon_ar2 = {
 			Slot = 2,
 			Spawnable = true,
@@ -209,7 +210,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 			WorldModel = "models/weapons/w_irifle.mdl",
 			Primary = { Ammo = "AR2", Damage = 8, RPM = 600, ClipSize = 30, Cone = math.rad(0.8) }
 		},
-		
+
 		weapon_shotgun = {
 			Slot = 3,
 			Spawnable = true,
@@ -218,7 +219,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 			WorldModel = "models/weapons/w_shotgun.mdl",
 			Primary = { Ammo = "Buckshot", Damage = 8, RPM = 80, ClipSize = 6, Cone = math.rad(2.5), NumShots = 7 }
 		},
-		
+
 		weapon_rpg = {
 			Slot = 4,
 			Spawnable = true,
@@ -227,7 +228,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 			WorldModel = "models/weapons/w_rocket_launcher.mdl",
 			Primary = { Ammo = "RPG_Round", Damage = 200, RPM = 34, ClipSize = 1, Cone = 0 }
 		},
-		
+
 		weapon_frag = {
 			Slot = 4,
 			Spawnable = true,
@@ -236,7 +237,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 			WorldModel = "models/weapons/w_grenade.mdl",
 			Primary = { Ammo = "Grenade", Damage = 125, RPM = 30, ClipSize = 1, Cone = 0 }
 		},
-		
+
 		weapon_crossbow = {
 			Slot = 3,
 			Spawnable = true,
@@ -257,10 +258,10 @@ jcms.vectorOne = Vector(1, 1, 1)
 		weapon_frag = 199,
 		weapon_crossbow = 699
 	}
-	
+
 	jcms.weapon_ammoCosts = {
 		_DEFAULT = 5.4,
-		
+
 		-- Default
 		["ar2"] = 3,
 		["ar2altfire"] = 64,
@@ -299,7 +300,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 		["12mmround"] = 8.5,
 		["striderminigundirect"] = 7.1,
 		["combineheavycannon"] = 24,
-		
+
 		-- M9K
 		["40mmgrenade"] = 65,
 		["improvised_explosive"] = 47,
@@ -311,7 +312,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 		["c4explosive"] = 33,
 		["nuclear_warhead"] = 975,
 		["proxmine"] = 45.65,
-		
+
 		-- Hunt Down The Freeman Weapon Pack
 		["hdtf_ammo_9mm"] = 1.2,
 		["hdtf_ammo_buckshot"] = 6.3,
@@ -327,7 +328,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 		["hdtf_ammo_pills"] = 285,
 		["hdtf_ammo_grenade"] = 48,
 		["hdtf_ammo_.45cal"] = 1.65,
-		
+
 		-- HL2 Beta Weapon Pack
 		-- (no idea why most of these were necessary, but I guess that's how it was in beta?)
 		["bp_small"] = 1.75,
@@ -342,13 +343,13 @@ jcms.vectorOne = Vector(1, 1, 1)
 		["bp_flame"] = 3.3,
 		["bp_immolator"] = 0.95,
 		["bp_brickbat"] = 1.5,
-		
+
 		-- Serious Sam 1 & 2 Weapon Packs
 		["cannonball"] = 79,
 		["klodovik"] = 78,
 		["napalm"] = 2.31,
 		["seriousbomb"] = 1000,
-		
+
 		-- Chuck's Weaponry 2.0
 		-- (I fucking hate this)
 		["5.56x45mm"] = 3.8,
@@ -387,13 +388,13 @@ jcms.vectorOne = Vector(1, 1, 1)
 		["hdtf_ammo_claymore"] = true,
 		["hdtf_ammo_molotov"] = true,
 		["hdtf_ammo_grenade"] = true,
-		
+
 		-- Serious Sam 1 & 2 Weapon Packs
 		["cannonball"] = true,
 		["klodovik"] = true,
 		["napalm"] = true,
 		["seriousbomb"] = true,
-		
+
 		-- Chuck's Weaponry 2.0
 		["frag grenades"] = true,
 	}
@@ -401,17 +402,17 @@ jcms.vectorOne = Vector(1, 1, 1)
 	function jcms.gunstats_GetExpensive(class)
 		local gunData = weapons.Get(class) or jcms.default_weapons_datas[class]
 		if not gunData then return end
-		if not gunData.Primary then 
+		if not gunData.Primary then
 			ErrorNoHaltWithStack( "Weapon set up incorrectly: " .. class .. "from the base" .. gunData.Base .. " go bother the dev to fix it" )
-			return 
+			return
 		end
-		
+
 		local stats = {}
 			stats.name = tostring(gunData.PrintName or class)
 			stats.baseclass = tostring(gunData.Base) or "weapon_base"
 			stats.category = tostring(gunData.Category or "_")
 			local radAccuracy = true
-			
+
 			if (gunData.SciFiWorldStats) then
 				if class == "sfw_custom" then return end
 				-- Darken217's SciFi Weapons
@@ -429,7 +430,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 				else
 					stats.numshots = 1
 				end
-				
+
 				stats.damage = gunData.SciFiWorldStats.Primary.DamageAmount or 0
 				if not gunData.SciFiWorldStats.Primary.FireRate then
 					stats.firerate = 0.25
@@ -449,7 +450,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 
 				stats.clipsize = gunData.Primary.ClipSize or 0
 				stats.numshots = gunData.Primary.NumShots or 1
-				
+
 				stats.damage = gunData.Primary.Damage or 0
 				stats.firerate = 60 / (tonumber(gunData.Primary.RPM) or 1)
 				stats.automatic = gunData.Primary.Automatic
@@ -465,7 +466,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 
 				stats.clipsize = gunData.Primary.ClipSize or 0
 				stats.numshots = gunData.Num or 1
-				
+
 				stats.damage = math.Round( (gunData.Damage or 0) / stats.numshots, 1 )
 				stats.firerate = gunData.Delay or 0
 				stats.automatic = gunData.Primary.Automatic
@@ -481,7 +482,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 
 				stats.clipsize = gunData.Primary.ClipSize or 0
 				stats.numshots = gunData.Shots or 1
-				
+
 				stats.damage = gunData.Damage or 0
 				stats.firerate = gunData.FireDelay or 0
 				stats.automatic = gunData.Primary.Automatic
@@ -503,7 +504,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 				stats.automatic = gunData.Primary.Automatic
 				stats.accuracy = gunData.HipCone or 0
 				radAccuracy = true
-			elseif gunData.ARC9 then  
+			elseif gunData.ARC9 then
 				-- Arc9
 				stats.base = "ARC9"
 
@@ -516,7 +517,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 
 				stats.damage = gunData.DistributeDamage and math.Round( gunData.DamageMax / stats.numshots, 1 ) or gunData.DamageMax
 				stats.firerate = 60/gunData.RPM
-				
+
 				stats.accuracy = (tonumber(gunData.Spread) or 0) + (tonumber(gunData.SpreadAddHipFire) or 0)
 			elseif gunData.ArcticTacRP then
 				stats.base = "Tactical RP"
@@ -524,15 +525,15 @@ jcms.vectorOne = Vector(1, 1, 1)
 				local ammotype = game.GetAmmoName( game.GetAmmoID(tostring(gunData.Ammo) or "") or tonumber(gunData.Ammo)  ) or "none"
 				stats.ammotype_lkey = ammotype .. "_ammo"
 				stats.ammotype = ammotype:lower()
-				
+
 				stats.clipsize = gunData.ClipSize
 				stats.numshots = gunData.Num or 1
 
 				stats.damage = gunData.Damage_Max
 				stats.firerate = 60/gunData.RPM
-				
+
 				stats.accuracy = (tonumber(gunData.Spread) or 0)
-			elseif gunData.Base == "mg_base" then --MW Base --TODO: See if there's a better way to detect this for this base. 
+			elseif gunData.Base == "mg_base" then --MW Base --TODO: See if there's a better way to detect this for this base.
 				stats.base = "MW Base"
 
 				local ammotype = game.GetAmmoName( game.GetAmmoID(tostring(gunData.Primary.Ammo) or "") or tonumber(gunData.Primary.Ammo)  ) or "none"
@@ -549,7 +550,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 				stats.accuracy = (gunData.Cone.Hip) or 0 --Not 100% sure I've done this correctly - j
 				radAccuracy = false
 			else
-				-- Fallback 
+				-- Fallback
 				stats.base = "Default"
 
 				local ammotype = game.GetAmmoName( game.GetAmmoID(tostring(gunData.Primary.Ammo) or "") or tonumber(gunData.Primary.Ammo)  ) or "none"
@@ -558,7 +559,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 
 				stats.clipsize = gunData.Primary.ClipSize or 0
 				stats.numshots = gunData.Primary.NumShots or gunData.Primary.NumBullets or gunData.Primary.NumberofShots or 1
-				
+
 				stats.damage = gunData.Primary.Damage
 				if not stats.damage then
 					if gunData.Primary.MinDamage and gunData.Primary.MaxDamage then
@@ -572,7 +573,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 						end
 					end
 				end
-				
+
 				stats.automatic = gunData.Primary.Automatic
 				if gunData.Primary.CurrentSpread then
 					stats.accuracy = gunData.Primary.CurrentSpread
@@ -584,7 +585,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 					end
 					radAccuracy = true
 				end
-				
+
 				if type(gunData.Tick) == "number" and gunData.Primary.Delay then
 					-- DOOM 2 guns use this. Thanks traeesen for helping me figure it out
 					stats.firerate = gunData.Primary.Delay * gunData.Tick
@@ -595,22 +596,22 @@ jcms.vectorOne = Vector(1, 1, 1)
 					end
 				end
 			end
-			
-			if stats.ammotype == "" or 
-				stats.ammotype == "none" or 
-				stats.ammotype == false or 
+
+			if stats.ammotype == "" or
+				stats.ammotype == "none" or
+				stats.ammotype == false or
 				stats.ammotype == "false" then
 				stats.ammotype = "none"
 			end
-			
+
 			if stats.clipsize < 0 then
 				stats.clipsize = tonumber(gunData.Primary.DefaultClip) or 0
 			end
 
 			if SERVER and gunData.ViewModel and gunData.ViewModel ~= "" then
 				--Note: This function gets called in render hooks, so we either need to cache this or only have the data serverside.
-				local dummyEnt 
-				--if SERVER then 
+				local dummyEnt
+				--if SERVER then
 					dummyEnt = ents.Create("prop_physics")
 					--[[
 				else
@@ -636,15 +637,15 @@ jcms.vectorOne = Vector(1, 1, 1)
 			else
 				stats.reloadtime = 0
 			end
-			
+
 			stats.accuracy = stats.accuracy or 0
 			if radAccuracy then
 				stats.accuracy = math.Round(math.deg(stats.accuracy), 2)
 			end
-			
+
 			stats.firerate_rps = 1 / stats.firerate
 			stats.range = (20 + stats.numshots*1.2) / math.tan( math.rad(stats.accuracy) )
-			
+
 			if stats.firerate == 0 then
 				stats.dps = stats.damage * stats.numshots
 			else
@@ -656,10 +657,10 @@ jcms.vectorOne = Vector(1, 1, 1)
 			end
 
 			stats.slot = gunData.Slot or 5
-			
+
 		return stats
 	end
-	
+
 	function jcms.gunstats_CountGivenAmmoFromLoadoutCount(stats, count) -- How much ammo is given for a weapon bought X times.
 		if stats.clipsize == 1 then
 			return (count + 2) * stats.clipsize
@@ -667,7 +668,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 			return (count + 1) * stats.clipsize
 		end
 	end
-	
+
 	function jcms.gunstats_ExtraAmmoCostData(stats, extra_count) -- Add this cost to base cost
 		return math.ceil( math.max(1, stats.clipsize) * (jcms.weapon_ammoCosts[stats.ammotype] or jcms.weapon_ammoCosts._DEFAULT) * (extra_count or 0) )
 	end
@@ -686,11 +687,11 @@ jcms.vectorOne = Vector(1, 1, 1)
 				avgFireRate = math.min(1/stats.reloadtime, stats.firerate_rps)
 			end
 		-- // }}}
-		
+
 		--Fallback to 100 if we have no damage stat. Avoids anything *too* broken becoming cheap.
 		local dmgShot = (stats.damage == 0 and 100) or stats.damage
 		local damagePer = dmgShot * math.max(stats.numshots, 1) --damage per shot / ammo spent
-		
+
 		local ammoCost = jcms.weapon_ammoCosts[stats.ammotype] or jcms.weapon_ammoCosts._DEFAULT
 
 		damagePer = math.max(damagePer, ammoCost) --Not ideal. Used to keep things with projectile weapons in-check. Vaguely.
@@ -715,7 +716,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 		local scaledDPSCost = ( kps + (dpsCost / 50) ) * 50/2
 		local scaledEfficiencyCost = ammoEfficiency^(2/3)
 
-		--Final cost. 
+		--Final cost.
 		local cost = (scaledDPSCost * scaledEfficiencyCost + starterClipCost) * 2.75
 
 		local divider = 5		-- Never noticed this, but I like it -J.
@@ -728,7 +729,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 		elseif cost >= 20 then
 			divider = 10
 		end
-		
+
 		if noDivider then
 			return math.ceil(cost)
 		else
@@ -757,7 +758,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 	jcms.validTargetEnts = jcms.validTargetEnts or { --Extra entities we can shoot.
 		["jcms_micromissile"] = true
 	}
-	
+
 	jcms.team_flyingEntityClasses = jcms.team_flyingEntityClasses or {
 		["npc_strider"] = true,
 		["npc_combinegunship"] = true,
@@ -775,21 +776,21 @@ jcms.vectorOne = Vector(1, 1, 1)
 		function jcms.team_JCorp(ent) --*Still* expensive.
 			return IsValid(ent) and ( (getmetatable(ent) == pmt and pmt.Team(ent) == 1) or (ent:GetTable().GetHackedByRebels and not ent:GetTable().GetHackedByRebels(ent)) or not not jcms.team_jCorpClasses[emt.GetClass(ent)] )
 		end
-		
+
 		function jcms.team_JCorp_player(ply) --If we already know it's a player
 			return IsValid(ply) and pmt.Team(ply) == 1
 		end
-		
+
 		function jcms.team_JCorp_ent(ent) --If we already know it isn't a player. (And is valid)
 			local entTbl = ent:GetTable()
 			return (entTbl.GetHackedByRebels and not entTbl.GetHackedByRebels(ent)) or not not jcms.team_jCorpClasses[emt.GetClass(ent)]
 		end
 	-- // }}}
-		
+
 	function jcms.team_NPC(ent)
 		if IsValid(ent) then
 			local mt = getmetatable(ent)
-			local entTbl = ent:GetTable() 
+			local entTbl = ent:GetTable()
 
 			return (mt == pmt and ent:Team() == 2) or (entTbl.GetHackedByRebels and entTbl.GetHackedByRebels(ent)) or (( mt == nmt or mt == nbmt ) and not jcms.team_jCorpClasses[ emt.GetClass(ent) ])
 			--[[
@@ -806,30 +807,30 @@ jcms.vectorOne = Vector(1, 1, 1)
 
 	function jcms.team_NPC_optimised(ent) --Getting rid of the IsValid check / assuming the target's valid.
 		local mt = getmetatable(ent)
-		local entTbl = ent:GetTable() 
+		local entTbl = ent:GetTable()
 
 		return (mt == pmt and ent:Team() == 2) or (entTbl.GetHackedByRebels and entTbl.GetHackedByRebels(ent)) or (( mt == nmt or mt == nbmt ) and not jcms.team_jCorpClasses[ emt.GetClass(ent) ])
 	end
-	
+
 	function jcms.team_GoodTarget(ent)
 		if not IsValid(ent) then return false end
 
 		local mt = getmetatable(ent) --moderately faster than an Is<Type> function call individually, and can be used repeatedly afterwards.
 
-		local npcCheck = (mt == nmt and (not SERVER or nmt.GetNPCState(ent) ~= NPC_STATE_DEAD) and (emt.Health(ent)>0) and not jcms.team_invalidNPCs[emt.GetClass(ent)] and not emt.GetInternalVariable(ent,"startburrowed"))		
+		local npcCheck = (mt == nmt and (not SERVER or nmt.GetNPCState(ent) ~= NPC_STATE_DEAD) and (emt.Health(ent)>0) and not jcms.team_invalidNPCs[emt.GetClass(ent)] and not emt.GetInternalVariable(ent,"startburrowed"))
 		local playerCheck = mt == pmt and pmt.Alive(ent) and pmt.GetObserverMode(ent)==OBS_MODE_NONE
-		local nextbotCheck = mt == nbmt and emt.Health(ent) > 0  
+		local nextbotCheck = mt == nbmt and emt.Health(ent) > 0
 		local entClassCheck = jcms.validTargetEnts[emt.GetClass(ent)] and emt.Health(ent) > 0
 
 		return npcCheck or playerCheck or nextbotCheck or entClassCheck --NOTE: Could be optimised more by turning it into a single massive boolean expression, but idk if that's worth it.
 	end
-	
+
 	function jcms.team_SameTeam(e1, e2)
 		if (e1 == e2) or ( jcms.team_JCorp(e1) and jcms.team_JCorp(e2) ) then
 			return true
 		else
 			local bothNPCs = jcms.team_NPC(e1) and jcms.team_NPC(e2)
-			
+
 			if bothNPCs then
 				local director = jcms.director
 				if director and director.totalWar then
@@ -871,7 +872,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 	end
 
 	function jcms.GetLobbySweepers() --used for mapgen, teams aren't set until after.
-		local players = player.GetAll() 
+		local players = player.GetAll()
 		for i=#players, 1, -1 do
 			local ply = players[i]
 			if not(ply:GetNWInt("jcms_desiredteam", -1) == 1) then
@@ -881,7 +882,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 
 		return players
 	end
-	
+
 	jcms.cvar_noepisodes = GetConVar("jcms_noepisodes")
 	function jcms.HasEpisodes()
 		return ( not jcms.cvar_noepisodes:GetBool() ) and IsMounted("ep2") and IsMounted("episodic")
@@ -898,7 +899,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 			return n
 		end
 	end
-	
+
 	function jcms.util_ToFeet(len, format)
 		local n = math.Round(len / 16)
 		if format then
@@ -907,7 +908,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 			return n
 		end
 	end
-	
+
 	function jcms.util_ToDistance(len, format)
 		if CLIENT and jcms.cvar_imperial:GetBool() then
 			return jcms.util_ToFeet(len, format)
@@ -961,10 +962,10 @@ jcms.vectorOne = Vector(1, 1, 1)
 		local lastpos = from
 		local up = Vector(0, 0, 20000)
 		local normalup = Vector(0, 0, 1)
-		
+
 		for i=1, 48 do
 			local trace = util.TraceLine { start = lastpos + normalup, endpos = lastpos + up, mask = MASK_SOLID_BRUSHONLY }
-			
+
 			if trace.HitSky then
 				return trace.HitPos, i == 1
 			else
@@ -994,7 +995,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 	function jcms.util_Percentage(n, total)
 		n = tonumber(n) or 0
 		total = tonumber(total) or 0
-		
+
 		if total == 0 or n == 0 then
 			return "0%"
 		else
@@ -1020,7 +1021,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 		[6] = "S",
 		[7] = "SE"
 	}
-	
+
 	function jcms.util_GetCompassDir(from, to, formatAsString)
 		local int = math.floor((to - from):Angle().y / 45 + 0.5)%8
 
@@ -1049,13 +1050,13 @@ jcms.vectorOne = Vector(1, 1, 1)
 			return language.GetPhrase("jcms.stats_playtime_ms"):format(minutes, seconds)
 		end
 	end
-	
+
 	local function MSG_OVERRIDE(...)
 		for i, arg in ipairs {...} do
 			jcms.__tempstring = jcms.__tempstring .. tostring(arg)
 		end
 	end
-	
+
 	function jcms.util_Hash(tab)
 		if istable(tab) then
 			-- quite hacky, but i need a recursive table print function that also has alphabetical order for keys
@@ -1162,11 +1163,11 @@ jcms.vectorOne = Vector(1, 1, 1)
 	function jcms.util_IsStunstick(ent)
 		return not not (IsValid(ent) and ent:IsWeapon() and ent:GetClass():lower():find("stun_?stick"))
 	end
-	
+
 	function jcms.util_GetThresholdTimer() -- How many players need to be ready to start mission countdown
 		return math.min(#player.GetHumans(), game.MaxPlayers()/2)
 	end
-	
+
 	function jcms.util_GetThresholdAutostart() -- How many players need to be ready to instantly start the mission
 		return math.max(#player.GetHumans(), game.MaxPlayers()/2)
 	end
@@ -1182,7 +1183,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 	function jcms.util_GetMissionTime()
 		return CurTime() - game.GetWorld():GetNWFloat("jcms_missionStartTime", 0)
 	end
-	
+
 	function jcms.util_GetTimeUntilStart()
 		return math.max(0, game.GetWorld():GetNWFloat("jcms_missionStartTime", 0) - CurTime())
 	end
@@ -1211,7 +1212,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 	function jcms.util_GetCurrentWinstreak()
 		return game.GetWorld():GetNWInt("jcms_winstreak", 0)
 	end
-	
+
 -- }}}
 
 -- Licenses {{{
@@ -1912,7 +1913,7 @@ with others.
 
 The OFL allows the licensed fonts to be used, studied, modified and
 redistributed freely as long as they are not sold by themselves. The
-fonts, including any derivative works, can be bundled, embedded, 
+fonts, including any derivative works, can be bundled, embedded,
 redistributed and/or sold with any software provided that any reserved
 names are not used by derivative works. The fonts and derivatives,
 however, cannot be released under any other type of license. The

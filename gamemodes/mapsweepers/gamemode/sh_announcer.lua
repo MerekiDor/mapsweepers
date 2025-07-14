@@ -31,7 +31,7 @@ jcms.ANNOUNCER_IDLE = 9
 jcms.ANNOUNCER_AMMO_WASTE = 10
 jcms.ANNOUNCER_FRIENDLYFIRE = 11
 jcms.ANNOUNCER_FRIENDLYFIRE_KILL = 12
-jcms.ANNOUNCER_DEAD=13
+jcms.ANNOUNCER_DEAD = 13
 jcms.ANNOUNCER_SHELLING = 14
 jcms.ANNOUNCER_ORBITALBEAM = 15
 jcms.ANNOUNCER_DONTTOUCH = 16
@@ -40,8 +40,20 @@ jcms.ANNOUNCER_HA = 18
 
 jcms.announcer_vo = {}
 jcms.announcer_vo_weights = {}
+jcms.announcer_vo_types = {["default"] = {["vo"] = jcms.announcer_vo, ["voW"] = jcms.announcer_vo_weights}}
 local vo = jcms.announcer_vo
 local voW = jcms.announcer_vo_weights
+
+cvars.AddChangeCallback("jcms_announcer_type", function(_, _, new)
+	local voType = jcms.announcer_vo_types[new]
+
+	if not voType then
+		voType = jcms.announcer_vo_types["default"]
+	end
+
+	vo = voType["vo"]
+	voW = voType["voW"]
+end)
 
 -- {{{
 	vo[jcms.ANNOUNCER_FAILED] = {
@@ -229,8 +241,8 @@ local voW = jcms.announcer_vo_weights
 		"youdontkillpeople"
 	}
 	voW["ifyoukillmo_what_fuck"] = 0.15
-	for i=1,6 do
-		voW["whywouldyoudothat"..i] = 1/6
+	for i = 1, 6 do
+		voW["whywouldyoudothat" .. i] = 1 / 6
 	end
 -- }}}
 
@@ -304,7 +316,7 @@ if CLIENT then
 	function jcms.announcer_Speak(id, index)
 		local voTable = vo[id]
 		local chosenLine = voTable[index or math.random(#voTable)]
-		
+
 		local soundDur = SoundDuration("vo/jcms/" .. chosenLine .. ".mp3")
 		local cTime = CurTime()
 
@@ -317,7 +329,7 @@ if CLIENT then
 			chat.AddText(Color(255, 0, 0), "[ MISSION ] ", Color(255, 128, 128), language.GetPhrase("#jcms.vo_" .. chosenLine))
 
 			--Tracking number of uses on both client and server sounds like a pain, so I'm not going to do that.
-			
+
 			if jcms.cvar_announcer:GetBool() then
 				EmitSound("vo/jcms/" .. chosenLine .. ".mp3", vector_origin, 0, CHAN_VOICE2, 1, 0, 0, 100, 0)
 			end
@@ -339,7 +351,7 @@ if SERVER then
 
 	function jcms.announcer_getHistoryWeight(line)
 		for i, histLine in ipairs(jcms.announcer_vo_history) do
-			if histLine == line then 
+			if histLine == line then
 				return jcms.announcer_vo_historyWeights[i]
 			end
 		end
@@ -348,9 +360,9 @@ if SERVER then
 
 	function jcms.announcer_Speak(id, ply)
 		local voTable = vo[id]
-		
+
 		local weightedTable = {}
-		for i, line in ipairs(voTable) do 
+		for i, line in ipairs(voTable) do
 			weightedTable[i] = (jcms.announcer_vo_weights[line] or 1) * jcms.announcer_getHistoryWeight(line)
 		end
 
@@ -358,7 +370,7 @@ if SERVER then
 
 		if not IsValid(ply) then --Only do history weighting if we're global
 			table.insert(jcms.announcer_vo_history, voTable[chosenIndex])
-			if #jcms.announcer_vo_history > #jcms.announcer_vo_historyWeights then 
+			if #jcms.announcer_vo_history > #jcms.announcer_vo_historyWeights then
 				table.remove(jcms.announcer_vo_history, 1)
 			end
 		end
@@ -367,7 +379,7 @@ if SERVER then
 		--if ply is nil, play for everyone. Otherwise only for that person.
 		jcms.net_SendAnnouncerSpeak(id, chosenIndex, ply)
 	end
-	
+
 	function jcms.announcer_SpeakChance(ch, id, ply)
 		if math.random() < ch then
 			jcms.announcer_Speak(id, ply)
