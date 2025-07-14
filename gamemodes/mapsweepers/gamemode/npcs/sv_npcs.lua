@@ -150,6 +150,9 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 			npcTbl.jcms_ScaleDamage = enemyData.scaleDamage
 		end
 		npc:Spawn()
+		if not game.SinglePlayer() then
+			npc:SetLagCompensated( true )
+		end
 
 		if npc.SetMaxLookDistance then
 			npc:SetMaxLookDistance( math.max(npc:GetMaxLookDistance(), 4096) )
