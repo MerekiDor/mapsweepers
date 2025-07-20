@@ -289,7 +289,6 @@ if SERVER then
 			local _i =  i + 1
 			timer.Simple(i*delay, function()
 				jcms.net_SendOrder(orderId, orderData)
-				jcms.printf("Sending order %d/%d", _i, count)
 			end)
 			i = i + 1
 		end
