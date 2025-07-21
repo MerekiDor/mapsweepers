@@ -868,6 +868,7 @@
 		local armorWidth = ply:GetMaxArmor()*3
 		local armorFrac = math.Clamp(ply:Armor() / ply:GetMaxArmor(), 0, 1)
 		local pingString = ply:IsBot() and "BOT" or ply:Ping()
+		local cashString = jcms.util_CashFormat( ply:GetNWInt("jcms_cash", 0) )
 		local nick = ply:Nick()
 
 		if dead and not evacuated then
@@ -884,8 +885,11 @@
 			surface.SetMaterial(cmat)
 			surface.DrawTexturedRectRotated(x-w/2+h/2+4, y, 96, 96, 0)
 			draw.SimpleText(nick, "jcms_hud_medium", x - w/2 + h, y, color, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-
-			draw.SimpleText(pingString, "jcms_hud_medium", x + w/2 - h, y, color, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(cashString, "jcms_hud_medium", x + w/2 - h*2.5, y, color, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			local cashStringWidth = surface.GetTextSize(cashString, "jcms_hud_medium")
+			local cashIconX = x + w/2 - h*2.5 + cashStringWidth/2 + 30
+			jcms.draw_IconCash_optimised(cashIconX, y, 16, 16, color)
+			draw.SimpleText(pingString, "jcms_hud_medium", x + w/2 - h / 2, y, color, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 			surface.SetAlphaMultiplier(alphamul)
 
 			if not dead then
