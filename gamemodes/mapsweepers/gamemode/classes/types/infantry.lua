@@ -125,7 +125,6 @@ function class.Think(ply)
 				end
 			end
 		else
-			print("Infantry Ammo Restore: " .. wep:GetClass() .. " does not have TakePrimaryAmmo or TakeAmmo function, using default behavior.")
 			local originalFunction = wep.TakePrimaryAmmo
 			wep.TakePrimaryAmmo = function(self, count, ...)
 				local owner = self:GetOwner()
