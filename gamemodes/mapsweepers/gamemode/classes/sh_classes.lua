@@ -165,3 +165,10 @@ table.Empty(jcms.classesOrderIndices)
 	end
 
 -- // }}}
+
+hook.Add("PlayerPostThink", "jcms_ClassThink", function(ply)
+	local data = jcms.class_GetData(ply)
+	if data and data.Think then
+		data.Think(ply)
+	end
+end)

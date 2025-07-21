@@ -691,12 +691,6 @@ end
 	end)
 
 	hook.Add("PlayerPostThink", "jcms_PlayerThink", function(ply)
-		local data = jcms.class_GetData(ply)
-
-		if data and data.Think then
-			data.Think(ply)
-		end
-		
 		if ply:IsOnFire() and ply:WaterLevel() > 0 then
 			ply:Extinguish()
 		end

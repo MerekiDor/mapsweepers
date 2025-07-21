@@ -72,6 +72,8 @@ if SERVER then
 	end
 
 	function class.Think(ply)
+		if CLIENT then return end
+
 		if ply.jcms_odessaRocketJumped then
 			if ply:OnGround() then
 				ply.jcms_odessaRocketJumped = nil

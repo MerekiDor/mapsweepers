@@ -138,6 +138,8 @@ function class.SecondaryAttack(ply, wep)
 end
 
 function class.Think(ply)
+	if CLIENT then return end
+
 	if ply:OnGround() and ply.zombieFrenzy then
 		ply.zombieFrenzy = nil
 	end
