@@ -557,6 +557,13 @@ jcms.offgame = jcms.offgame or NULL
 		function jcms.offgame_BuildMissionTab(tab)
 			tab.Paint = jcms.offgame_paint_MissionTab
 
+			local favclass = jcms.cvar_favclass:GetString()
+			if jcms.classes[ favclass ] then
+				timer.Simple(0.1, function()
+					RunConsoleCommand("jcms_setclass", favclass)
+				end)
+			end
+
 			if game.SinglePlayer() then
 				local y = 220
 
@@ -576,13 +583,6 @@ jcms.offgame = jcms.offgame or NULL
 					surface.PlaySound("buttons/button14.wav")
 					jcms.offgame_BuildMissionPrepTab(tab)
 					RunConsoleCommand("jcms_jointeam", "1")
-					
-					local favclass = jcms.cvar_favclass:GetString()
-					if jcms.classes[ favclass ] then
-						timer.Simple(0.1, function()
-							RunConsoleCommand("jcms_setclass", favclass)
-						end)
-					end
 				end
 				y = y + 32 + 8
 
