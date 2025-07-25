@@ -384,7 +384,7 @@ if SERVER then
 
 			net.WriteUInt(jcms.director.vote_time or 0, 32)
 			if jcms.director.vote_maps then
-				net.WriteUInt(table.Count(jcms.director.vote_maps), 4)
+				net.WriteUInt(table.Count(jcms.director.vote_maps), 8)
 				for map, wsid in pairs(jcms.director.vote_maps) do
 					net.WriteString(map)
 					if wsid then
@@ -874,7 +874,7 @@ if CLIENT then
 					end
 
 					jcms.aftergame.voteTime = net.ReadUInt(32)
-					local voteOptionsCount = net.ReadUInt(4)
+					local voteOptionsCount = net.ReadUInt(8)
 					for i=1, voteOptionsCount do
 						local mapname = net.ReadString()
 						local wsid = net.ReadBool() and net.ReadString() or false -- Workshop ID
