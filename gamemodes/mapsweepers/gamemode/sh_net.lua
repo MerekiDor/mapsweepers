@@ -92,7 +92,7 @@ if SERVER then
 			if jcms.director and jcms.director.votes then
 				local mapname = net.ReadString()
 				
-				if jcms.director.vote_maps[mapname] then
+				if jcms.director.vote_maps[mapname] ~= nil then
 					jcms.director.votes[ply] = mapname
 				end
 

@@ -848,7 +848,7 @@ end
 
 			if (game.SinglePlayer() and totalVotes > 0) or (CurTime() >= jcms.director.vote_time) then
 				local winningVoteCount, winningMap = -1, nil
-				for map in ipairs(jcms.director.vote_maps) do
+				for map in pairs(jcms.director.vote_maps) do
 					if (counts[ map ] or 0) > winningVoteCount then
 						winningVoteCount = counts[ map ] or 0
 						winningMap = map
