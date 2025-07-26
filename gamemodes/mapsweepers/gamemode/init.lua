@@ -389,10 +389,6 @@ end
 		return true
 	end)
 
-	gameevent.Listen("player_activate") 
-	-- Am I missing something? Why do we even have to fucking do this? We've already
-	-- got a fucking hook for player_disconnect, that is, GM:PlayerDisconnected. Why
-	-- couldn't they do something like this here, too?
 	hook.Add("jcms_PlayerNetReady", "jcms_OnActivate", function(ply)
 		local sid64 = ply:SteamID64()
 		if jcms.director and jcms.director.persisting_loadout then
