@@ -393,53 +393,33 @@ end
 	-- Am I missing something? Why do we even have to fucking do this? We've already
 	-- got a fucking hook for player_disconnect, that is, GM:PlayerDisconnected. Why
 	-- couldn't they do something like this here, too?
-	hook.Add("player_activate", "jcms_OnActivate", function(data)
-		local ply = Player(data.userid)
-		net.inited_players[ply] = true
-		
-		timer.Simple(1, function()
-			if IsValid(ply) then
-				jcms.net_NotifySquadChange(ply, true)
-				jcms.net_SendFogData(ply) --Currently doesn't update/assumes the fog stays static. Might cause weird behaviour on maps that edit their fog. 
-			end
-		end)
-		
-		timer.Simple(1.5, function()
-			if IsValid(ply) and not ply:IsBot() then
-				jcms.net_SendManyOrders(jcms.orders, ply)
-			end
-		end)
+	hook.Add("jcms_PlayerNetReady", "jcms_OnActivate", function(ply)
+		local sid64 = ply:SteamID64()
+		if jcms.director and jcms.director.persisting_loadout then
+			ply.jcms_lastLoadout = jcms.director.persisting_loadout[ sid64 ]
+			ply:SetNWString("jcms_desiredclass", jcms.director.persisting_class[ sid64 ] or "infantry")
+			ply:SetNWInt("jcms_cash", jcms.director.persisting_cash[ sid64 ] or jcms.runprogress_GetStartingCash(ply))
+			jcms.printf("Restoring loadout, class and cash for player " .. tostring(ply))
+		end
 
-		timer.Simple(2, function()
-			if IsValid(ply) then
-				local sid64 = ply:SteamID64()
-				
-				if jcms.director and jcms.director.persisting_loadout then
-					ply.jcms_lastLoadout = jcms.director.persisting_loadout[ sid64 ]
-					ply:SetNWString("jcms_desiredclass", jcms.director.persisting_class[ sid64 ] or "infantry")
-					ply:SetNWInt("jcms_cash", jcms.director.persisting_cash[ sid64 ] or jcms.runprogress_GetStartingCash(ply))
-					jcms.printf("Restoring loadout, class and cash for player " .. tostring(ply))
-				end
-
-				local count = 0
-				for i, ent in ipairs(ents.GetAll()) do
-					if ent.jcms_owner_sid64 == sid64 then
-						ent.jcms_owner = ply
-						ent.jcms_owner_sid64 = nil
-						count = count + 1
-					end
-				end
-				if count > 0 then
-					jcms.printf("%s joined back, %d of their owned entities have been restored", ply, count)
-				end
+		local count = 0
+		for i, ent in ipairs(ents.GetAll()) do
+			if ent.jcms_owner_sid64 == sid64 then
+				ent.jcms_owner = ply
+				ent.jcms_owner_sid64 = nil
+				count = count + 1
 			end
-		end)
+		end
+		if count > 0 then
+			jcms.printf("%s joined back, %d of their owned entities have been restored", ply, count)
+		end
 
-		timer.Simple(4.0, function()
-			if IsValid(ply) and not ply:IsBot() then
-				jcms.net_SendManyWeapons(jcms.weapon_prices, ply)
-			end
-		end)
+		if ply:IsBot() then return end
+		jcms.net_NotifySquadChange(ply, true)
+		jcms.net_SendFogData(ply) --Currently doesn't update/assumes the fog stays static. Might cause weird behaviour on maps that edit their fog. 
+		jcms.net_SendManyOrders(jcms.orders, ply)
+		jcms.net_SendManyWeapons(jcms.weapon_prices, ply)
+		jcms.net_ShareMissionData(jcms.mission_GetObjectives(), ply)
 	end)
 
 	hook.Add("PlayerDisconnected", "jcms_OnDisconnect", function(ply)

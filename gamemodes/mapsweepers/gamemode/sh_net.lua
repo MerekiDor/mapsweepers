@@ -52,14 +52,26 @@ local bits_ply, bits_ent, bits_wld = 2, 2, 4
 
 -- // }}}
 
-if SERVER then 
+if SERVER then
 	util.AddNetworkString "jcms_msg"
-	
-	net.inited_players = {}
-	
-	hook.Add("PlayerDisconnected", "jcms_netDisconnect", function(ply)
-		net.inited_players[ply] = nil
-	end)
+
+	hook.Add( "PlayerInitialSpawn", "jcms_netReady", function( initPly )
+		if initPly:IsBot() then
+			-- Bots don't need to wait for net messages, they are always ready.
+			hook.Run( "jcms_PlayerNetReady", initPly )
+			return
+		end
+
+		local hookName = "jcms_netReady_" .. tostring( initPly )
+
+		hook.Add( "SetupMove", hookName, function( setupPly, _, cmd )
+			if initPly ~= setupPly then return end
+			if cmd:IsForced() then return end
+
+			hook.Remove( "SetupMove", hookName )
+			hook.Run( "jcms_PlayerNetReady", setupPly )
+		end )
+	end )
 
 	local ply_messages = {
 		--Nothing here for now
@@ -225,7 +237,7 @@ if SERVER then
 		end
 	end
 
-	function jcms.net_ShareMissionData(objectives)
+	function jcms.net_ShareMissionData(objectives, ply)
 		net.Start("jcms_msg")
 			net.WriteBool(false)
 			net.WriteEntity( game.GetWorld() )
@@ -241,7 +253,11 @@ if SERVER then
 				net.WriteBool(obj.percent)
 				net.WriteBool(obj.completed)
 			end
-		net.Broadcast()
+		if ply then
+			net.Send(ply)
+		else
+			net.Broadcast()
+		end
 	end
 	
 	function jcms.net_SendDamage(ply, arg, isNegated)
