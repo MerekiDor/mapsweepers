@@ -418,7 +418,7 @@ end
 		jcms.net_NotifySquadChange(ply, true)
 		jcms.net_SendFogData(ply) --Currently doesn't update/assumes the fog stays static. Might cause weird behaviour on maps that edit their fog. 
 		jcms.net_SendManyOrders(jcms.orders, ply)
-		jcms.net_SendManyWeapons(jcms.weapon_prices, ply)
+		jcms.net_SendWeaponPrices(jcms.weapon_prices, ply)
 		jcms.net_ShareMissionData(jcms.mission_GetObjectives(), ply)
 	end)
 

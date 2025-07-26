@@ -182,7 +182,7 @@ hook.Add("Think", "jcms_TutorialThink", function()
 				weapon_crossbow = 699
 			}
 			
-			jcms.net_SendManyWeapons(jcms.weapon_prices, ply)
+			jcms.net_SendWeaponPrices(jcms.weapon_prices, ply)
 		end
 		
 		if #ply:GetWeapons() > 1 then

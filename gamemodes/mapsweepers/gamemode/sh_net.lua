@@ -39,6 +39,7 @@ local bits_ply, bits_ent, bits_wld = 2, 2, 4
 		local WLD_ANNOUNCER = 7
 		local WLD_FOG = 8
 		local WLD_ANNOUNCER_UPDATE = 9
+		local WLD_WEAPON_PRICES = 10
 	-- // }}}
 
 	-- // CLIENT {{{
@@ -542,19 +543,17 @@ if SERVER then
 		end
 	end
 	
-	function jcms.net_SendManyWeapons(weapons, to)
-		local delay = 0.028
-		local count = table.Count(weapons)
-		local i = 0
-		
-		for weaponClass, weaponCost in pairs(weapons) do
-			local _i =  i + 1
-			timer.Simple(i*delay, function()
-				jcms.net_SendWeapon(weaponClass, weaponCost, to)
-				--jcms.printf("Sending weapon %d/%d", _i, count)
-			end)
-			i = i + 1
-		end
+	function jcms.net_SendWeaponPrices(weapons, to)
+		local weaponsData = util.TableToJSON(weapons)
+		local compressed = util.Compress(weaponsData)
+
+		net.Start("jcms_msg")
+			net.WriteBool(false)
+			net.WriteEntity(game.GetWorld())
+			net.WriteUInt(WLD_WEAPON_PRICES, bits_wld)
+			net.WriteUInt(#compressed, 16)
+			net.WriteData(compressed, #compressed)
+		net.Send(to)
 	end
 
 	function jcms.net_SendWeaponInLoadout(class, n, to)
@@ -981,6 +980,17 @@ if CLIENT then
 				else
 					jcms.weapon_loadout[class] = nil
 				end
+			end
+		end,
+
+		[ WLD_WEAPON_PRICES ] = function()
+			local compressedSize = net.ReadUInt(16)
+			local compressedData = net.ReadData(compressedSize)
+			local weaponsData = util.Decompress(compressedData)
+			local wepsPrices = util.JSONToTable(weaponsData)
+
+			for class, price in pairs(wepsPrices) do
+				jcms.weapon_prices[ class ] = price
 			end
 		end,
 
