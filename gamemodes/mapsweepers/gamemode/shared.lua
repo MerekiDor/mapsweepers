@@ -734,8 +734,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 
 		-- // Calculate our average time between shots, accounting for reload. {{{
 			local fullCycle = (stats.firerate * math.max(stats.clipsize, 1)) + stats.reloadtime
-			local avgFireRate = fullCycle / math.max(stats.clipsize, 1)
-			avgFireRate = 1 / avgFireRate
+			local avgFireRate = math.max(stats.clipsize, 1) / fullCycle
 
 			if math.max(stats.clipsize, 1) == 1 then --If we only have 1 shot, only one of these values matters.
 				avgFireRate = math.min(1/stats.reloadtime, stats.firerate_rps)
@@ -768,10 +767,11 @@ jcms.vectorOne = Vector(1, 1, 1)
 
 		--Stat weighting.
 		local scaledDPSCost = ( kps + (dpsCost / 50) ) * 50/2
-		local scaledEfficiencyCost = ammoEfficiency^(2/3)
+		local scaledEfficiencyCost = ammoEfficiency^(2/3) / 10
 
 		--Final cost.
-		local cost = (scaledDPSCost * scaledEfficiencyCost + starterClipCost) * 2.75
+		local costMult = 2.75 * 4.85 // Arbitrary multiplier to keep prices stable when changing calculations
+		local cost = (scaledDPSCost * scaledEfficiencyCost + starterClipCost) * costMult
 
 		local divider = 5		-- Never noticed this, but I like it -J.
 		if cost >= 2000 then
