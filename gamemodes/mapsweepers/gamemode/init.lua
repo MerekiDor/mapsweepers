@@ -2559,6 +2559,14 @@ end
 		weapon_dredux_de_supershotgun = 699,
 		weapon_dredux_de_unmaker = 1999,
 
+		-- ARCCW GSO
+		arccw_go_nade_frag = 399,
+		arccw_go_nade_incendiary = 399,
+		arccw_go_nade_molotov = 399,
+		arccw_go_nade_smoke = 99,
+		arccw_go_nade_flash = 99,
+		arccw_go_nade_knife = 99,
+
 		-- Other
 		ultra_rail_gun = 1999,
 		weapon_undertale_sans = 3799,
