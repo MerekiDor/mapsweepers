@@ -33,6 +33,7 @@ function ENT:Initialize()
 
 	if SERVER then
 		self.nextSlowCharge = CurTime()
+		self:SetMoveType(MOVETYPE_NONE)
 		self:PhysicsInitStatic(SOLID_VPHYSICS)
 	end
 
