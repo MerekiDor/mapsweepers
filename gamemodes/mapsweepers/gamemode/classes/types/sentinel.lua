@@ -129,12 +129,21 @@ if SERVER then
 					ply.sentinel_teleportSound = CreateSound(ply, "ambient/levels/labs/teleport_alarm_loop1.wav")
 					ply.sentinel_teleportSound:Play()
 
+					--TODO: We probably want an actual on-screen count-down (including miliseconds) for this now that it's more important. 
 					timer.Simple(1.5, function() --Delay/warning before teleporting.
 						if not IsValid(ply) then return end
 						ply.sentinel_teleportSound:Stop()
 						ply.sentinel_isTeleporting = false
 
-						if ply:Armor() > 10 then return end --Allow recovery.
+						--TODO: ABSOLUTELY NEEDS TO BE INDICATED. Should be some large-text saying "ANCHORED" + some smaller text elaborating a bit
+						--(Telling people they won't teleport / that it's buildings causing this)
+						--This should ideally display whenever they're close to a building.
+						for i, ent in ipairs(ents.FindInSphere(ply:WorldSpaceCenter(), 200)) do
+							if ent.SentinelAnchor and (not ent.GetHackedByRebels or not ent:GetHackedByRebels()) then 
+								return --Don't teleport us if we're near a friendly building.
+							end
+						end
+
 						if IsValid(ply:GetNWEntity("jcms_vehicle", NULL)) then return end -- Don't teleport us out of vehicles
 
 						local zoneList = jcms.mapgen_ZoneList()
@@ -148,28 +157,30 @@ if SERVER then
 						
 						if not plyZone or jcms.mapdata.zoneSizes[plyZoneId] < 5000^2 then
 							local weightedZones = {}
-							for zone, area in ipairs(jcms.mapdata.zoneSizes) do 
-								if area >= 5000^2 then 
+							for zone, area in ipairs(jcms.mapdata.zoneSizes) do
+								if area >= 5000 then 
 									weightedZones[zone] = math.sqrt(area)
 								end
 							end
+							
 							plyZoneId = jcms.util_ChooseByWeight(weightedZones)
 							plyZone = zoneList[plyZoneId]
 						end
 
 						if not plyZone then return end --This is stupid but I guess people are willing to play on maps made of tiny rooms.
 
+
 						local plyMins, plyMaxs = ply:GetHull()
-						local zOff = Vector(0,0, plyMaxs.z + 5)
+						--local zOff = Vector(0,0, plyMaxs.z + 5)
 						local zOff2 = Vector(0,0,5)
 
-						local awayAreas = jcms.director_GetAreasAwayFrom(plyZone, {ply:GetPos()}, 2500, math.huge)
+						local awayAreas = jcms.director_GetAreasAwayFrom(plyZone, {ply:GetPos()}, 1500, math.huge)
 
 						local weightedAreas = {}
 						for i, area in ipairs(awayAreas) do
 							local centre = area:GetCenter()
 							local tr = util.TraceEntityHull({
-								start = centre + zOff,
+								start = centre + zOff2,
 								endpos = centre + zOff2
 							}, ply)
 
@@ -275,8 +286,9 @@ if SERVER then
 		
 			if charge > 0 then
 				local oldArmor = ply:Armor()
-				local newArmor = math.min( oldArmor + charge, ply:GetMaxArmor() )
-				
+				local newArmor = math.min( oldArmor + charge, 250 ) --Can charge past max armour. --TODO: Visuals (Preferably make the "overcharged" part of the armour bar lighter)
+				--TODO: Would be nice if we could also overcharge with batteries/chargers, although that probably isn't possible.
+
 				if newArmor ~= oldArmor then
 					ply:SetArmor( newArmor )
 					ply:EmitSound("items/battery_pickup.wav", 50, 110 + charge * 5 + math.random()*5, 0.75)

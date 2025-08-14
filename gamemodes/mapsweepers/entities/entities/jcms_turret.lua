@@ -28,6 +28,8 @@ ENT.Category = "Map Sweepers"
 ENT.Spawnable = false
 ENT.RenderGroup = RENDERGROUP_BOTH
 
+ENT.SentinelAnchor = true
+
 if SERVER then
 	function jcms.turret_GetTargetPos(self, target, origin)
 		local boneId = target:LookupBone("ValveBiped.Bip01_Head1") or target:LookupBone("ValveBiped.Bip01_Spine4")

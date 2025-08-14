@@ -34,6 +34,8 @@ ENT.ChainRadius = 500
 ENT.ChainSteps = 14
 ENT.FireRate = 0.4
 
+ENT.SentinelAnchor = true
+
 function ENT:Initialize()
 	if SERVER then
 		self:SetModel("models/props_c17/utilityconnecter006c.mdl")

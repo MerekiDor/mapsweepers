@@ -31,6 +31,8 @@ ENT.RenderGroup = RENDERGROUP_BOTH
 ENT.ChargePerSecond = 5
 ENT.ChargeInterval = 0.5
 
+ENT.SentinelAnchor = true
+
 function ENT:Initialize()
 	if SERVER then
 		self:SetModel("models/props_combine/combine_light001a.mdl")
