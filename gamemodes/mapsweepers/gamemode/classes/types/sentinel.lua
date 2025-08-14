@@ -286,9 +286,7 @@ if SERVER then
 		
 			if charge > 0 then
 				local oldArmor = ply:Armor()
-				local newArmor = math.min( oldArmor + charge, 250 ) --Can charge past max armour. --TODO: Visuals (Preferably make the "overcharged" part of the armour bar lighter)
-				--TODO: Would be nice if we could also overcharge with batteries/chargers, although that probably isn't possible.
-
+				local newArmor = math.min( oldArmor + charge, 250 ) --Can charge past max armour.
 				if newArmor ~= oldArmor then
 					ply:SetArmor( newArmor )
 					ply:EmitSound("items/battery_pickup.wav", 50, 110 + charge * 5 + math.random()*5, 0.75)

@@ -550,6 +550,7 @@
 
 			local fracHealth = math.Clamp(me:Health() / me:GetMaxHealth(), 0, 1)
 			local fracArmor = math.Clamp(me:Armor() / me:GetMaxArmor(), 0, 1)
+			local fracArmorOvercharge = math.Clamp(math.TimeFraction(me:GetMaxArmor(), me:GetMaxArmor() + 100, me:Armor()), 0, 1)
 
 			if not jcms.hud_fracHealth then
 				jcms.hud_fracHealth = fracHealth
@@ -600,6 +601,13 @@
 				surface.DrawRect(128 + addX + offsetArmor, -48 - 12 - offsetArmor, armorWidth * fracArmor, 16)
 				jcms.hud_DrawStripedRect(128 + addX + offsetArmor/2 + armorWidth*fracArmor, -48 - 12 - offsetArmor/2 + 2, armorWidth*(1-fracArmor), 16-4, 75)
 				draw.SimpleText(me:Armor(), "jcms_hud_medium", 158 + addX + offsetArmor/3, -54 - 12 - offsetArmor/3, jcms.color_bright_alt, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+
+				if fracArmorOvercharge > 0 then
+					local pad = 4 + fracArmorOvercharge*3 + math.random()*4
+					surface.SetDrawColor(jcms.color_bright_alt)
+					surface.DrawRect(128 + addX + offsetArmor - pad, -48 - 12 - offsetArmor - pad, armorWidth * math.Clamp(fracArmorOvercharge, 0, 1) + pad*2, 16 + pad*2)
+					draw.SimpleText(me:Armor(), "jcms_hud_medium", 158 + addX + offsetArmor/3 + math.random(-4, 4), -54 - 12 - offsetArmor/3 + math.random(-4, 4), jcms.color_bright_alt, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+				end
 
 				jcms.hud_fracArmorRegen = ((jcms.hud_fracArmorRegen or 0)*12 + (shieldDamageElapsed < shieldDamageDelay and 1 or 0))/13
 				if jcms.hud_fracArmorRegen > 0.01 then
