@@ -1217,7 +1217,7 @@ end
 			ply:SetViewPunchAngles(Angle(-1, math.Rand(-0.2, 0.2), 0))
 		end
 
-		ply:SetArmor( math.Clamp((armor - armorDmg)*armorDmgMultiplier, 0, ply:GetMaxArmor()) )
+		ply:SetArmor( math.max((armor - armorDmg)*armorDmgMultiplier, 0) )
 		
 		if ply:Armor() <= 0 then
 			local ed = EffectData()
