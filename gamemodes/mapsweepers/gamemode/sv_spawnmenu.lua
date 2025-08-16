@@ -565,7 +565,7 @@
 			end
 		},
 
-		--[[apc = {
+		apc = {
 			category = jcms.SPAWNCAT_MOBILITY,
 			cost = 600,
 			cooldown = 600,
@@ -595,7 +595,7 @@
 					apc:CPPISetOwner( game.GetWorld() )
 				end
 			end
-		},]]
+		},
 
 		hovertank = {
 			category = jcms.SPAWNCAT_MOBILITY,
