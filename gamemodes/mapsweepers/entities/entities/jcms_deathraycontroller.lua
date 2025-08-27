@@ -92,7 +92,7 @@ if SERVER then
 			if jcms.team_JCorp(target) then
 				priority = math.min(target:GetMaxHealth(), target:Health()) - self:DistanceSqrToTrace(tgpos, tr) - 10000000
 			else
-				priority = (1.5 * math.max(target:GetMaxHealth() - 5, 10))^2 - self:DistanceSqrToTrace(tgpos, tr)/2
+				priority = (1.5 * math.max(target:GetMaxHealth() - 5, 10)) - self:DistanceSqrToTrace(tgpos, tr)/2
 			end
 			
 			local beampos = self:GetPos()

@@ -168,7 +168,7 @@ if SERVER then
 		for i=1, 3 do
 			local phi = math.random()*math.pi*2
 			local cos, sin = math.cos(phi)*(1+heat), math.sin(phi)*(1-heat*0.2)
-			local mul = math.random()*(i*0.8+heat*0.7)
+			local mul = math.random()*(i*0.8+heat*0.7) * 0.75
 
 			local spreadAngle = Angle(a)
 			spreadAngle.p = spreadAngle.p + sin*mul 

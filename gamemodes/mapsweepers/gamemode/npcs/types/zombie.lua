@@ -466,6 +466,16 @@ jcms.npc_types.zombie_husk = {
 		npc:SetHealth(hp)
 
 		npc.jcms_dmgMult = 4
+
+		-- 9-12 torso
+		--45 - 47 head/crab(?)
+
+		local totalRand = 45
+		for i=9, 12 do
+			local rand = math.Rand(0, totalRand)
+			totalRand = math.max(totalRand - rand, 0)
+			npc:ManipulateBoneAngles(i, AngleRand(-rand, rand), true)
+		end
 	end,
 
 	think = jcms.npc_SlowZombieThink
@@ -703,8 +713,13 @@ jcms.npc_types.zombie_combine = {
 		local hp = math.ceil(npc:GetMaxHealth()*1.75)
 		npc:SetMaxHealth(hp)
 		npc:SetHealth(hp)
+	end,
 
-		npc:Fire("StartSprint")
+	think = function(npc)
+		jcms.npc_SlowZombieThink(npc)
+
+		if #jcms.GetSweepersInRange(npc:GetPos(), 600) > 0 then return end
+		npc:Fire("StartSprint") --Force us to run until we're closer.
 	end,
 	
 	damageEffect = function(npc, target, dmgInfo)
