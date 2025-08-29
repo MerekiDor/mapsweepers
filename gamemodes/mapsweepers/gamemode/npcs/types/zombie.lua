@@ -66,6 +66,16 @@
 				npc:AdvancePath()
 			end
 		end
+
+		--[[
+		if npc.jcms_spreadPathing then
+			if npc:GetPathDistanceToGoal() > 500 and not(npc.jcms_npcState == jcms.NPC_STATE_AINNAVIGATE) then
+				jcms.npc_ainGenPath(npc, npc:GetGoalPos(), HULL_HUMAN, CAP_MOVE_GROUND)
+			elseif npc:GetPathDistanceToGoal() > 0 and npc.jcms_npcState == jcms.NPC_STATE_AINNAVIGATE then
+				jcms.npc_ainNavigateThink(npc, 150)
+			end
+		end
+		--]]
 	end
 
 	function jcms.npc_MiniTank_Launch(npc, target)
@@ -467,6 +477,8 @@ jcms.npc_types.zombie_husk = {
 
 		npc.jcms_dmgMult = 4
 
+		jcms.npc_setupNPCAINNav(npc)
+
 		-- 9-12 torso
 		--45 - 47 head/crab(?)
 
@@ -519,6 +531,8 @@ jcms.npc_types.zombie_poison = {
 		npc:SetHealth(hp)
 
 		npc.jcms_dmgMult = 5
+
+		jcms.npc_setupNPCAINNav(npc)
 	end,
 
 	think = jcms.npc_SlowZombieThink
@@ -543,6 +557,7 @@ jcms.npc_types.zombie_minitank = {
 
 	postSpawn = function(npc)
 		npc.jcms_ignoreStraggling = true
+		jcms.npc_setupNPCAINNav(npc)
 
 		local hp = math.ceil(npc:GetMaxHealth()*2.75)
 		npc:SetMaxHealth(hp)
@@ -693,6 +708,10 @@ jcms.npc_types.zombie_boomer = {
 	bounty = 25,
 
 	portalScale = 1.1,
+
+	postSpawn = function(npc)
+		jcms.npc_setupNPCAINNav(npc)
+	end,
 
 	think = jcms.npc_SlowZombieThink
 }

@@ -595,7 +595,7 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 
 -- // }}}
 
--- // Standardized NAV code {{{
+-- // Standardized AirNav code {{{
 
 	function jcms.npc_airCheck(director) -- Check func for all air units
 		return jcms.pathfinder.airNodes and #jcms.pathfinder.airNodes > 0
@@ -723,3 +723,75 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 	end
 
 -- // }}
+
+-- // Standardized AINNav Code (zombie spreading) {{{
+	-- // {{{ Enums for custom behaviours
+		jcms.NPC_STATE_AINNONE = 0
+		jcms.NPC_STATE_AINNAVIGATE = 1
+	-- // }}}
+
+	function jcms.npc_setupNPCAINNav(npc)
+		npc.jcms_npcState = jcms.NPC_STATE_AINNONE
+		npc.jcms_moveQueue = {}
+		npc.jcms_spreadPathing = true
+
+		npc:CallOnRemove( "jcms_ainNav_releasePath", jcms.npc_ainNavigateReleasePath )
+	end
+
+	function jcms.npc_ainNavigateThink(npc, distTolerance)
+		local targetNode = npc.jcms_moveQueue[#npc.jcms_moveQueue]
+
+		local npcPos = npc:GetPos() 
+		if npc:GetEnemyLastKnownPos():DistToSqr(npcPos) < 500^2 then --Exit when we're close to target
+			jcms.npc_ainNavigateReleasePath(npc)
+			npc.jcms_npcState = jcms.NPC_STATE_AINNONE
+			return
+		end
+
+		debugoverlay.Cross(ainReader.nodePositions[targetNode], 30, 8, Color( 0, 0, 255 ), true)
+		if not npc.jcms_ainHasSetGoal then
+			npc:NavSetGoalPos(ainReader.nodePositions[targetNode]) --NOTE: DON'T REPEAT-CALL! Resets our navigation
+			npc.jcms_ainHasSetGoal = true
+		end
+
+		--TODO: Handle failure to reach a point (maybe mimic the way normal AI marks connections as bad?)
+
+		local dist = npcPos:Distance(ainReader.nodePositions[targetNode])
+		if dist < distTolerance then --Remove from queue if we've reached it. 
+			npc.jcms_moveQueue[#npc.jcms_moveQueue] = nil
+			npc.jcms_ainHasSetGoal = false --Allow us to call :SetGoalPos() again
+			jcms.pathfinder.ain_nodeUsers[targetNode] = jcms.pathfinder.ain_nodeUsers[targetNode] - 1
+		end
+
+		if #npc.jcms_moveQueue == 0 then --Return to default behaviour after reaching target.
+			npc.jcms_npcState = jcms.NPC_STATE_AINNONE
+			return
+		end
+	end
+
+	function jcms.npc_ainGenPath(npc, targetPos, hull, cap) --NPC Hull and movement capabilities
+		local nodeUsers = jcms.pathfinder.ain_nodeUsers
+		
+		local path = jcms.pathfinder.ain_navigate(npc:GetPos(), targetPos, hull, cap)
+		
+		if path then
+			for i, node in ipairs(path) do 
+				nodeUsers[node] = (nodeUsers[node] or 0) + 1
+			end
+
+			npc.jcms_moveQueue = path
+			npc.jcms_npcState = jcms.NPC_STATE_AINNAVIGATE
+		end
+	end
+
+	function jcms.npc_ainNavigateReleasePath(npc)
+		local nodeUsers = jcms.pathfinder.ain_nodeUsers
+
+		for i, node in ipairs(npc.jcms_moveQueue) do 
+			nodeUsers[node] = nodeUsers[node] - 1
+		end
+
+		npc.jcms_moveQueue = {}
+	end
+
+-- // }}}

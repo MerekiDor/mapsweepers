@@ -89,6 +89,7 @@ include "sh_statistics.lua"
 -- // NPC Includes {{{
 	do
 		include "npcs/sv_pathfinder.lua"
+		include "npcs/sv_pathfinder_nodegraph.lua"
 		include "npcs/sv_npcs.lua"
 		local npcFiles, _ = file.Find( "mapsweepers/gamemode/npcs/types/*.lua", "LUA")
 		for i, v in ipairs(npcFiles) do 

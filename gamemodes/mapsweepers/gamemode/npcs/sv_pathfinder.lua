@@ -216,24 +216,10 @@ function jcms.pathfinder.getNodesInPVS( point )
 	return nodes
 end
 
-function jcms.pathfinder.navigate( startPoint, endPoint ) --A*
-	--We can accept either a vector position or the node itself. Latter is used for optimisation of missile turrets.
-	local startNode = (isvector(startPoint) and jcms.pathfinder.getNearestNodePVS( startPoint )) or startPoint
-	local endNode = (isvector(endPoint) and jcms.pathfinder.getNearestNodePVS( endPoint )) or endPoint
-
-	if not startNode or isvector(startNode) then --fallback
-		startNode = jcms.pathfinder.getNearestNode( startPoint )
-	end
-	if not endNode or isvector(endNode) then --fallback
-		endNode = jcms.pathfinder.getNearestNode( endPoint )
-	end
-
-	if startNode == endNode or not startNode or not endNode then return end --Don't need to navigate if we're just going to where we already are.
-	if not(jcms.pathfinder.nodeZones[startNode] == jcms.pathfinder.nodeZones[endNode]) then return end --We can't reach our target, don't waste time trying.
-
+function jcms.pathfinder.AStar( startNode, endNode, totalCost, exploreConnected ) --Generalised A* algorithm since we use this for (Currently) 3 different graph types
 	local openNodes = {startNode}
 	local openDict = {[startNode] = true}
-	local nodePathCosts = {[startNode] = startNode.pos:Distance(endNode.pos)}
+	local nodePathCosts = {[startNode] = totalCost}
 	local nodePredecessors = {}
 	local closedDict = {}
 
@@ -258,6 +244,41 @@ function jcms.pathfinder.navigate( startPoint, endPoint ) --A*
 			break
 		end
 
+		--This part is still kinda messy, if I need to work with this system more in-future I might try to further cut down repeat code. 
+		exploreConnected(currentNode, closedDict, nodePathCosts, nodePredecessors, openDict, openNodes)
+	end
+
+	if not success then return end
+	
+	--Backtrack to make a path
+	local path = {endNode}
+	while true do --if we were successful we're guaranteed to have a path.
+		local node = nodePredecessors[path[#path]]
+
+		table.insert(path, node)
+		if node == startNode then break end
+	end
+
+	return path --Chain of nodes representing our path.
+end
+
+function jcms.pathfinder.navigate( startPoint, endPoint ) --A*
+	--We can accept either a vector position or the node itself. Latter is used for optimisation of missile turrets.
+	local startNode = (isvector(startPoint) and jcms.pathfinder.getNearestNodePVS( startPoint )) or startPoint
+	local endNode = (isvector(endPoint) and jcms.pathfinder.getNearestNodePVS( endPoint )) or endPoint
+
+	if not startNode or isvector(startNode) then --fallback
+		startNode = jcms.pathfinder.getNearestNode( startPoint )
+	end
+	if not endNode or isvector(endNode) then --fallback
+		endNode = jcms.pathfinder.getNearestNode( endPoint )
+	end
+
+	if startNode == endNode or not startNode or not endNode then return end --Don't need to navigate if we're just going to where we already are.
+	if not(jcms.pathfinder.nodeZones[startNode] == jcms.pathfinder.nodeZones[endNode]) then return end --We can't reach our target, don't waste time trying.
+
+	-- Uses airgraph node data, avoids occupied nodes. 
+	local function exploreConnected(currentNode, closedDict, nodePathCosts, nodePredecessors, openDict, openNodes)
 		for i, node in ipairs(currentNode.connections) do
 			if not closedDict[node] and not node.occupied then
 				local heuristic = node.pos:Distance(endNode.pos)
@@ -275,51 +296,18 @@ function jcms.pathfinder.navigate( startPoint, endPoint ) --A*
 		end
 	end
 
-	if not success then return end
-	
-	--Backtrack to make a path
-	local path = {endNode}
-	while true do --if we were successful we're guaranteed to have a path.
-		local node = nodePredecessors[path[#path]]
-
-		table.insert(path, node)
-		if node == startNode then break end
-	end
-
-	return path --Chain of nodes representing our path.
+	--Everything else is generic.
+	return jcms.pathfinder.AStar( startNode, endNode, startNode.pos:Distance(endNode.pos), exploreConnected )
 end
 
 function jcms.pathfinder.navigateVectorGrid( connections, costs, startPoint, endPoint )
 	-- Based entirely on the code above.
 	if startPoint == endPoint or not startPoint or not endPoint or not (connections[startPoint]) or not (connections[endPoint]) then return end
 
-	local openNodes = {startPoint}
-	local openDict = {[startPoint] = true}
-	local nodePathCosts = {[startPoint] = startPoint:Distance(endPoint) + (costs[startPoint] or 0) }
-	local nodePredecessors = {}
-	local closedDict = {}
-
-	local success = false
-	while #openNodes > 0 do
-		local currentNode
-		local lowestCost = math.huge
-		for i, node in ipairs(openNodes) do
-			if (nodePathCosts[node] or math.huge) < lowestCost then
-				lowestCost = nodePathCosts[node]
-				currentNode = node
-			end
-		end
-		table.RemoveByValue(openNodes, currentNode)
-		openDict[currentNode] = nil
-		closedDict[currentNode] = true
-
-		if currentNode == endPoint then
-			success = true 
-			break
-		end
-
+	--Uses vector connection data instead of airgraph nodes
+	local function exploreConnected(currentNode, closedDict, nodePathCosts, nodePredecessors, openDict, openNodes)
 		for i, node in ipairs( connections[currentNode] ) do
-			if not closedDict[node] and not node.occupied then
+			if not closedDict[node] then
 				local heuristic = node:Distance(endPoint)
 				local cost = nodePathCosts[currentNode] + (costs[node] or 0) + node:Distance(currentNode)
 
@@ -335,15 +323,6 @@ function jcms.pathfinder.navigateVectorGrid( connections, costs, startPoint, end
 		end
 	end
 
-	if not success then return end
-	
-	local path = { endPoint }
-	while true do
-		local node = nodePredecessors[path[#path]]
-
-		table.insert(path, node)
-		if node == startNode then break end
-	end
-
-	return path
+	--Everything else is generic.
+	return jcms.pathfinder.AStar( startPoint, endPoint, startPoint:Distance(endPoint), exploreConnected )
 end
