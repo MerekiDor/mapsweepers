@@ -155,10 +155,10 @@ if SERVER then
 		},
 		
 		shotgun = {
-			damage = 8,
+			damage = 9,
 			firerate = 0.8,
 			damagetype = DMG_BUCKSHOT,
-			attackPattern = { 21, 20, 18, 19 },
+			attackPattern = { 19, 18, 16, 17 },
 			muzzleflashScale = 1.4,
 			muzzleflashFlag = 2,
 			clip = 100,
@@ -176,7 +176,7 @@ if SERVER then
 			pitchLockMin = -66,
 			pitchLockMax = 66,
 			
-			spreadX = 12,
+			spreadX = 10.5,
 			spreadY = 5,
 			targetingMode = "closest",
 			
@@ -188,7 +188,7 @@ if SERVER then
 
 				OnHit = function(turret, target, dmgInfo, tr)
 					if not jcms.team_JCorp(target) then 
-						target:Ignite(3)
+						target:Ignite(2.5)
 					end
 				end
 			}
