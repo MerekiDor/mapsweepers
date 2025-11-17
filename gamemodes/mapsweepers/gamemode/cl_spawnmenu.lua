@@ -31,9 +31,11 @@ end
 	jcms.orders = jcms.orders or {}
 	jcms.spawnmenu_scrolled = false
 	
+	/*
 	function jcms.orders_Hash()
 		return jcms.util_Hash(jcms.orders)
 	end
+	*/
 	
 	jcms.orders_lists = {}
 	

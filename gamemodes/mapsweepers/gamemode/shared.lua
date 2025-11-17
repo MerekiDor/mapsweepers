@@ -1132,6 +1132,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 		end
 	end
 
+	/*
 	local function MSG_OVERRIDE(...)
 		for i, arg in ipairs {...} do
 			jcms.__tempstring = jcms.__tempstring .. tostring(arg)
@@ -1153,7 +1154,8 @@ jcms.vectorOne = Vector(1, 1, 1)
 			return util.SHA256(tostring(tab))
 		end
 	end
-
+	*/
+	
 	function jcms.util_ColorIntegerFast(r,g,b)
 		-- 24-bit color to 8 bit
 		local red3 = math.floor(r/32)
