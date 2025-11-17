@@ -817,8 +817,7 @@ jcms.terminal_modeTypes = {
 			local wsize = 100
 			local animWeight = 1.5
 
-			local newGunHash = jcms.util_Hash( jcms.weapon_prices )
-			if ent.previousGunHash ~= newGunHash then
+			local function UpdatePrices()
 				-- Lots of copypasted code unfortunately.
 				if not ent.categorizedGuns then
 					ent.categorizedGuns = {}
@@ -858,8 +857,9 @@ jcms.terminal_modeTypes = {
 					ent.categorizedGuns["_"] = topmostCategory
 				end
 				
-				ent.previousGunHash = newGunHash
 			end
+			if not ent.categorizedGuns then UpdatePrices() end
+			hook.Add("jcms_UpdatePrices", "jcms_UpdateShop", updatePrices())
 
 			local categorizedGuns = ent.categorizedGuns
 			local categoriesSorted = ent.categoriesSorted
