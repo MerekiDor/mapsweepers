@@ -503,7 +503,10 @@ jcms.vectorOne = Vector(1, 1, 1)
 						dmg = GetConVar("arccw_mult_damage"):GetFloat() or 1.0,
 						rpm = GetConVar("arccw_mult_rpm"):GetFloat() or 1.0,
 						moa = GetConVar("arccw_mult_accuracy"):GetFloat() or 1.0
-					}
+					}				/*
+					if WepBaseMod.ArcCW.dmg ~= GetConVar("arccw_mult_npcdamage"):GetFloat() then --Inconsistant damage handler
+					end
+					*/
 				end
 
 				local ammotype = game.GetAmmoName( game.GetAmmoID(tostring(gunData.Primary.Ammo) or "") or tonumber(gunData.Primary.Ammo)  ) or "none"
