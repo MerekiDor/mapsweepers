@@ -1133,7 +1133,7 @@ jcms.offgame = jcms.offgame or NULL
 						tab.loadoutPnl.shopScroller.VBar.btnGrip.Paint = jcms.paint_ScrollGrip
 					end
 				end
-				hook.Add("jcms_UpdatePrices", "jcms_UpdateShop", tab.loadoutPnl.shop:RebuildLayout())
+				hook.Add("jcms_UpdatePrices", "jcms_UpdateLoadout", tab.loadoutPnl.shop:RebuildLayout())
 
 				tab.loadoutPnl.sortComboBox = tab.loadoutPnl:Add("DComboBox")
 				tab.loadoutPnl.sortComboBox:SetSize(224 - 24 - 4, 24)
