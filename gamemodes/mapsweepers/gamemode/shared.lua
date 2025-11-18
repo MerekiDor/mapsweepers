@@ -516,8 +516,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 				stats.clipsize = gunData.Primary.ClipSize or 0
 				stats.numshots = gunData.Num or 1
 
-				stats.damage = math.Round( (gunData.Damage or 0) / stats.numshots, 1 )
-				stats.damage = stats.damage * WepBaseMod.ArcCW.dmg
+				stats.damage = math.Round( (gunData.Damage or 0) * WepBaseMod.ArcCW.dmg / stats.numshots, 1 )
 				stats.firerate = gunData.Delay or 0
 				stats.firerate = stats.firerate * WepBaseMod.ArcCW.rpm
 				stats.automatic = gunData.Primary.Automatic
@@ -575,8 +574,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 				stats.clipsize = gunData.ClipSize
 				stats.numshots = gunData.Num or 1
 
-				stats.damage = gunData.DistributeDamage and math.Round( gunData.DamageMax / stats.numshots, 1 ) or gunData.DamageMax
-				stats.damage = stats.damage * WepBaseMod.ARC9.dmg
+				stats.damage = gunData.DistributeDamage and math.Round( gunData.DamageMax * WepBaseMod.ARC9.dmg / stats.numshots, 1 ) or gunData.DamageMax * WepBaseMod.ARC9.dmg
 				stats.firerate = 60/gunData.RPM
 				stats.firerate = stats.firerate / WepBaseMod.ARC9.rpm
 
@@ -617,8 +615,7 @@ jcms.vectorOne = Vector(1, 1, 1)
 
 				stats.numshots = gunData.Bullet.NumBullets or 1
 
-				stats.damage = gunData.Bullet.Damage[1] / stats.numshots
-				stats.damage = stats.damage * WepBaseMod.MW.dmg
+				stats.damage = gunData.Bullet.Damage[1] * WepBaseMod.MW.dmg / stats.numshots
 				stats.firerate = 60/gunData.Primary.RPM
 
 				stats.accuracy = (gunData.Cone.Hip) or 0 --Not 100% sure I've done this correctly - j
