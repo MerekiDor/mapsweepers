@@ -435,6 +435,8 @@ jcms.vectorOne = Vector(1, 1, 1)
 		["frag grenades"] = true,
 	}
 
+	local WepBaseMod = {}
+
 	function jcms.gunstats_GetExpensive(class)
 		local gunData = weapons.Get(class) or jcms.default_weapons_datas[class]
 		if not gunData then return end
@@ -545,6 +547,14 @@ jcms.vectorOne = Vector(1, 1, 1)
 				-- Arc9
 				stats.base = "ARC9"
 
+				if not WepBaseMod.ARC9 then
+					WepBaseMod.ARC9 = {
+						dmg = GetConVar("arc9_mod_damage"):GetFloat() or 1.0,
+						rpm = GetConVar("arc9_mod_rpm"):GetFloat() or 1.0,
+						moa = GetConVar("arc9_mod_spread"):GetFloat() or 1.0
+					}
+				end
+
 				local ammotype = game.GetAmmoName( game.GetAmmoID(tostring(gunData.Ammo) or "") or tonumber(gunData.Ammo)  ) or "none"
 				stats.ammotype_lkey = ammotype .. "_ammo"
 				stats.ammotype = ammotype:lower()
@@ -553,9 +563,12 @@ jcms.vectorOne = Vector(1, 1, 1)
 				stats.numshots = gunData.Num or 1
 
 				stats.damage = gunData.DistributeDamage and math.Round( gunData.DamageMax / stats.numshots, 1 ) or gunData.DamageMax
+				stats.damage = stats.damage * WepBaseMod.ARC9.dmg
 				stats.firerate = 60/gunData.RPM
+				stats.firerate = stats.firerate / WepBaseMod.ARC9.rpm
 
 				stats.accuracy = (tonumber(gunData.Spread) or 0) + (tonumber(gunData.SpreadAddHipFire) or 0)
+				stats.accuracy = stats.accuracy * WepBaseMod.ARC9.moa
 			elseif gunData.ArcticTacRP then
 				stats.base = "Tactical RP"
 
