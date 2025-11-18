@@ -585,6 +585,16 @@ jcms.vectorOne = Vector(1, 1, 1)
 				stats.accuracy = (tonumber(gunData.Spread) or 0)
 			elseif gunData.Base == "mg_base" then --MW Base --TODO: See if there's a better way to detect this base.
 				stats.base = "MW Base"
+				if not WepBaseMod.MW then
+					WepBaseMod.MW = {
+						dmg = GetConVar("mgbase_sv_pvedamage"):GetFloat() or 1.0,
+						moa = GetConVar("mgbase_sv_accuracy"):GetFloat() or 1.0
+					}
+					/*
+					if WepBaseMod.MW.dmg ~= GetConVar("mgbase_sv_pvpdamage"):GetFloat() then --Inconsistant damage handler
+					end
+					*/
+				end
 
 				local ammotype = game.GetAmmoName( game.GetAmmoID(tostring(gunData.Primary.Ammo) or "") or tonumber(gunData.Primary.Ammo)  ) or "none"
 				stats.ammotype_lkey = ammotype .. "_ammo"
@@ -595,9 +605,11 @@ jcms.vectorOne = Vector(1, 1, 1)
 				stats.numshots = gunData.Bullet.NumBullets or 1
 
 				stats.damage = gunData.Bullet.Damage[1] / stats.numshots
+				stats.damage = stats.damage * WepBaseMod.MW.dmg
 				stats.firerate = 60/gunData.Primary.RPM
 
 				stats.accuracy = (gunData.Cone.Hip) or 0 --Not 100% sure I've done this correctly - j
+				stats.accuracy = stats.accuracy / WepBaseMod.MW.moa
 				radAccuracy = false
 			elseif string.StartsWith(gunData.Base or "", "draconic_") then --Draconic Base -- TODO: See if there's a better way to detect this base
 				stats.base = "Draconic"
