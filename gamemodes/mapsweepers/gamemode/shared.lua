@@ -498,6 +498,13 @@ jcms.vectorOne = Vector(1, 1, 1)
 			elseif gunData.ArcCW then
 				-- ArcCW
 				stats.base = "ArcCW"
+				if not WepBaseMod.ArcCW then
+					WepBaseMod.ArcCW = {
+						dmg = GetConVar("arccw_mult_damage"):GetFloat() or 1.0,
+						rpm = GetConVar("arccw_mult_rpm"):GetFloat() or 1.0,
+						moa = GetConVar("arccw_mult_accuracy"):GetFloat() or 1.0
+					}
+				end
 
 				local ammotype = game.GetAmmoName( game.GetAmmoID(tostring(gunData.Primary.Ammo) or "") or tonumber(gunData.Primary.Ammo)  ) or "none"
 				stats.ammotype_lkey = ammotype .. "_ammo"
@@ -507,9 +514,12 @@ jcms.vectorOne = Vector(1, 1, 1)
 				stats.numshots = gunData.Num or 1
 
 				stats.damage = math.Round( (gunData.Damage or 0) / stats.numshots, 1 )
+				stats.damage = stats.damage * WepBaseMod.ArcCW.dmg
 				stats.firerate = gunData.Delay or 0
+				stats.firerate = stats.firerate * WepBaseMod.ArcCW.rpm
 				stats.automatic = gunData.Primary.Automatic
 				stats.accuracy = (gunData.AccuracyMOA or 0)/60
+				stats.accuracy = stats.accuracy * WepBaseMod.ArcCW.moa
 				radAccuracy = false
 			elseif gunData.CW20Weapon then
 				-- Chuck's Weaponry 2.0
