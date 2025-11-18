@@ -967,11 +967,9 @@
 	
 	jcms.orders_lastused = {}
 	
-	/*
 	function jcms.orders_Hash()
 		return jcms.util_Hash(jcms.orders)
 	end
-	*/
 	
 	function jcms.orders_CanUse(ply, orderId)
 		local orderData = jcms.orders[ orderId ]
