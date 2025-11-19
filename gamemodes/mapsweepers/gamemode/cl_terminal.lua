@@ -816,8 +816,8 @@ jcms.terminal_modeTypes = {
 			local wx, wy = baseWeaponX, baseWeaponY + 24 - ent.scrollY
 			local wsize = 100
 			local animWeight = 1.5
-
-			local function UpdatePrices()
+			
+			hook.Add("jcms_UpdatePrices", "jcms_UpdateShop", function()
 				-- Lots of copypasted code unfortunately.
 				if not ent.categorizedGuns then
 					ent.categorizedGuns = {}
@@ -856,10 +856,9 @@ jcms.terminal_modeTypes = {
 					table.insert(ent.categoriesSorted, 1, "_")
 					ent.categorizedGuns["_"] = topmostCategory
 				end
-				
-			end
-			if not ent.categorizedGuns then UpdatePrices() end
-			hook.Add("jcms_UpdatePrices", "jcms_UpdateShop", updatePrices())
+			end)
+
+			if not ent.categorizedGuns then hook.Call("jcms_UpdatePrices") end
 
 			local categorizedGuns = ent.categorizedGuns
 			local categoriesSorted = ent.categoriesSorted
