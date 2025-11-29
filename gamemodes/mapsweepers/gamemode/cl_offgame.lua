@@ -1003,11 +1003,6 @@ jcms.offgame = jcms.offgame or NULL
 					return sortfunc
 				end
 				function tab.loadoutPnl.shop:Think()
-					local newHash = jcms.util_Hash( jcms.weapon_prices )
-					if self.previousHash ~= newHash then
-						self.previousHash = newHash
-						self:RebuildLayout()
-					end
 
 					local ply = LocalPlayer()
 					for i, wbtn in ipairs(self.weaponButtons) do
@@ -1138,6 +1133,7 @@ jcms.offgame = jcms.offgame or NULL
 						tab.loadoutPnl.shopScroller.VBar.btnGrip.Paint = jcms.paint_ScrollGrip
 					end
 				end
+				hook.Add("jcms_UpdatePrices", "jcms_UpdateLoadout", tab.loadoutPnl.shop:RebuildLayout())
 
 				tab.loadoutPnl.sortComboBox = tab.loadoutPnl:Add("DComboBox")
 				tab.loadoutPnl.sortComboBox:SetSize(224 - 24 - 4, 24)

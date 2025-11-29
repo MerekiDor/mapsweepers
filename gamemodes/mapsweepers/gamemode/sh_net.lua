@@ -1022,6 +1022,7 @@ if CLIENT then
 				else
 					jcms.weapon_prices[ class ] = nil
 				end
+				hook.Run("jcms_UpdatePrices")
 			else
 				-- Fetching loadout count
 				local class = net.ReadString()
