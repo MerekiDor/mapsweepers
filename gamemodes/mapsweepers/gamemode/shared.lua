@@ -441,6 +441,8 @@ local nmt = FindMetaTable("NPC")
 		["frag grenades"] = true,
 	}
 
+	local WepBaseMod = {}
+
 	function jcms.gunstats_GetExpensive(class)
 		local gunData = weapons.Get(class) or jcms.default_weapons_datas[class]
 		if not gunData then return end
@@ -502,6 +504,16 @@ local nmt = FindMetaTable("NPC")
 			elseif gunData.ArcCW then
 				-- ArcCW
 				stats.base = "ArcCW"
+				if not WepBaseMod.ArcCW then
+					WepBaseMod.ArcCW = {
+						dmg = GetConVar("arccw_mult_damage"):GetFloat() or 1.0,
+						rpm = GetConVar("arccw_mult_rpm"):GetFloat() or 1.0,
+						moa = GetConVar("arccw_mult_accuracy"):GetFloat() or 1.0
+					}				/*
+					if WepBaseMod.ArcCW.dmg ~= GetConVar("arccw_mult_npcdamage"):GetFloat() then --Inconsistant damage handler
+					end
+					*/
+				end
 
 				local ammotype = game.GetAmmoName( game.GetAmmoID(tostring(gunData.Primary.Ammo) or "") or tonumber(gunData.Primary.Ammo)  ) or "none"
 				stats.ammotype_lkey = ammotype .. "_ammo"
@@ -510,10 +522,12 @@ local nmt = FindMetaTable("NPC")
 				stats.clipsize = gunData.Primary.ClipSize or 0
 				stats.numshots = gunData.Num or 1
 
-				stats.damage = math.Round( (gunData.Damage or 0) / stats.numshots, 1 )
+				stats.damage = math.Round( (gunData.Damage or 0) * WepBaseMod.ArcCW.dmg / stats.numshots, 1 )
 				stats.firerate = gunData.Delay or 0
+				stats.firerate = stats.firerate * WepBaseMod.ArcCW.rpm
 				stats.automatic = gunData.Primary.Automatic
 				stats.accuracy = (gunData.AccuracyMOA or 0)/60
+				stats.accuracy = stats.accuracy * WepBaseMod.ArcCW.moa
 				radAccuracy = false
 			elseif gunData.CW20Weapon then
 				-- Chuck's Weaponry 2.0
@@ -551,6 +565,14 @@ local nmt = FindMetaTable("NPC")
 				-- Arc9
 				stats.base = "ARC9"
 
+				if not WepBaseMod.ARC9 then
+					WepBaseMod.ARC9 = {
+						dmg = GetConVar("arc9_mod_damage"):GetFloat() or 1.0,
+						rpm = GetConVar("arc9_mod_rpm"):GetFloat() or 1.0,
+						moa = GetConVar("arc9_mod_spread"):GetFloat() or 1.0
+					}
+				end
+
 				local ammotype = game.GetAmmoName( game.GetAmmoID(tostring(gunData.Ammo) or "") or tonumber(gunData.Ammo)  ) or "none"
 				stats.ammotype_lkey = ammotype .. "_ammo"
 				stats.ammotype = ammotype:lower()
@@ -558,10 +580,12 @@ local nmt = FindMetaTable("NPC")
 				stats.clipsize = gunData.ClipSize
 				stats.numshots = gunData.Num or 1
 
-				stats.damage = gunData.DistributeDamage and math.Round( gunData.DamageMax / stats.numshots, 1 ) or gunData.DamageMax
+				stats.damage = gunData.DistributeDamage and math.Round( gunData.DamageMax * WepBaseMod.ARC9.dmg / stats.numshots, 1 ) or gunData.DamageMax * WepBaseMod.ARC9.dmg
 				stats.firerate = 60/gunData.RPM
+				stats.firerate = stats.firerate / WepBaseMod.ARC9.rpm
 
 				stats.accuracy = (tonumber(gunData.Spread) or 0) + (tonumber(gunData.SpreadAddHipFire) or 0)
+				stats.accuracy = stats.accuracy * WepBaseMod.ARC9.moa
 			elseif gunData.ArcticTacRP then
 				stats.base = "Tactical RP"
 
@@ -578,6 +602,16 @@ local nmt = FindMetaTable("NPC")
 				stats.accuracy = (tonumber(gunData.Spread) or 0)
 			elseif gunData.Base == "mg_base" then --MW Base --TODO: See if there's a better way to detect this base.
 				stats.base = "MW Base"
+				if not WepBaseMod.MW then
+					WepBaseMod.MW = {
+						dmg = GetConVar("mgbase_sv_pvedamage"):GetFloat() or 1.0,
+						moa = GetConVar("mgbase_sv_accuracy"):GetFloat() or 1.0
+					}
+					/*
+					if WepBaseMod.MW.dmg ~= GetConVar("mgbase_sv_pvpdamage"):GetFloat() then --Inconsistant damage handler
+					end
+					*/
+				end
 
 				local ammotype = game.GetAmmoName( game.GetAmmoID(tostring(gunData.Primary.Ammo) or "") or tonumber(gunData.Primary.Ammo)  ) or "none"
 				stats.ammotype_lkey = ammotype .. "_ammo"
@@ -587,10 +621,11 @@ local nmt = FindMetaTable("NPC")
 
 				stats.numshots = gunData.Bullet.NumBullets or 1
 
-				stats.damage = gunData.Bullet.Damage[1] / stats.numshots
+				stats.damage = gunData.Bullet.Damage[1] * WepBaseMod.MW.dmg / stats.numshots
 				stats.firerate = 60/gunData.Primary.RPM
 
 				stats.accuracy = (gunData.Cone.Hip) or 0 --Not 100% sure I've done this correctly - j
+				stats.accuracy = stats.accuracy / WepBaseMod.MW.moa
 				radAccuracy = false
 			elseif string.StartsWith(gunData.Base or "", "draconic_") then --Draconic Base -- TODO: See if there's a better way to detect this base
 				stats.base = "Draconic"
