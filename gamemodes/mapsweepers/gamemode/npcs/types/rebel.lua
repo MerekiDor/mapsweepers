@@ -321,7 +321,9 @@
 			if npc:GetPos():DistToSqr(npc.jcms_npc_HeliTurretPos) < 25^2 then 
 				npc:EmitSound("NPC_AttackHelicopter.DropMine")
 				local type = npc.jcms_heli_dropTypes[1] 
-				jcms.npc_SpawnRebelTurret(npc:GetPos() - Vector(0,0,150), angle_zero, type, npc)
+				local turret = jcms.npc_SpawnRebelTurret(npc:GetPos() - Vector(0,0,150), angle_zero, type, npc)
+				turret.jcms_stunEnd = CurTime() + 2.5 --Don't instantly attack
+
 				npc.jcms_heli_nextDrop = CurTime() + 30
 
 				npc.jcms_npcState = jcms.NPC_STATE_AIRIDLE
@@ -561,8 +563,10 @@ jcms.npc_types.rebel_fighter = {
 
 		local wep = npc:GetActiveWeapon()
 		if IsValid(wep) then
-			if wep:GetClass() ~= "weapon_ar2" then
-				wep:SetSaveValue("m_fMaxRange1", 1000)
+			if wep:GetClass() == "weapon_smg" then
+				wep:SetSaveValue("m_fMaxRange1", 1000) --TODO: This is a bit low? Might want to mess with it.
+			else
+				npc:SetCurrentWeaponProficiency(WEAPON_PROFICIENCY_PERFECT) --Ar2 rebels are scarier, just like AR2 combine
 			end
 		end
 		
@@ -585,7 +589,7 @@ jcms.npc_types.rebel_breacher = {
 	
 	danger = jcms.NPC_DANGER_FODDER,
     cost = 1,
-    swarmWeight = 1,
+    swarmWeight = 0.6,
 
 	class = "npc_citizen",
 	bounty = 45,
@@ -602,11 +606,9 @@ jcms.npc_types.rebel_breacher = {
 		PrintTable(npc:GetSaveTable())
 		local wep = npc:GetActiveWeapon()
 		if IsValid(wep) then
-			wep:SetSaveValue("m_fMaxRange1", 550)
+			wep:SetSaveValue("m_fMaxRange1", 650) --TODO: Increase our range if player is unreachable.
 		end
 		
-		--npc:SetSaveValue("m_flDistTooFar", 100)
-
 		npc:CapabilitiesAdd(CAP_MOVE_SHOOT)
 		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
 	end,
@@ -1119,6 +1121,7 @@ jcms.npc_types.rebel_vortigaunt = {
 				end
 			end
 			if targetCount == 0 then return end
+			--TODO: Telegraph effect radius
 
 			npc:AddGestureSequence(66)
 			npc.jcms_vortCharging = true
@@ -1128,7 +1131,7 @@ jcms.npc_types.rebel_vortigaunt = {
 
 					npc:EmitSound("npc/vort/attack_shoot.wav", 100, 90, 1)
 					for i, ent in ipairs(ents.FindInSphere(npc:GetPos(), 300)) do
-						if ent:IsPlayer() then 
+						if ent:IsPlayer() then --Player still gets it even if the NPC died, rebels don't.
 							ent:SetArmor(ent:GetMaxArmor())
 
 							local ed = EffectData()
@@ -1137,7 +1140,7 @@ jcms.npc_types.rebel_vortigaunt = {
 							ed:SetColor(jcms.util_ColorIntegerFast(128, 255, 128))
 							util.Effect("jcms_shieldeffect", ed)
 							ent:EmitSound("items/suitchargeok1.wav", 50, 130, 0.5)
-						elseif ent:IsNPC() and not(ent:GetNWInt("jcms_sweeperShield_max") == -1) and ent:GetMaxHealth() < 100 then
+						elseif IsValid(npc) and ent:IsNPC() and not(ent:GetNWInt("jcms_sweeperShield_max") == -1) and ent:GetMaxHealth() < 100 then
 							--30 max, 5 regen, 1.5 delay (like an elite)
 							jcms.npc_SetupSweeperShields(ent, 30, 5, 1.5, Color(120, 255, 120))
 						end
