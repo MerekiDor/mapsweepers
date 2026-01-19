@@ -173,31 +173,6 @@
 	end
 
 	function jcms.npc_rebel_think(npc)
-		local breachRange = 150
-
-		local npcPos = npc:WorldSpaceCenter()
-
-		-- Breaching {{{
-			local doors = ents.FindByClass("*door*")
-			for i, door in ipairs(doors) do
-				local doorPos = door:WorldSpaceCenter() 
-				if doorPos:DistToSqr(npcPos) < breachRange^2 and not door.jcms_rebelBreached then
-					local tr = util.TraceLine({
-						start = npcPos,
-						endpos = doorPos,
-						filter = function(ent) 
-							return not string.StartsWith(ent:GetClass(), "npc_")
-						end
-					})
-
-					if tr.Entity == door then 
-						door.jcms_rebelBreached = true 
-						jcms.npc_RebelPlaceMine("breach", npc, tr.HitPos, tr.HitNormal:Angle(), door)
-						break 
-					end
-				end
-			end
-		-- }}}
 
 		-- // JumpPad Nav {{{
 			--If we can't reach something (our GoalPos, target, etc) check each jumppad to see if we can reach it,
@@ -559,114 +534,6 @@ jcms.npc_commanders["rebel"] = {
 	end
 }
 
-jcms.npc_types.rebel_rgg = {
-	portalSpawnWeight = 0.5,
-	faction = "rebel",
-	
-	danger = jcms.NPC_DANGER_FODDER,
-    cost = 0.9,
-    swarmWeight = 0.3,
-
-	class = "npc_citizen",
-	bounty = 25,
-
-	weapons = {
-		weapon_pistol = 3,
-		weapon_smg1 = 1,
-		--weapon_stunstick = 1 --Melee might've been cool, but they work terribly.
-	},
-	
-	postSpawn = function(npc)
-		local color = Color(math.random(140, 150), 0, math.random(209, 230), 100)
-		npc:SetMaterial("models/shiny")
-		npc:SetColor(color)
-		npc:SetRenderMode(RENDERMODE_TRANSCOLOR)
-		npc:SetRenderFX( 15 ) --Enum for this doesn't exist? Or at least my editor doesn't highlight it for some reason.
-		
-		local wep = npc:GetActiveWeapon()
-		if IsValid(wep) then
-			wep:SetMaterial("models/shiny")
-			wep:SetColor(color)
-			wep:SetRenderMode(RENDERMODE_TRANSCOLOR)
-			wep:SetRenderFX( 15 )
-		end
-
-		npc:SetMaxHealth(4) --If we really want randomness with this enemy, it should be this part.
-		npc:SetHealth(npc:GetMaxHealth())
-
-		npc.jcms_rgg_nextTeleport = CurTime()
-		npc.jcms_rgg_teleporting = false
-		npc.jcms_noSweeperShields = true
-
-		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
-	end,
-	
-	takeDamage = function(npc, dmg)
-		if npc:Health() > 4 then
-			npc:SetHealth(4)
-		end
-
-        dmg:SetDamageType(DMG_DISSOLVE)
-
-		if dmg:GetDamage() > 0 then
-			if jcms.util_IsStunstick( dmg:GetInflictor() ) then
-				dmg:SetDamage(npc:Health())
-			else
-				dmg:SetDamage(1)
-			end
-		end
-    end,
-    
-    think = function(npc)
-		--Could split into smaller grunts if they're still an uninteresting enemy. This should hopefully be good enough though.
-
-		if npc.jcms_rgg_teleporting then 
-			if npc:GetPathDistanceToGoal() > 0 then --SAFETY! If we lose our path between this/next think this could crash us.
-				local start = npc:WorldSpaceCenter()
-
-				local waypoint = npc:GetNextWaypointPos()
-				if waypoint:LengthSqr() > 1 then -- They may sometimes teleport to world origin if waypoint is invalid.
-					npc:SetPos(waypoint + Vector(0,0,10))
-					npc:AdvancePath()
-
-					local ed = EffectData()
-					ed:SetFlags(3)
-					ed:SetEntity(npc)
-					ed:SetOrigin(start)
-					util.Effect("jcms_chargebeam", ed)
-				else
-					npc.jcms_rgg_teleporting = false
-				end
-			end
-
-			npc.jcms_rgg_teleporting = false
-		end
-
-		if npc.jcms_rgg_nextTeleport < CurTime() and npc:GetPathDistanceToGoal() > 150 then 
-			npc.jcms_rgg_teleporting = true
-
-			--Make a bunch of tesla effects on us before we teleport.
-			local ed = EffectData()
-			ed:SetEntity(npc)
-			ed:SetScale(1.1) --Activation time
-			ed:SetMagnitude(16)
-            ed:SetColor( jcms.util_ColorIntegerFast(230, 32, 255) )
-			ed:SetMaterialIndex(1)
-			util.Effect("jcms_electricarcs", ed)
-
-			npc.jcms_rgg_nextTeleport = CurTime() + 2.5
-		end
-
-		if math.random() < 0.7 then
-			local t = { "npc_citizen.no01", "npc_citizen.no02", "npc_citizen.die", "npc_citizen.uhoh" }
-			
-			npc:EmitSound(t[math.random(1, #t)])
-		end
-    end,
-
-	proficiency = WEAPON_PROFICIENCY_GOOD
-}
-
 jcms.npc_types.rebel_fighter = {
 	portalSpawnWeight = 1.25,
 	faction = "rebel",
@@ -680,8 +547,7 @@ jcms.npc_types.rebel_fighter = {
 
 	weapons = {
 		weapon_smg1 = 4,
-		weapon_ar2 = 2,
-		weapon_pistol = 1
+		weapon_ar2 = 2
 	},
 	
 	preSpawn = function(npc)
@@ -704,14 +570,23 @@ jcms.npc_types.rebel_fighter = {
 	end,
 
 	think = function(npc) 
+		local npcPos = npc:WorldSpaceCenter()
 		jcms.npc_rebel_think(npc)
+
+		-- HEAL SCHED 166
+		local nearestSwp, dist = jcms.GetNearestSweeper(npcPos)
+--[[
+		if dist < 100 then
+			print("HELLO")
+			npc:SetSchedule(166) --HEAL
+		end--]]
 	end,
 
 	proficiency = WEAPON_PROFICIENCY_VERY_GOOD
 }
 
-jcms.npc_types.rebel_medic = {
-	portalSpawnWeight = 0.75,
+jcms.npc_types.rebel_breacher = {
+	portalSpawnWeight = 0.65,
 	faction = "rebel",
 	
 	danger = jcms.NPC_DANGER_FODDER,
@@ -719,36 +594,63 @@ jcms.npc_types.rebel_medic = {
     swarmWeight = 1,
 
 	class = "npc_citizen",
-	bounty = 35,
+	bounty = 45,
 
 	weapons = {
-		weapon_shotgun = 3,
-		weapon_smg1 = 2,
-		weapon_ar2 = 1
+		weapon_shotgun = 4,
 	},
 	
 	preSpawn = function(npc)
 		npc:SetKeyValue("citizentype", "3")
-		npc:SetKeyValue("spawnflags", bit.bor(npc:GetKeyValues().spawnflags, 131072))
 	end,
 	
 	postSpawn = function(npc)
-		npc:Fire("SetMedicOn")
-		
+		PrintTable(npc:GetSaveTable())
 		local wep = npc:GetActiveWeapon()
 		if IsValid(wep) then
-			if wep:GetClass() == "weapon_shotgun" then 
-				wep:SetSaveValue("m_fMaxRange1", 600)
-			elseif wep:GetClass() == "weapon_smg1" then
-				wep:SetSaveValue("m_fMaxRange1", 1000)
-			end
+			wep:SetSaveValue("m_fMaxRange1", 550)
 		end
 		
+		--npc:SetSaveValue("m_flDistTooFar", 100)
+
+		npc:CapabilitiesAdd(CAP_MOVE_SHOOT)
 		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
 	end,
-	
-	think = function(npc)
-		jcms.npc_rebel_think(npc)
+
+	think = function(npc) 
+		local npcPos = npc:WorldSpaceCenter()
+		local enemy = npc:GetEnemy()
+		local wep = npc:GetActiveWeapon()
+
+		if IsValid(enemy)  and IsValid(wep) and wep:Clip1() > 0 and npc:IsLineOfSightClear( enemy ) and npcPos:DistToSqr(enemy:WorldSpaceCenter()) > 200^2 and not(npc:GetCurrentSchedule() == SCHED_FORCED_GO_RUN) then
+			npc:SetSaveValue("m_vecLastPosition", enemy:WorldSpaceCenter())
+			npc:SetSchedule(SCHED_FORCED_GO_RUN)
+		end
+		
+
+		local breachRange = 150
+
+		-- Breaching {{{
+			local doors = ents.FindByClass("*door*")
+			for i, door in ipairs(doors) do
+				local doorPos = door:WorldSpaceCenter() 
+				if doorPos:DistToSqr(npcPos) < breachRange^2 and not door.jcms_rebelBreached then
+					local tr = util.TraceLine({
+						start = npcPos,
+						endpos = doorPos,
+						filter = function(ent) 
+							return not string.StartsWith(ent:GetClass(), "npc_")
+						end
+					})
+
+					if tr.Entity == door then 
+						door.jcms_rebelBreached = true 
+						jcms.npc_RebelPlaceMine("breach", npc, tr.HitPos, tr.HitNormal:Angle(), door)
+						break 
+					end
+				end
+			end
+		-- }}}
 	end,
 
 	proficiency = WEAPON_PROFICIENCY_VERY_GOOD
@@ -1032,11 +934,12 @@ jcms.npc_types.rebel_alyx = {
 		npc:SetMaxLookDistance(1000)
 		npc:SetArrivalDistance(250)
 		
-		npc:GetActiveWeapon():SetSaveValue("m_fMaxRange1", 1000)
-		npc:SetSaveValue("m_flDistTooFar", 1000)
+		npc:GetActiveWeapon():SetSaveValue("m_fMaxRange1", 500)
+		npc:SetSaveValue("m_flDistTooFar", 250)
 		npc.jcms_noSweeperShields = true
 
 		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
+		npc:SetCurrentWeaponProficiency( WEAPON_PROFICIENCY_POOR )
 	end,
 
 	takeDamage = function(npc, dmg) --Alyx self-heals and there's no way (that I've found in the documentation) to disable that. This is a work-around because that's awful.

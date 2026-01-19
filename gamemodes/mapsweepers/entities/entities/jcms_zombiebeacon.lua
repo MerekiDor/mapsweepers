@@ -300,7 +300,6 @@ if SERVER then
 end
 
 if CLIENT then 
-
 	function ENT:Think()
 		self.closeAnim = self.closeAnim or 0
 
