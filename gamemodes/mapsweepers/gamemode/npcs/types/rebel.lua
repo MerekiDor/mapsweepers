@@ -570,16 +570,10 @@ jcms.npc_types.rebel_fighter = {
 	end,
 
 	think = function(npc) 
-		local npcPos = npc:WorldSpaceCenter()
 		jcms.npc_rebel_think(npc)
 
 		-- HEAL SCHED 166
-		local nearestSwp, dist = jcms.GetNearestSweeper(npcPos)
---[[
-		if dist < 100 then
-			print("HELLO")
-			npc:SetSchedule(166) --HEAL
-		end--]]
+		npc:SetCondition(npc:ConditionID( "COND_CIT_PLAYERHEALREQUEST" )) --77
 	end,
 
 	proficiency = WEAPON_PROFICIENCY_VERY_GOOD
