@@ -521,6 +521,10 @@ end)
 		jcms.render_matShield = Material("effects/tvscreen_noise002a")
 	end
 
+	jcms.render_matShield_Decay = Material("models/props_combine/cit_beacon")
+	--models/alyx/emptool_glow
+	--models/effects/portalfunnel_sheet
+
 	local emt = FindMetaTable("Entity")
 	local nmt = FindMetaTable("NPC")
 
@@ -529,10 +533,13 @@ end)
 		if swpShield >= 0 then
 			local maxShield = emt.GetNWInt(ent, "jcms_sweeperShield_max", -1)
 			local r, g, b = jcms.util_ColorFromIntegerUnpacked( emt.GetNWInt(ent, "jcms_sweeperShield_colour", 255) )
-			local alpha = math.Clamp(swpShield/maxShield, 0, 1)
+			
+			local isDecayShield = swpShield > maxShield
+			local alpha = (isDecayShield and math.Rand(1, 1)) or math.Clamp(swpShield/maxShield, 0, 1)
+
 			
 			render.SetColorModulation((r/200) * alpha, (g/200) * alpha, (b/200) * alpha)
-			render.MaterialOverride(jcms.render_matShield)
+			render.MaterialOverride(isDecayShield and jcms.render_matShield_Decay or jcms.render_matShield)
 			cam.Start3D()
 				emt.DrawModel(ent)
 			cam.End3D()

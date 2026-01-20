@@ -36,8 +36,8 @@ if SERVER then
 		self:SetModel("models/jcms/rgg_dish.mdl")
 		self:PhysicsInitStatic(SOLID_VPHYSICS)
 
-		self:SetMaxHealth(250)
-		self:SetHealth(250)
+		self:SetMaxHealth(350)
+		self:SetHealth(350)
 
 		local filter = RecipientFilter()
 		filter:AddAllPlayers()

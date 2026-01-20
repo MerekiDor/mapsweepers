@@ -506,7 +506,47 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 		iterateEnts(player.GetAll())
 	end
 
-	function jcms.npc_SetupSweeperShields(npc, max, regen, regenDelay, col)
+	function jcms.npc_SetupDecayingShield(npc, shield, decay, col)
+		if not IsValid(npc) or npc.jcms_noSweeperShields then return end
+
+		local colInt = (type(col)=="number" and col) or (IsColor(col) and jcms.util_ColorInteger(col)) or 255
+		local maxShield = npc:GetNWInt("jcms_sweeperShield_max", -1)
+		if maxShield == -1 then --Set us up if we don't exist.
+			jcms.npc_SetupSweeperShields( npc, 0, 0, 0, colInt )
+			maxShield = 0
+		else --Reset our colour
+			npc:SetNWInt("jcms_sweeperShield_colour", colInt)
+		end
+
+		--Set our shield.
+		local newShield = math.max(shield, npc:GetNWInt("jcms_sweeperShield", -1))
+		npc:SetNWInt("jcms_sweeperShield", newShield)
+
+		--npc:EmitSound("npc/scanner/combat_scan_loop2.wav", 75, 150)
+
+		local timerIdentifier = "jcms_ShieldDecay" .. npc:EntIndex()
+		timer.Create(timerIdentifier, 1 / decay, 0, function()
+			if not IsValid(npc) then timer.Remove(timerIdentifier) return end --NPC no longer exists
+
+			local shield = npc:GetNWInt("jcms_sweeperShield", 0)
+			local maxShield = npc:GetNWInt("jcms_sweeperShield_max", 0)
+			if shield < maxShield then timer.Remove(timerIdentifier) return end --Below our decay threshold
+
+			local newShield = shield - 1
+			npc:SetNWInt("jcms_sweeperShield", newShield)
+
+			if newShield == maxShield then
+				local ed = EffectData()
+				ed:SetEntity(npc)
+				ed:SetFlags(1)
+				ed:SetColor(colInt)
+				util.Effect("jcms_shieldeffect", ed)
+				npc:EmitSound("npc/turret_floor/die.wav", 75, 180)
+			end
+		end)
+	end
+
+	function jcms.npc_SetupSweeperShields(npc, max, regen, regenDelay, col )
 		if not IsValid(npc) or npc.jcms_noSweeperShields then return end
 		local colInt = (type(col)=="number" and col) or (IsColor(col) and jcms.util_ColorInteger(col)) or 255
 

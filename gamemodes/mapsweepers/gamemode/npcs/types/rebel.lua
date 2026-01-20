@@ -557,6 +557,8 @@ jcms.npc_types.rebel_fighter = {
 	end,
 	
 	postSpawn = function(npc)
+		--TODO: Rare ammo bearer rebels with explosive backpacks. Functionally the same but they act as living dynamic resupplies. Would allow people to use more weapons & be a cool gimmick. Also gets people moving.
+
 		npc:SetMaxHealth( npc:Health() + 5 )
 		npc:SetHealth( npc:GetMaxHealth() )
 		npc:Fire("SetMedicOn") 
@@ -860,8 +862,6 @@ jcms.npc_types.rebel_odessa = {
 	},
 	
 	postSpawn = function(npc)
-		npc:Fire("SetMedicOn") --todo: Maybe we should give RPG ammo instead
-
 		npc:SetMaxLookDistance(5000)
 		npc:SetArrivalDistance(4000)
 		npc:SetKeyValue("ignoreunseenenemies", "1")
@@ -1042,7 +1042,7 @@ jcms.npc_types.rebel_alyx = {
 	proficiency = WEAPON_PROFICIENCY_GOOD
 }
 
-jcms.npc_types.rebel_dog = {
+jcms.npc_types.rebel_dog = { --TODO: Some sort of damage feedback. Maybe just give them sparks / tesla fx
 	portalSpawnWeight = 0.08,
 	faction = "rebel",
 	
@@ -1064,8 +1064,8 @@ jcms.npc_types.rebel_vortigaunt = {
 	faction = "rebel",
 	
 	danger = jcms.NPC_DANGER_STRONG,
-    cost = 1.8,
-    swarmWeight = 0.55,
+    cost = 1.4,
+    swarmWeight = 0.625,
 
 	class = "npc_vortigaunt",
 	bounty = 90,
@@ -1079,7 +1079,7 @@ jcms.npc_types.rebel_vortigaunt = {
 
 		npc.jcms_vortCharging = false 
 		
-		npc.jcms_vortNextCharge = CurTime() + 12.5
+		npc.jcms_vortNextCharge = CurTime() + 8
 		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
 
 
@@ -1105,7 +1105,9 @@ jcms.npc_types.rebel_vortigaunt = {
 	end,
 	
 	think = function(npc, state)
-		if npc.jcms_vortNextCharge < CurTime() and not npc.jcms_vortCharging then --Apply shields every 30s
+		if not(npc.jcms_vortNextCharge < CurTime() and not npc.jcms_vortCharging) then return end --Apply shields every  12.5s
+
+		-- {{ FX / Target Detection
 			local ed = EffectData()
 			ed:SetEntity(npc)
 			ed:SetScale(1)
@@ -1116,40 +1118,95 @@ jcms.npc_types.rebel_vortigaunt = {
 
 			local targetCount = 0
 			for i, ent in ipairs(ents.FindInSphere(npc:GetPos(), 175)) do
-				if (ent:IsPlayer() or ent:IsNPC()) and not (ent == npc) then 
+				if (ent:IsPlayer() or ent:IsNPC()) and not (ent == npc) and not ent.jcms_noSweeperShields then 
 					targetCount = targetCount + 1
 				end
 			end
-			if targetCount == 0 then return end
-			--TODO: Telegraph effect radius
+		-- }}
 
-			npc:AddGestureSequence(66)
-			npc.jcms_vortCharging = true
-			timer.Simple(1.8, function()
-				if IsValid(npc) then
-					npc.jcms_vortCharging = false
+		if targetCount == 0 then 
+			--Go to nearby ally
+			local enemy = npc:GetEnemy()
+			if IsValid(enemy) and (enemy:GetPos():DistToSqr(npc:GetPos()) < 850^2 or npc:IsLineOfSightClear(enemy)) then --Close or can see enemy
+				local npcPos = npc:WorldSpaceCenter()
 
-					npc:EmitSound("npc/vort/attack_shoot.wav", 100, 90, 1)
-					for i, ent in ipairs(ents.FindInSphere(npc:GetPos(), 300)) do
-						if ent:IsPlayer() then --Player still gets it even if the NPC died, rebels don't.
-							ent:SetArmor(ent:GetMaxArmor())
-
-							local ed = EffectData()
-							ed:SetEntity(ent)
-							ed:SetFlags(2)
-							ed:SetColor(jcms.util_ColorIntegerFast(128, 255, 128))
-							util.Effect("jcms_shieldeffect", ed)
-							ent:EmitSound("items/suitchargeok1.wav", 50, 130, 0.5)
-						elseif IsValid(npc) and ent:IsNPC() and not(ent:GetNWInt("jcms_sweeperShield_max") == -1) and ent:GetMaxHealth() < 100 then
-							--30 max, 5 regen, 1.5 delay (like an elite)
-							jcms.npc_SetupSweeperShields(ent, 30, 5, 1.5, Color(120, 255, 120))
+				--Go help our allies
+				local closest
+				local closestDist = math.huge
+				for i, ent in ipairs(ents.FindInSphere(npcPos, 750)) do
+					if not(ent == npc) and ent:IsNPC() and (not ent.jcms_noSweeperShields) and not(ent:GetNWInt("jcms_sweeperShield_max") == -1) then 
+						local dist = ent:WorldSpaceCenter():DistToSqr(npcPos)
+						if dist < closestDist then
+							closestDist = dist
+							closest = ent
 						end
 					end
 				end
-			end)
 
-			npc.jcms_vortNextCharge = CurTime() + 22.5
+				if closest then	
+					npc:SetSaveValue("m_vecLastPosition", closest:WorldSpaceCenter())
+					npc:SetSchedule(SCHED_FORCED_GO_RUN)
+				end
+			end
+
+			return 
 		end
+		--TODO: Telegraph effect radius
+
+		--npc:SetSchedule(SCHED_IDLE_STAND)
+		npc:AddGestureSequence(66)
+		npc.jcms_vortCharging = true
+		timer.Simple(1.8, function()
+			if IsValid(npc) then
+				npc.jcms_vortCharging = false
+
+				-- // Prevent attacking for the next 2s {{{
+					npc:SetSaveValue("m_flNextAttack", 2.25)
+					npc:ClearCondition( npc:ConditionID("COND_CAN_RANGE_ATTACK1") )
+
+					timer.Simple(2.25, function()
+						if not IsValid(npc) then return end
+						npc:SetCondition( npc:ConditionID("COND_CAN_RANGE_ATTACK1") )
+					end)
+					npc:SetSchedule(SCHED_TAKE_COVER_FROM_ENEMY)
+				-- // }}}
+
+				npc:EmitSound("npc/vort/attack_shoot.wav", 100, 90, 1)
+				for i, ent in ipairs(ents.FindInSphere(npc:GetPos(), 300)) do
+					if ent:IsPlayer() then --Player still gets it even if the NPC died, rebels don't.
+						local maxShield = ent:GetMaxArmor()
+						local shieldAdd = math.max(75, maxShield) --Tanky classes get more (enough to max them out).
+						local newArmour = ent:Armor() + shieldAdd
+						local overflow = newArmour - maxShield
+						ent:SetArmor( newArmour ) 
+
+						if overflow > 0 then --Any overcharge decays
+							local timerName = "jcms_vortDecay" .. ent:EntIndex()
+							timer.Create(timerName, 0.25, overflow / 0.25, function()
+								if not IsValid(ent) then timer.Remove(timerName) return end
+
+								local armour = ent:Armor()
+								if armour <= ent:GetMaxArmor() then timer.Remove(timerName) return end
+
+								ent:SetArmor(armour - 1)
+							end)
+						end
+
+						local ed = EffectData()
+						ed:SetEntity(ent)
+						ed:SetFlags(2)
+						ed:SetColor(jcms.util_ColorIntegerFast(128, 255, 128))
+						util.Effect("jcms_shieldeffect", ed)
+						ent:EmitSound("items/suitchargeok1.wav", 50, 130, 0.5)
+					elseif IsValid(npc) and ent:IsNPC() and not(ent:GetNWInt("jcms_sweeperShield_max") == -1) and ent:GetMaxHealth() < 100 then
+						--250 shield decaying over 8s
+						jcms.npc_SetupDecayingShield(ent, 300, 300/12, Color(120, 255, 120))
+					end
+				end
+			end
+		end)
+
+		npc.jcms_vortNextCharge = CurTime() + 12.5
 	end
 }
 
