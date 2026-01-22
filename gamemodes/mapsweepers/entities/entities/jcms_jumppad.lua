@@ -121,7 +121,7 @@ function ENT:LaunchPlayer(ply)
     ev:Mul(isOverclocked and 0 or 128)
     ev:Add(vector)
 
-    if isOverclocked then
+    if isOverclocked or self.jcms_isSingleUse then
         local oldVel = ply:GetVelocity()
         oldVel:Mul(0.8)
         ev:Sub(oldVel)
@@ -140,7 +140,7 @@ hook.Add("OnPlayerJump", "jcms_BoostJump", function(ply)
 
         for i, pad in ipairs(ents.FindByClass "jcms_jumppad") do
             local dif = ply:GetPos()-pad:GetPos()
-            if (dif.z > 0 and dif.z < 32) and (dif.x*dif.x + dif.y*dif.y) < radius2 then
+            if (dif.z > 0 and dif.z < 32) and (dif.x^2 + dif.y^2) < radius2 then
                 pad:LaunchPlayer(ply)
                 break
             end

@@ -108,12 +108,22 @@
 		ed:SetEntity(pad)
 		util.Effect("jcms_spawneffect", ed)
 		pad.jcms_rebelTargetPoint = targetPos
+		pad.jcms_isSingleUse = true
+
+		--Overcharge FX --TODO: Would be better for networking to just have an extra bool/render on the entity probably.
+		local ed = EffectData()
+		ed:SetEntity(pad)
+		ed:SetScale(0) --Inf
+		ed:SetMagnitude(10)
+		ed:SetColor( jcms.factions_GetColorInteger("rebel") )
+		ed:SetMaterialIndex(1)
+		util.Effect("jcms_electricarcs", ed)
 	end
 -- // }}}
 
 -- // [FODDER/GRUNT ENEMIES] Rebel-Specific Functions {{{
 
-	function jcms.npc_RebelGetJumpPos(npc, targetVec)
+	function jcms.npc_RebelGetJumpPos(npc, targetVec) --TODO: Not reliable enough
 		local npcPos = npc:GetPos()
 
 		--Hijack antlion navigation to find a path with jumps. 
@@ -173,38 +183,42 @@
 	end
 
 	function jcms.npc_rebel_think(npc)
+		local npcPos = npc:GetPos()
 
-		-- // JumpPad Nav {{{
-			--If we can't reach something (our GoalPos, target, etc) check each jumppad to see if we can reach it,
-			--then check if we can reach the target from that jumppad's destination(s?).
-		-- }}}
-		
 		--[[
-		-- Deploying Jump pads {{{
-			--todo: Don't place if there's already a pad
-			local enemy = npc:GetEnemy() 
-			--Deploy jumppads when we can't reach our enemy. --todo: Find highground when idle?
-			if IsValid(enemy) and npc:IsUnreachable(enemy) then 
-				local jumpStart, jumpEnd = jcms.npc_RebelGetJumpPos(npc, enemy:GetPos())
-				if jumpStart then
-					jcms.npc_RebelPlaceJump(jumpStart, angle_zero, jumpEnd, npc)
-					--npc:NavSetGoalPos(jumpStart)
-					--npc:SetSchedule(SCHED_FORCED_GO_RUN) --Still doesn't quite seem to work? This is temporary anyway so I'll figure that out later.
-				
-					npc:SetSaveValue("m_vecLastPosition", jumpStart )
-					npc:SetSchedule(SCHED_FORCED_GO_RUN)
-				end
-			end
-		-- }}}
-
 		-- Using jump pads {{{
 			for i, ent in ipairs(ents.FindInSphere(npcPos, 50)) do
 				if ent:GetClass() == "jcms_jumppad" and ent.jcms_rebelTargetPoint then 
 					jcms.npc_LaunchTowardsPos(npc, ent.jcms_rebelTargetPoint)
 
 					ent:JumpEffect()
+					ent:BreakByBreach(jcms.vectorOrigin) --TODO: Jump dir
+
 					npc:EmitSound("odessa.nlo_cheer0" .. tostring(math.random(1,3)) )
 					break
+				end
+			end
+		-- }}}
+
+		
+		--TODO: DEBUG
+		npc.jcms_nextJumppad = npc.jcms_nextJumppad or 0
+		if npc.jcms_nextJumppad > CurTime() then return end
+
+		-- Deploying Jump pads {{{
+			--todo: Don't place if there's already a pad
+			local enemy = npc:GetEnemy() 
+			--Deploy jumppads when we can't reach our enemy. --todo: Find highground when idle?
+			if IsValid(enemy) and npc:IsUnreachable(enemy) then --TODO: IsUnreachable seems like it takes int account nodes blocked by enemies/props, which makes this activate when it shouldn't.
+				local jumpStart, jumpEnd = jcms.npc_RebelGetJumpPos(npc, enemy:GetPos())
+				if jumpStart then
+					jcms.npc_RebelPlaceJump(jumpStart, angle_zero, jumpEnd, npc)
+				
+					npc:SetSaveValue("m_vecLastPosition", jumpStart )
+					npc:SetSchedule(SCHED_FORCED_GO_RUN)
+
+					npc.jcms_nextJumppad = CurTime() + 15 --TODO: DEBUG
+			
 				end
 			end
 		-- }}}
@@ -590,8 +604,8 @@ jcms.npc_types.rebel_breacher = {
 	faction = "rebel",
 	
 	danger = jcms.NPC_DANGER_FODDER,
-    cost = 1,
-    swarmWeight = 0.6,
+    cost = 1.25,
+    swarmWeight = 0.5,
 
 	class = "npc_citizen",
 	bounty = 45,
@@ -605,14 +619,81 @@ jcms.npc_types.rebel_breacher = {
 	end,
 	
 	postSpawn = function(npc)
-		PrintTable(npc:GetSaveTable())
 		local wep = npc:GetActiveWeapon()
 		if IsValid(wep) then
 			wep:SetSaveValue("m_fMaxRange1", 650) --TODO: Increase our range if player is unreachable.
 		end
+
+		npc.jcms_breacher_mask = ents.Create("jcms_decorator")
+		npc.jcms_breacher_mask:SetModel("models/props_silo/welding_helmet.mdl")
+
+
+		npc.jcms_breacher_mask:Spawn()
+		npc.jcms_breacher_mask:SetupAsBoneFollower(npc, 6, Angle(0,15,180))
 		
 		npc:CapabilitiesAdd(CAP_MOVE_SHOOT)
 		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
+
+		npc.jcms_breacher_maskHealth = 20
+	end,
+
+	takeDamage = function(npc, dmgInfo) --Clean up our mask on death
+		timer.Simple(0, function()
+			if IsValid(npc) and IsValid(npc.jcms_breacher_mask) and npc:Health() < 0 then 
+				local gib = ents.Create("gib") --auto cleanup
+				gib:SetModel("models/props_silo/welding_helmet.mdl")
+				gib:SetPos(npc.jcms_breacher_mask:GetPos())
+				gib:SetAngles(npc.jcms_breacher_mask:GetAngles())
+				gib:Spawn()
+				gib:PhysicsInitSphere(5)
+
+				gib:GetPhysicsObject():Wake()
+				gib:GetPhysicsObject():ApplyForceCenter(Vector(0,0,150) + VectorRand(-35,35)) --dmgInfo:GetDamageForce() * 0.1 
+				timer.Simple(2, function()
+					if IsValid(gib) then gib:Dissolve() end
+				end)
+
+				npc.jcms_breacher_mask:Remove()
+			end
+		end)
+	end,
+	
+	scaleDamage = function(npc, hitGroup, dmgInfo)
+		if not(hitGroup == 1) or npc.jcms_breacher_maskHealth <= 0 then return end --Only headshots
+		local inflictor = dmgInfo:GetInflictor() 
+		if not IsValid(inflictor) then return end 
+		local attkVec = npc:GetPos() - inflictor:GetPos()
+		attkVec.z = 0
+		local attkNorm = attkVec:GetNormalized()
+		local npcAng = npc:GetAngles():Forward()
+
+		local dot = attkNorm:Dot(-npcAng)
+		local angDiff = math.acos(dot)
+
+		if angDiff < math.pi/2 then --Heavy damage resist from the front, weak from behind.
+			npc:EmitSound("SolidMetal.BulletImpact", 100, 100, 1)
+
+			local effectdata = EffectData()
+			effectdata:SetEntity(npc)
+			effectdata:SetOrigin(dmgInfo:GetDamagePosition() - attkNorm)
+			effectdata:SetStart(dmgInfo:GetDamagePosition() + attkNorm )
+			effectdata:SetSurfaceProp(2)
+			effectdata:SetDamageType(dmgInfo:GetDamageType())
+
+			util.Effect("impact", effectdata)
+
+			npc.jcms_breacher_maskHealth = npc.jcms_breacher_maskHealth - dmgInfo:GetDamage()
+			if npc.jcms_breacher_maskHealth < 0 then
+				if IsValid(npc.jcms_breacher_mask) then 
+					npc.jcms_breacher_mask:Remove()
+				end
+				
+				npc:EmitSound("physics/metal/metal_sheet_impact_hard6.wav")
+				npc:EmitSound("Breakable.Metal")
+			end
+
+			dmgInfo:ScaleDamage(0.05) --If you're doing *that* much damage you might as well just outright kill them
+		end
 	end,
 
 	think = function(npc) 
@@ -1134,7 +1215,7 @@ jcms.npc_types.rebel_vortigaunt = {
 				local closest
 				local closestDist = math.huge
 				for i, ent in ipairs(ents.FindInSphere(npcPos, 750)) do
-					if not(ent == npc) and ent:IsNPC() and (not ent.jcms_noSweeperShields) and not(ent:GetNWInt("jcms_sweeperShield_max") == -1) then 
+					if not(ent == npc) and ent:IsNPC() and (not ent.jcms_noSweeperShields) and not(ent:GetNWInt("jcms_sweeperShield_max") == -1) and ent:GetMaxHealth() < 100 then 
 						local dist = ent:WorldSpaceCenter():DistToSqr(npcPos)
 						if dist < closestDist then
 							closestDist = dist
