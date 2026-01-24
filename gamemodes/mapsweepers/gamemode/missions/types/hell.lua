@@ -36,7 +36,9 @@ jcms.missions.hell = {
 		
 		--Prefabs from all factions
 		for k, commander in pairs(jcms.npc_commanders) do 
-			commander:placePrefabs(missionData)
+			if commander.placePrefabs then
+				commander:placePrefabs(missionData)
+			end
 		end
 
 		local diffMult = jcms.runprogress_GetDifficulty() ^ (2/3)
