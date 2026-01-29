@@ -523,6 +523,27 @@ jcms.npc_types.zombie_fast = {
 	end
 }
 
+jcms.npc_types.zombie_crawler = {
+	faction = "zombie",
+
+	danger = jcms.NPC_DANGER_FODDER,
+    cost = 0.15,
+    swarmWeight = 0.35,
+
+	class = "npc_fastzombie_torso",
+	bounty = 15,
+
+	postSpawn = function(npc)
+		local hp = math.ceil(npc:GetMaxHealth()*1.5)
+		npc:SetMaxHealth(hp)
+		npc:SetHealth(hp)
+
+		npc.jcms_dmgMult = 5
+
+		npc:SetCollisionGroup(COLLISION_GROUP_WEAPON)
+	end
+}
+
 jcms.npc_types.zombie_poison = {
 	portalSpawnWeight = 0.8,
 	portalScale = 1.1,
