@@ -46,8 +46,6 @@ if SERVER then
 
 		self:SetAngles(rotMat:GetAngles())
 		self:SetPos(pos)
-
-		target:DeleteOnRemove( self )
 	end
 end
 

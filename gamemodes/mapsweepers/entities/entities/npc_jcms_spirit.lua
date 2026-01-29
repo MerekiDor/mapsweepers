@@ -96,6 +96,12 @@ if SERVER then
 		--and target:IsNPC() --Removed because we use a whitelist now.
 		return IsValid(target) and self.GrabWhitelist[target:GetClass()] and target ~= self and (target:Health() > 0) and (not IsValid(target:GetParent())) and (not target.jcms_danger or target.jcms_danger < jcms.NPC_DANGER_BOSS) and (target:GetMoveType() > MOVETYPE_NONE) and jcms.team_SameTeam(self, target)
 	end
+
+	function ENT:TryFindGoodDropSpot(targetVec)
+		local targetNodes = jcms.pathfinder.ain_nodeSplat(targetVec, self.DeployDistance, HULL_HUMAN, CAP_MOVE_GROUND)
+	
+		--TODO: 
+	end
 	
 	function ENT:IsGoodGrabTarget_optimised(selfTbl, target)
 		local targetTbl = target:GetTable()
@@ -135,21 +141,29 @@ if SERVER then
 
 	function ENT:SelectSchedule()
 		local selfTbl = self:GetTable()
-		if selfTbl:GetIsDying() then return end
+		if selfTbl:GetIsDying() then return end --Dying, return early
 
 		local enemy = self:GetEnemy()
-		if IsValid(enemy) then
-			local enemyPos = enemy:GetPos()
-			local selfPos = self:GetPos()
-			
-			if enemyPos:DistToSqr(selfPos) < (selfTbl.DeployDistance/2)^2 then 
+		if not IsValid(enemy) then				--No enemy, go carry stuff.
+			selfTbl.wantToCarry = true
+			self:SetSchedule(SCHED_PATROL_RUN)
+			return
+		end
+
+
+		local enemyPos = enemy:GetPos()
+		local selfPos = self:GetPos()
+		
+		--If our enemy's too close run away
+		if enemyPos:DistToSqr(selfPos) < (selfTbl.DeployDistance/2)^2 then 
+			if not(self:GetCurrentSchedule() == SCHED_RUN_FROM_ENEMY) then
 				self:SetSchedule(SCHED_RUN_FROM_ENEMY)
-				return
 			end
+			return
+		end
 
-			local canMove = not selfTbl.nextMove or CurTime() > selfTbl.nextMove
+		-- // Find the furthest valid target to go grab {{{
 			local npcs = ents.FindByClass("npc_*")
-
 			local bestDist2, furthest = selfTbl.MinGrabDist^2
 			for i, npc in ipairs(npcs) do
 				if not selfTbl.IsGoodGrabTarget_optimised(self, selfTbl, npc) or self:IsUnreachable( npc ) then continue end
@@ -159,72 +173,77 @@ if SERVER then
 					furthest, bestDist2 = npc, dist2
 				end
 			end
+		-- // }}}
 
-			if selfTbl.wantToCarry then
-				if IsValid(furthest) then
-					if self:GetPathTimeToGoal() == 0 then --This happens if the target's unreachable
-						self:RememberUnreachable(furthest, 60)
-					end
-					if canMove or furthest:GetPos():DistToSqr( self:GetGoalPos() ) >= (selfTbl.GrabDistance/2)^2 then
-						self:NavSetGoalPos( furthest:GetPos() )
-						self:StartEngineTask(48, 0)
-						--debugoverlay.Line(selfPos, self:GetGoalPos(), 0.2, Color(0, 255, 129))
-						--debugoverlay.Line(furthest:GetPos(), self:GetGoalPos(), 0.2, Color(0, 255, 0))
-						selfTbl.nextMove = CurTime() + 5
-					end
-				else
-					selfTbl.wantToCarry = false
+		if selfTbl.wantToCarry then
+			if IsValid(furthest) then --Go grab the target
+				if self:GetPathTimeToGoal() == 0 then --Target's unreachable, stop trying to grab it.
+					self:RememberUnreachable(furthest, 60)
+				end
+
+				--Change target-pos if our target's far enough from our destination for us to be unable to grab them.
+				local canMove = not selfTbl.nextMove or CurTime() > selfTbl.nextMove --Cooldown between changing direction
+				if canMove or furthest:GetPos():DistToSqr( self:GetGoalPos() ) >= (selfTbl.GrabDistance/2)^2 then
+					self:NavSetGoalPos( furthest:GetPos() )
+					self:StartEngineTask(48, 0)
+					selfTbl.nextMove = CurTime() + 5
 				end
 			else
-				if IsValid(furthest) and self:GetCarriedNPCCount() <= 0 then
-					selfTbl.wantToCarry = true
-				elseif self:GetCarriedNPCCount() > 0 and self:GetCurrentSchedule() ~= SCHED_CHASE_ENEMY then
-					self:SetSchedule(SCHED_CHASE_ENEMY)
-				elseif self:GetCurrentSchedule() ~= SCHED_PATROL_RUN then
-					self:ClearSchedule()
-					self:SetSchedule(SCHED_PATROL_RUN)
-				end
+				selfTbl.wantToCarry = false
 			end
-		else
-			selfTbl.wantToCarry = true
-			self:SetSchedule(SCHED_PATROL_RUN)
+		else --We don't want to grab any more NPCs
+			if IsValid(furthest) and self:GetCarriedNPCCount() <= 0 then --We have no NPCs to drop-off, go grab some
+				selfTbl.wantToCarry = true
+			elseif self:GetCarriedNPCCount() > 0 then --Chase our enemy if we have carried NPCs
+				if self:GetCurrentSchedule() ~= SCHED_CHASE_ENEMY then
+					self:SetSchedule(SCHED_CHASE_ENEMY)
+				end
+
+			elseif self:GetCurrentSchedule() ~= SCHED_PATROL_RUN then --Patrol if we have no targets and no held NPCs.
+				self:ClearSchedule()
+				self:SetSchedule(SCHED_PATROL_RUN)
+			end
 		end
 	end
 
 	function ENT:Death(attacker, inflictor)
 		self:DeployNPCs()
 
-		local valids = {}
-		for i, npc in ipairs( ents.FindInSphere(self:WorldSpaceCenter(), self.GiveShieldDistance) ) do
-			if IsValid(npc) and npc:Health() > 0 and jcms.team_SameTeam(self, npc) then
-				table.insert(valids, npc)
-			end
-		end
-
-		table.Shuffle(valids)
-		for i=1, math.min(#valids, 5) do
-			local npc = valids[i]
-
-			if npc:IsPlayer() then
-				npc:SetMaxArmor( npc:GetMaxArmor() + self.GiveShieldAmount )
-				npc:SetArmor( npc:GetMaxArmor() )
-			elseif not npc:GetClass() == "npc_jcms_spirit" then --Difficult/impossible to see shields on other spirits, so I'd rather just not.
-				jcms.npc_SetupSweeperShields(npc, npc:GetNWInt("jcms_sweeperShield_max", 0) + self.GiveShieldAmount, self.GiveShieldRegen, self.GiveShieldRegenDelay, jcms.factions_GetColorInteger("zombie"))
-				npc:SetPlaybackRate(2)
+		-- // Shield nearby units, up to max 5 {{{
+			local valids = {}
+			for i, npc in ipairs( ents.FindInSphere(self:WorldSpaceCenter(), self.GiveShieldDistance) ) do
+				if IsValid(npc) and npc:Health() > 0 and jcms.team_SameTeam(self, npc) then
+					table.insert(valids, npc)
+				end
 			end
 
-			local ed = EffectData()
-			ed:SetFlags(2)
-			ed:SetEntity(npc)
-			ed:SetOrigin(self:WorldSpaceCenter())
-			util.Effect("jcms_chargebeam", ed)
-		end
+			table.Shuffle(valids)
+			for i=1, math.min(#valids, 5) do
+				local npc = valids[i]
+
+				if npc:IsPlayer() then --NPC Players
+					npc:SetMaxArmor( npc:GetMaxArmor() + self.GiveShieldAmount )
+					npc:SetArmor( npc:GetMaxArmor() )
+				elseif not npc:GetClass() == "npc_jcms_spirit" then --Difficult/impossible to see shields on other spirits, so I'd rather just not. --TODO: use the no-sweepershields var instead
+					jcms.npc_SetupSweeperShields(npc, npc:GetNWInt("jcms_sweeperShield_max", 0) + self.GiveShieldAmount, self.GiveShieldRegen, self.GiveShieldRegenDelay, jcms.factions_GetColorInteger("zombie"))
+					npc:SetPlaybackRate(2)
+				end
+
+				--FX
+				local ed = EffectData()
+				ed:SetFlags(2)
+				ed:SetEntity(npc)
+				ed:SetOrigin(self:WorldSpaceCenter())
+				util.Effect("jcms_chargebeam", ed)
+			end
+		-- // }}}
 
 		self:SetSolid(SOLID_NONE)
 		self:SetMoveType(MOVETYPE_FLY)
 		self:SetIsDying(true)
 		self:SetDeathTime(CurTime())
 		
+		--Explode FX
 		local ed = EffectData()
 		ed:SetMagnitude(1.5)
 		ed:SetOrigin(self:WorldSpaceCenter())
@@ -238,123 +257,129 @@ if SERVER then
 	end
 
 	function ENT:Think()
-		if self:GetIsDying() then
-			if CurTime() > self:GetDeathTime() + 3 then
+		local selfTbl = self:GetTable()
+		local cTime = CurTime()
+
+		--Return early if dead / remove us.
+		if self:GetIsDying() then							
+			if cTime > self:GetDeathTime() + 3 then
 				self:Remove()
 			end
-		else
-			if self.wantToCarry and self:GetCarriedNPCCount() > 0 and IsValid( self:GetEnemy() ) and self:GetEnemy():GetPos():DistToSqr( self:GetPos() ) < self.GrabDistance^2 then
-				self.wantToCarry = false
+			return
+		end
+
+		local selfPos = self:GetPos()
+		local enemy = self:GetEnemy()
+		
+		--Enemy's too close to us, immediately drop our carried NPCs.
+		if self.wantToCarry and self:GetCarriedNPCCount() > 0 and IsValid( enemy ) and enemy:GetPos():DistToSqr( selfPos ) < self.GrabDistance^2 then
+			self.wantToCarry = false
+		end
+
+
+		if self.wantToCarry then							-- We're looking for NPCs to eat
+			if not(not self.carryCooldown or cTime > self.carryCooldown) then return end --Cooldown
+
+			--Grab one valid target within our radius & wait.
+			for i, npc in ipairs( ents.FindInSphere(selfPos, self.GrabDistance) ) do
+				if self:IsGoodGrabTarget(npc) and self:Visible(npc) and (not IsValid(npc:GetEnemy()) or npc:GetEnemy():GetPos():DistToSqr(npc:GetPos()) > self.MinGrabDist^2) then
+					self:CarryNPC(npc)
+					self.carryCooldown = cTime + 0.25
+					break
+				end
 			end
 
-			if not self.carryCooldown or CurTime() > self.carryCooldown then
-				if self.wantToCarry then
-					for i, npc in ipairs( ents.FindInSphere(self:WorldSpaceCenter(), self.GrabDistance) ) do
-						if self:IsGoodGrabTarget(npc) and self:Visible(npc) and (not IsValid(npc:GetEnemy()) or npc:GetEnemy():GetPos():DistToSqr(npc:GetPos()) > self.MinGrabDist^2) then
-							self:CarryNPC(npc)
-							self.carryCooldown = CurTime() + 0.25
-							break
-						end
-					end
+			--If we've carried enough, stop searching / return to other behaviours. 
+			if self:GetCarriedNPCCount() >= self.npcCarryGoal then
+				self.wantToCarry = false
+				self.carryCooldown = cTime + 1
+			end
+		elseif self:GetCarriedNPCCount() > 0 and IsValid(enemy) then
+			local viscon = self:Visible(enemy) and (cTime-self:GetEnemyLastTimeSeen(enemy)) < 1
 
-					if self:GetCarriedNPCCount() >= self.npcCarryGoal then
-						self.wantToCarry = false
-						self.carryCooldown = CurTime() + 1
-					end
-				elseif self:GetCarriedNPCCount() > 0 then
-					local enemy = self:GetEnemy()
+			if viscon and enemy:GetPos():DistToSqr(selfPos) < self.DeployDistance^2 then
+				self:DeployNPCs(enemy:GetPos(), farDeploy)
 
-					if IsValid(enemy) then
-						local viscon = self:Visible(enemy) and (CurTime()-self:GetEnemyLastTimeSeen(enemy)) < 1
-
-						--[[
-							todo: If it's impossible to navigate to a target we probably want to change our rules.
-							Spirits used to provide a way for zombies to continue attacking targets on short buildings.
-							We want that back eventually.
-						--]]
-
-						if viscon and enemy:GetPos():DistToSqr(self:GetPos()) < self.DeployDistance^2 then
-							self:DeployNPCs(enemy:GetPos())
-
-							self:ClearSchedule()
-							self:SetSchedule(SCHED_RUN_FROM_ENEMY)
-							self.carryCooldown = CurTime() + 5
-							self.wantToCarry = true
-						end
-					end
-				end
+				self:ClearSchedule()
+				self:SetSchedule(SCHED_RUN_FROM_ENEMY)
+				self.carryCooldown = cTime + 5
+				self.wantToCarry = true
 			end
 		end
 	end
 
 	function ENT:HandleAnimEvent(event, eventTime, cycle, type, options)
-		if (event == 105 or event == 106) then
-			if not self:GetIsDying() then
-				self:EmitSound("player/footsteps/snow"..math.random(1, 6)..".wav", 100, 200, 0.7)
-			end
-
-			return true
-		end
+		return true
 	end
 
 	function ENT:CarryNPC(npc)
+		--FX
 		local ed = EffectData()
 		ed:SetFlags(2)
 		ed:SetEntity(self)
 		ed:SetOrigin(npc:WorldSpaceCenter())
 		util.Effect("jcms_chargebeam", ed)
+
+		--Grab the NPC
 		npc:SetParent(self)
 		npc:SetPos(self:GetPos())
 		npc:SetNoDraw(true)
+		
+		--FX / data tracking
 		self:SetCarriedNPCCount( self:GetCarriedNPCCount() + 1 )
 		self:EmitSound("npc/advisor/advisor_blast1.wav", 100, 100, 1)
 		self:AddGestureSequence(17)
 	end
 
-	function ENT:DeployNPCs(pos)
-		local toDeploy = {}
-
-		for i, ent in ipairs( self:GetChildren() ) do
-			if IsValid(ent) and ent:IsNPC() and ent:Health() > 0 then
-				table.insert(toDeploy, ent)
-			end
-		end
-
-		local mostVectors
-
-		if isvector(pos) then
-			for i=1, 4 do
-				local vectors, fully = jcms.director_PackSquadVectors(LerpVector( math.Remap(i, 1, 4, 0.5, 0.2), self:WorldSpaceCenter(), pos ), #toDeploy, math.random(75, 125))
-
-				if fully or (not mostVectors) or (#vectors > #mostVectors) then
-					mostVectors = vectors
-
-					if fully then
-						break
-					end
+	function ENT:DeployNPCs(pos) --Reversed deploy - try to spawn close to enemy first
+		-- // NPCs to deploy {{{
+			local toDeploy = {}
+			for i, ent in ipairs( self:GetChildren() ) do
+				if IsValid(ent) and ent:IsNPC() and ent:Health() > 0 then
+					table.insert(toDeploy, ent)
 				end
 			end
-		else
-			local vectors, fully = jcms.director_PackSquadVectors(self:WorldSpaceCenter(), #toDeploy, math.random(150, 200))
-			mostVectors = vectors
-		end
+		-- // }}}
 
+		-- // Deploy positions {{{
+			local mostVectors
+			if isvector(pos) then 	-- Deploy towards target
+				for i=1, 4 do
+					local vectors, fully = jcms.director_PackSquadVectors(LerpVector( math.Remap(i, 1, 4, 0.55, 0.2), self:WorldSpaceCenter(), pos ), #toDeploy, math.random(75, 125))
+
+					if fully or (not mostVectors) or (#vectors > #mostVectors) then
+						mostVectors = vectors
+
+						if fully then
+							break
+						end
+					end
+				end
+			else 					-- Deploy on-top of us
+				local vectors, fully = jcms.director_PackSquadVectors(self:WorldSpaceCenter(), #toDeploy, math.random(150, 200))
+				mostVectors = vectors
+			end
+		-- // }}}
+
+		--Return early if we have no valid spots
 		if not mostVectors or #mostVectors == 0 then
-			return -- Oops
+			return
 		end
 
+		--Deploy our units
+		local foe = self:GetEnemy()
 		local upVec = Vector(0,0,10)
 		local deployed = 0
 		for i, v in ipairs(mostVectors) do
 			deployed = deployed + 1
 
+			--Spawn us
 			local ent = toDeploy[i]
 			ent:SetParent()
 			ent:SetPos(v + upVec)
-			--ent:DropToFloor()
 			ent:SetNoDraw(false)
 
-			local foe = self:GetEnemy()
+			--Target the enemy we were deployed towards
 			if IsValid(foe) then
 				local foePos = foe:GetPos()
 				ent:SetEnemy(foe)
@@ -362,29 +387,36 @@ if SERVER then
 				
 				ent:NavSetGoalPos(ent:GetPos()) --Reset our target point
 
-				foePos:Sub(v)
-				local faceAngle = foePos:Angle()
-				faceAngle.p = 0
-				faceAngle.r = 0
+				-- // Face towards the enemy {{{
+					foePos:Sub(v)
+					local faceAngle = foePos:Angle()
+					faceAngle.p = 0
+					faceAngle.r = 0
 
-				ent:SetAngles(faceAngle)
-			else
+					ent:SetAngles(faceAngle)
+				-- // }}}
+			else --Fallback for if we have no enemy
 				jcms.npc_GetRowdy(ent)
 			end
 
-			local filter = RecipientFilter()
-			filter:AddPVS(self:WorldSpaceCenter())
-			filter:AddPVS(ent:WorldSpaceCenter())
+			-- // FX {{{
+				local filter = RecipientFilter()
+				filter:AddPVS(self:WorldSpaceCenter())
+				filter:AddPVS(ent:WorldSpaceCenter())
 
-			local ed = EffectData()
-			ed:SetFlags(2)
-			ed:SetEntity(self)
-			ed:SetOrigin(ent:WorldSpaceCenter())
-			util.Effect("jcms_chargebeam", ed, true, filter)
+				local ed = EffectData()
+				ed:SetFlags(2)
+				ed:SetEntity(self)
+				ed:SetOrigin(ent:WorldSpaceCenter())
+				util.Effect("jcms_chargebeam", ed, true, filter)
+			-- // }}}
 		end
 
+		--Anim / sound
 		self:AddGestureSequence(16)
 		self:EmitSound("npc/advisor/advisor_blast6.wav", 100, 100, 1)
+
+		--Reset carry count/goal
 		local remaining = #toDeploy - deployed
 		self:SetCarriedNPCCount(remaining)
 		if remaining == 0 then 
