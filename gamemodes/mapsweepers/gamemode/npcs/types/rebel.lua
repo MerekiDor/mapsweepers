@@ -639,7 +639,7 @@ jcms.npc_types.rebel_breacher = {
 
 	takeDamage = function(npc, dmgInfo) --Clean up our mask on death
 		timer.Simple(0, function()
-			if IsValid(npc) and IsValid(npc.jcms_breacher_mask) and npc:Health() < 0 then 
+			if IsValid(npc) and IsValid(npc.jcms_breacher_mask) and npc:Health() < 0 and not npc.jcms_died then 
 				local gib = ents.Create("gib") --auto cleanup
 				gib:SetModel("models/props_silo/welding_helmet.mdl")
 				gib:SetPos(npc.jcms_breacher_mask:GetPos())
@@ -654,6 +654,8 @@ jcms.npc_types.rebel_breacher = {
 				end)
 
 				npc.jcms_breacher_mask:Remove()
+
+				npc.jcms_died = true
 			end
 		end)
 	end,

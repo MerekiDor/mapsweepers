@@ -148,94 +148,105 @@ if SERVER then
 		local time = CurTime()
 		if self.blockedUntil > time then return end
 		if self.jcms_dogDead then return end
-		
+
 		local grabbedObject = self:GetGrabbedObject()
-		if IsValid(grabbedObject) then
-			local bestAlyx
+		if IsValid(grabbedObject) then --We have a grabbed object, go do grabbed-object things
+			self:State_Grabbed()
+			return
+		end
+
+		--We're not carrying anything, run our normal behaviours.
+		self:State_Ungrabbed()
+	end
+
+	function ENT:State_Grabbed() --Having these prefixed State_ is a little misleading because this isn't an actual state-machine, but I couldn't think of a better name -j
+		local enemy = self:GetEnemy()
+		local time = CurTime()
+
+		--If we have an enemy try to establish line of sight and then throw our object at them
+		if IsValid(enemy) then
+			local enemypos = self:GetEnemyLastKnownPos(enemy)
+			local viscon = enemy:Visible(enemy) and (time-self:GetEnemyLastTimeSeen(enemy))<1
+			local dist = self:GetPos():Distance(enemypos)
 			
-			if not grabbedObject:GetHackedByRebels() then
-				-- Find an Alyx to hack this turret
-				local alyxes = ents.FindByClass("npc_alyx")
-				
-				if #alyxes > 0 then
-					local npcpos = self:WorldSpaceCenter()
-					local bestDist = math.huge
-					
-					for i, alyx in ipairs(alyxes) do
-						if alyx:Health() > 0 then
-							local dist = alyx:WorldSpaceCenter():Distance(npcpos)
-							if dist < bestDist then
-								bestAlyx = alyx
-								bestDist = dist
-							end
-						end
-					end
-				end
-			end
-			
-			if IsValid(bestAlyx) then
-				self:SetSaveValue("m_vecLastPosition", bestAlyx:GetPos())
-				self:SetSchedule(SCHED_FORCED_GO_RUN)
+			if viscon and dist < 1500 then
+				self:DogThrow(enemy:WorldSpaceCenter() + enemy:GetVelocity())
 			else
-				local enemy = self:GetEnemy()
-				if IsValid(enemy) then
-					local enemypos = self:GetEnemyLastKnownPos(enemy)
-					local viscon = enemy:Visible(enemy) and (CurTime()-self:GetEnemyLastTimeSeen(enemy))<1
-					local dist = self:GetPos():Distance(enemypos)
-					
-					if viscon and dist < 1500 then
-						self:DogThrow(enemy:WorldSpaceCenter() + enemy:GetVelocity())
-					else
-						self:SetSchedule(SCHED_ESTABLISH_LINE_OF_FIRE)
-					end
-				else
-					
-				end
-			end
-		else
-			local enemy = self:GetEnemy()
-			local canAtk = time > self.nextAtkTime
-			if IsValid(enemy) then
-				local enemypos = self:GetEnemyLastKnownPos(enemy)
-				local viscon = enemy:Visible(enemy) and (CurTime()-self:GetEnemyLastTimeSeen(enemy))<1
-				local dist = self:GetPos():Distance(enemypos)
-				
-				if viscon then
-					if self:IsGoodGrabTarget(enemy) then
-						-- Snatch that thing
-						if dist < 300 then
-							self:DogGrab(enemy)
-						else
-							self:SetSchedule(SCHED_CHASE_ENEMY)
-						end
-					else
-						-- Kill this mf
-						if enemy:IsPlayer() and CurTime() - self:GetEnemyFirstTimeSeen() < 1 then
-							self.blockedUntil = time + 1
-							self:EmitSound("NPC_dog.Growl_2")
-							self:AddLayeredSequence(8, 99)
-							self:SetSchedule(SCHED_COMBAT_FACE)
-						else
-							if dist < 250 then
-								if canAtk then
-									self:DogPound()
-								end
-							elseif dist < 1000 and canAtk then
-								self:SetSchedule(SCHED_COMBAT_FACE)
-								self:DogRoll(enemypos)
-							else
-								self:SetSchedule(SCHED_CHASE_ENEMY)
-							end
-						end
-					end
-				else
-					self:SetSchedule(SCHED_CHASE_ENEMY)
-				end
-			else
-				self:SetSchedule(SCHED_COMBAT_PATROL)
+				self:SetSchedule(SCHED_ESTABLISH_LINE_OF_FIRE)
 			end
 		end
 	end
+
+	function ENT:State_Ungrabbed()
+		local enemy = self:GetEnemy()
+
+		--Find a target to grab if we have no enemy
+		if not IsValid(enemy) then --TODO: Cooldown-based instead of just when we lack an enemy. 
+			self:SetSchedule(SCHED_COMBAT_PATROL)
+
+			for i, ent in ipairs(ents.FindInSphere(self:GetPos(), 1000)) do 
+				if self:IsGoodGrabTarget(ent) and not self:IsUnreachable(ent) then 
+					self.grabTarget = ent
+					break
+				end
+			end
+
+			return
+		end
+
+		--Go grab our grab target if we have one
+		if IsValid(self.grabTarget) then 
+			if self:IsUnreachable(self.grabTarget) then return end
+
+			local dist = self:GetPos():Distance(self.grabTarget:GetPos())
+
+			if dist < 300 then
+				self:DogGrab(self.grabTarget)
+				self.grabTarget = NULL 
+			else --Go to our target
+				--[[TODO: Figure out how to send us to the turret without forced go,
+					Doing it this way makes this uninterruptable / makes it have to *reach* the target before picking it up.
+				--]]
+				self:SetSaveValue("m_vecLastPosition", self.grabTarget:GetPos())
+				self:SetSchedule(SCHED_FORCED_GO_RUN)
+			end
+
+			return
+		end
+
+		--Run after our enemy if we can't see them
+		local cTime = CurTime()
+		local viscon = enemy:Visible(enemy) and (cTime-self:GetEnemyLastTimeSeen(enemy))<1
+		if not viscon then 
+			self:SetSchedule(SCHED_CHASE_ENEMY)
+			return
+		end
+
+		local enemypos = self:GetEnemyLastKnownPos(enemy)
+		local dist = self:GetPos():Distance(enemypos)
+		local canAtk = cTime > self.nextAtkTime
+		
+		if enemy:IsPlayer() and cTime - self:GetEnemyFirstTimeSeen() < 1 then
+			--Alert sound
+			self.blockedUntil = cTime + 1
+			self:EmitSound("NPC_dog.Growl_2")
+			self:AddLayeredSequence(8, 99)
+			self:SetSchedule(SCHED_COMBAT_FACE)
+		else
+			--Attack enemy, or roll towards them if they're too far
+			if dist < 250 then
+				if canAtk then
+					self:DogPound()
+				end
+			elseif dist < 1000 and canAtk then
+				self:SetSchedule(SCHED_COMBAT_FACE)
+				self:DogRoll(enemypos)
+			else
+				self:SetSchedule(SCHED_CHASE_ENEMY)
+			end
+		end
+	end
+
 	
 	function ENT:DogPound()
 		local time = CurTime()
@@ -353,9 +364,9 @@ if SERVER then
 			self:EmitSound("Weapon_PhysCannon.Pickup")
 		end
 	end
-	
+
 	function ENT:IsGoodGrabTarget(ent)
-		return ent.GetHackedByRebels and ent:GetMoveType() == MOVETYPE_VPHYSICS
+		return (ent.GetHackedByRebels and ent:GetHackedByRebels()) and ent:GetMoveType() == MOVETYPE_VPHYSICS
 	end
 	
 	function ENT:DogThrow(at)

@@ -194,7 +194,7 @@ jcms.turrets = {
 		blastRadius = 250,
 		firerate = 3,
 		damagetype = DMG_BLAST,
-		clip = 48,
+		clip = 32,
 		
 		radius = 5400,
 		radiusMin = 600,

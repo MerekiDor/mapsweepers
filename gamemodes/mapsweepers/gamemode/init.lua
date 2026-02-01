@@ -3349,6 +3349,12 @@ end
 		end
 	end
 
+	function jcms.SetDoorReturns()
+		for i, door in ipairs(ents.FindByClass("prop_door_rotating")) do --Doors never auto-close
+			door:SetSaveValue("returndelay", -1)
+		end
+	end
+
 	function jcms.ClearTinyProps()
 		local function clearIfSmall(ent)
 			local mins, maxs = ent:OBBMins(), ent:OBBMaxs()

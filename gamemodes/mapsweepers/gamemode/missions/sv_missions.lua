@@ -84,6 +84,7 @@
 			jcms.RecolorAllDollies()
 			jcms.ReplaceAllCrates()
 			jcms.DisableThumpers()
+			jcms.SetDoorReturns()
 			if jcms.cvar_performanceMode:GetBool() then 
 				jcms.ClearTinyProps()
 				jcms.ClearWindows()
