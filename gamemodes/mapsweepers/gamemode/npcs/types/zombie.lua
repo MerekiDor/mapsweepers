@@ -542,6 +542,8 @@ jcms.npc_types.zombie_crawler = {
 
 		npc:SetCollisionGroup(COLLISION_GROUP_WEAPON)
 	end
+
+	--TODO: THESE GUYS SHOULD LEAP
 }
 
 jcms.npc_types.zombie_poison = {
@@ -838,6 +840,22 @@ jcms.npc_types.zombie_spirit = {
 	check = function(director)
 		--Reliant on other npcs to be useful, and can end up stalling them more than helping them if too many are present.
 		return jcms.npc_capCheck("npc_jcms_spirit", 4)
+	end
+}
+
+jcms.npc_types.zombie_latcher = {
+	portalSpawnWeight = 0,
+	faction = "zombie",
+
+	danger = jcms.NPC_DANGER_STRONG,
+	cost = 1,
+	swarmWeight = 0.35,
+
+	class = "npc_jcms_zombielatcher",
+	bounty = 30,
+
+	check = function(director)
+		return jcms.npc_capCheck("npc_jcms_latcher", 4)
 	end
 }
 

@@ -315,3 +315,28 @@ if SERVER then
 	end)
 end
 -- // }}}
+
+-- // Snares {{{
+	--Slightly different logic between client and server because I'm not gonna network the entire snares table.
+	
+	if SERVER then
+		hook.Add("SetupMove", "jcms_Snare", function(ply, mv, cmd)
+			if not ply.jcms_snares then return end
+
+			local speedCap = mv:GetMaxClientSpeed()
+			for snarer, minSpeed in pairs(ply.jcms_snares) do 
+				if IsValid(snarer) then
+					speedCap = math.min(speedCap, minSpeed)
+				end
+			end
+
+			--TODO: Do something about recon's jump
+
+			speedCap = mv:SetMaxClientSpeed(speedCap)
+		end)
+	elseif CLIENT then
+		hook.Add("SetupMove", "jcms_Snare", function(ply, mv, cmd)
+			--TODO: Network the maximum speed on server, read that here.
+		end)
+	end
+-- // }}}
