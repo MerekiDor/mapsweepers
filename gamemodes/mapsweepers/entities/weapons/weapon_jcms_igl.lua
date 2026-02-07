@@ -100,6 +100,7 @@ end
 		bomb.Damage = damage
 		bomb.Attacker = self.Owner
 
+        local normal = self.Owner:GetAimVector()
         normal:Rotate( AngleRand(-aimcone, aimcone) )
 		bomb:GetPhysicsObject():SetVelocity(normal * math.random(500, 750))
 		
