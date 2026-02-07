@@ -20,21 +20,21 @@
 --]]
 AddCSLuaFile()
 
-SWEP.PrintName = "Machinegun"
+SWEP.PrintName = "AK-47"
 SWEP.Author = "Octantis Addons"
 SWEP.Purpose = "Map Sweepers"
 SWEP.Instructions = "Kill"
 SWEP.Spawnable = false
 SWEP.AdminOnly = true
 
-SWEP.Primary.ClipSize = 100
-SWEP.Primary.DefaultClip = 100
+SWEP.Primary.ClipSize = 30
+SWEP.Primary.DefaultClip = 30
 SWEP.Primary.Automatic = true
-SWEP.Primary.Ammo = "SMG1"
-SWEP.Primary.Damage = 5
+SWEP.Primary.Ammo = "AR2"
+SWEP.Primary.Damage = 2
 SWEP.Primary.NumBullets = 1
-SWEP.Primary.Spread = 2.8
-SWEP.Primary.Delay = 1 / 10
+SWEP.Primary.Spread = 2.1
+SWEP.Primary.Delay = 1/10
 
 SWEP.Secondary.ClipSize = -1
 SWEP.Secondary.DefaultClip = -1
@@ -51,20 +51,24 @@ SWEP.DrawAmmo = true
 SWEP.DrawCrosshair = true
 
 SWEP.ViewModel = "models/weapons/v_pistol.mdl"
-SWEP.WorldModel = "models/weapons/w_mach_m249para.mdl"
+SWEP.WorldModel = "models/weapons/w_rif_ak47.mdl"
 
 if SERVER then
 	sound.Add( {
-		name = "Weapon.jcms_mg",
+		name = "Weapon.jcms_ak47",
 		channel = CHAN_WEAPON,
 		volume = 1.0,
 		level = 140,
 		pitch = 100,
-		sound = "jcms/machinegun.wav"
+		sound = "^jcms/ak47_dist.wav"
 	} )
 end
 
-SWEP.ShootSound = Sound("Weapon.jcms_mg")
+SWEP.ShootSound = Sound("Weapon.jcms_ak47")
+
+function SWEP:Initialize()
+    self:SetHoldType("ar2")
+end
 
 -- // Attack {{{
 
@@ -119,7 +123,7 @@ SWEP.ShootSound = Sound("Weapon.jcms_mg")
         
         local ed = EffectData()
         ed:SetEntity(self)
-        ed:SetFlags(7)
+        ed:SetFlags(1)
         ed:SetAttachment(1)
         util.Effect("MuzzleFlash", ed)
     end
@@ -142,11 +146,11 @@ SWEP.ShootSound = Sound("Weapon.jcms_mg")
 -- // NPCs {{{
 
     function SWEP:GetNPCBurstSettings()
-        return 25, 50, self.Primary.Delay
+        return 3, 6, self.Primary.Delay
     end
 
     function SWEP:GetNPCRestTimes()
-        return 0.5, 1.25
+        return 0.8, 1.2
     end
 
     function SWEP:GetNPCBulletSpread(prof)
@@ -156,53 +160,6 @@ SWEP.ShootSound = Sound("Weapon.jcms_mg")
 
     function SWEP:CanBePickedUpByNPCs()
         return true 
-    end
-
--- // }}}
-
--- // Animations and activities {{{
-
-    local actTrans = {
-        [ACT_MP_RELOAD_STAND] = ACT_HL2MP_GESTURE_RELOAD_AR2,
-        [ACT_MP_STAND_IDLE] = ACT_HL2MP_IDLE_SHOTGUN,
-        [ACT_MP_WALK] = ACT_HL2MP_WALK_SHOTGUN,
-        [ACT_MP_RUN] = ACT_HL2MP_RUN_SHOTGUN,
-        [ACT_MP_ATTACK_STAND_PRIMARYFIRE] = ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2,
-        [ACT_MP_ATTACK_CROUCH_PRIMARYFIRE] = ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2,
-        [ACT_MP_JUMP] = ACT_HL2MP_JUMP_CROSSBOW,
-        [ACT_MP_AIRWALK] = ACT_HL2MP_JUMP_AR2,
-        [ACT_MP_SWIM] = ACT_HL2MP_SWIM_AR2,
-        [ACT_MP_RELOAD_CROUCH] = ACT_HL2MP_GESTURE_RELOAD_AR2,
-        [ACT_MP_CROUCH_IDLE] = ACT_HL2MP_IDLE_CROUCH_AR2,
-        [ACT_MP_CROUCHWALK] = ACT_HL2MP_WALK_CROUCH_AR2,
-        [ACT_MP_SWIM_IDLE] = ACT_HL2MP_SWIM_AR2
-    }
-
-    local actTransNPC = {
-        [ACT_IDLE] = ACT_IDLE_SMG1_STIMULATED,
-        [ACT_IDLE_STIMULATED] = ACT_IDLE_SMG1_STIMULATED,
-        [ACT_IDLE_ANGRY] = ACT_IDLE_ANGRY_SMG1,
-        [ACT_IDLE_AGITATED] = ACT_IDLE_ANGRY_SMG1,
-        [ACT_IDLE_RELAXED] = ACT_IDLE_SMG1_RELAXED,
-        [ACT_RANGE_ATTACK1] = ACT_RANGE_ATTACK_AR2,
-        [ACT_RANGE_ATTACK1_LOW] = ACT_RANGE_ATTACK_AR2_LOW,
-        [ACT_WALK] = ACT_WALK_RIFLE,
-        [ACT_WALK_AIM] = ACT_WALK_AIM_RIFLE,
-        [ACT_RUN] = ACT_RUN_RIFLE,
-        [ACT_RUN_AIM] = ACT_WALK_AIM_RIFLE,
-        [ACT_RUN_AIM_RIFLE] = ACT_WALK_AIM_RIFLE,
-        [ACT_RUN_RELAXED] = ACT_RUN_AIM_RIFLE_STIMULATED,
-        [ACT_RUN_AGITATED] = ACT_RUN_AIM_RIFLE_STIMULATED,
-        [ACT_RELOAD] = ACT_RELOAD_SMG1
-    }
-
-    function SWEP:TranslateActivity(act)
-        if self:GetOwner():IsNPC() then
-            return actTransNPC[act] or actTrans[act] or act
-        elseif self:GetOwner():IsPlayer() then
-            return actTrans[act] or act
-        end
-        return -1
     end
 
 -- // }}}

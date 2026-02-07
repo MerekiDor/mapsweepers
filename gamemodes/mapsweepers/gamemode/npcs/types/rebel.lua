@@ -563,7 +563,7 @@ jcms.npc_types.rebel_fighter = {
 
 	weapons = {
 		weapon_smg1 = 4,
-		weapon_ar2 = 2
+		weapon_jcms_ak47 = 2
 	},
 	
 	preSpawn = function(npc)
@@ -582,7 +582,7 @@ jcms.npc_types.rebel_fighter = {
 			if wep:GetClass() == "weapon_smg" then
 				wep:SetSaveValue("m_fMaxRange1", 1000) --TODO: This is a bit low? Might want to mess with it.
 			else
-				npc:SetCurrentWeaponProficiency(WEAPON_PROFICIENCY_PERFECT) --Ar2 rebels are scarier, just like AR2 combine
+				npc:SetCurrentWeaponProficiency(WEAPON_PROFICIENCY_VERY_GOOD) --AK47 rebels are scarier, just like AR2 combine
 			end
 		end
 		
@@ -626,8 +626,6 @@ jcms.npc_types.rebel_breacher = {
 
 		npc.jcms_breacher_mask = ents.Create("jcms_decorator")
 		npc.jcms_breacher_mask:SetModel("models/props_silo/welding_helmet.mdl")
-
-
 		npc.jcms_breacher_mask:Spawn()
 		npc.jcms_breacher_mask:SetupAsBoneFollower(npc, 6, Angle(0,15,180))
 		
@@ -742,15 +740,15 @@ jcms.npc_types.rebel_vanguard = {
 	faction = "rebel",
 	
 	danger = jcms.NPC_DANGER_STRONG,
-    cost = 1.5,
-    swarmWeight = 0.55,
+    cost = 1.6,
+    swarmWeight = 0.4,
     swarmLimit = 1,
 
 	class = "npc_citizen",
 	bounty = 45,
 
 	weapons = {
-		weapon_shotgun = 1
+		weapon_jcms_igl = 1
 	},
 	
 	preSpawn = function(npc)
@@ -760,8 +758,26 @@ jcms.npc_types.rebel_vanguard = {
 	postSpawn = function(npc)
 		npc:SetMaxHealth( npc:Health() + 25 )
 		npc:SetHealth( npc:GetMaxHealth() )
-		--npc.jcms_hasSmokeGrenade = true
 		npc:Fire("SetMedicOn")
+		npc:SetModel("models/barney.mdl")
+		npc.jcms_fireproof = true
+
+		local my_colour = Color(72, 72, 72)
+		npc:SetColor(my_colour)
+		npc.jcms_vanguard_mask = ents.Create("jcms_decorator")
+		npc.jcms_vanguard_mask:SetModel("models/props_silo/welding_helmet.mdl")
+		npc.jcms_vanguard_mask:SetColor( my_colour )
+		npc.jcms_vanguard_mask:Spawn()
+		npc.jcms_vanguard_mask:SetupAsBoneFollower(npc, 6, Angle(0,15,180))
+
+		npc.backpack = ents.Create("jcms_vanguard_backpack")
+		local attch = npc:GetAttachment(3)
+		npc.backpack:SetPos(attch.Pos - attch.Ang:Forward() * 11 - attch.Ang:Up() * 20)
+		npc.backpack:SetAngles(attch.Ang)
+		npc.backpack:SetParent(npc, 3)
+		npc.backpack:Spawn()
+		npc.backpack.jcms_owner = npc
+		npc.backpack.jcms_fireproof = true
 
 		npc:SetMaxLookDistance(1000)
 		npc:SetArrivalDistance(250)
@@ -769,93 +785,41 @@ jcms.npc_types.rebel_vanguard = {
 		npc:SetSaveValue("m_flDistTooFar", 500)
 		npc:GetActiveWeapon():SetSaveValue("m_fMinRange1", 0)
 		npc:GetActiveWeapon():SetSaveValue("m_fMaxRange1", 750)
-
-		-- // Visuals {{{ 
-			npc:SetColor(color_black)
-
-			local ed = EffectData()
-			ed:SetEntity(npc)
-			ed:SetScale(0)
-			ed:SetStart( jcms.vectorOrigin )
-			util.Effect("jcms_burningcharacter", ed)
-		-- // }}}
-
-		npc:EmitSound("streetwar.fire_medium")
-		--npc/zombie/moan_loop1.wav (1-4)
-		
 		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
 	end,
 
-	takeDamage = function(npc, dmgInfo) 
-		if not(bit.band(dmgInfo:GetDamageType(), bit.bor(DMG_BURN, DMG_SLOWBURN) ) == 0) then 
-			npc:Extinguish() --If we can't actually ignite ourselves then might as well.
-			dmgInfo:SetDamage(0)
+	takeDamage = function(npc, dmgInfo)
+		if IsValid(npc.backpack) and not npc.backpack.jcms_exploded and bit.band(dmgInfo:GetDamageType(), bit.bor(DMG_BUCKSHOT, DMG_BULLET) ) > 0 then
+			dmgInfo:ScaleDamage(0.2)
 		end
-	end,
-	
-	--[[
-	think = function(npc, state)
-		local smokeRange = 3500
-		if (npc.jcms_hasSmokeGrenade) and (state == NPC_STATE_COMBAT) and (IsValid(npc:GetEnemy()) and npc:GetEnemy():WorldSpaceCenter():DistToSqr(npc:EyePos()) < smokeRange*smokeRange) then
-			local nadeTarget = npc:GetEnemy():GetPos()
-			npc:SetIdealYaw((nadeTarget - npc:EyePos()):Angle().y)
-			npc:SetSchedule(SCHED_MELEE_ATTACK1)
-			
-			timer.Simple(0.5, function()
-				if IsValid(npc) and npc:Health() > 0 then
-					local npcPos = npc:WorldSpaceCenter()
-					local nadeDir = Vector(nadeTarget)
-					nadeDir:Sub(npcPos)
-					nadeDir:Normalize()
+
+		timer.Simple(0, function()
+			if IsValid(npc) and npc:Health() <= 0 and not npc.jcms_died then
+				npc.jcms_died = true
+				
+				if IsValid(npc.jcms_vanguard_mask) then 
+					local gib = ents.Create("gib") --auto cleanup
+					gib:SetModel("models/props_silo/welding_helmet.mdl")
+					gib:SetPos(npc.jcms_vanguard_mask:GetPos())
+					gib:SetAngles(npc.jcms_vanguard_mask:GetAngles())
+					gib:SetColor(npc.jcms_vanguard_mask:GetColor())
+					gib:Spawn()
+					gib:PhysicsInitSphere(5)
+
+					gib:GetPhysicsObject():Wake()
+					gib:GetPhysicsObject():ApplyForceCenter(Vector(0,0,150) + VectorRand(-35,35)) --dmgInfo:GetDamageForce() * 0.1 
+					timer.Simple(2, function()
+						if IsValid(gib) then gib:Dissolve() end
+					end)
 					
-					npc.jcms_hasSmokeGrenade = false
-					local nade = ents.Create("jcms_smokenade")
-					nade:SetPos(npcPos)
-					nade:SetOwner(npc)
-					nade:Spawn()
-					
-					nadeDir:Mul(900)
-					nadeDir.z = nadeDir.z + 75
-					nade:GetPhysicsObject():SetVelocity(nadeDir)
-					nade:GetPhysicsObject():SetAngleVelocity(Vector(-32, 32))
-					npc:SetSchedule(SCHED_BACK_AWAY_FROM_ENEMY)
+					npc.jcms_vanguard_mask:Remove()
 				end
-			end)
-		end
-	end,--]]
 
-	entityFireBullets = function(npc, bulletData)
-		bulletData.TracerName = nil
-		bulletData.Tracer = math.huge
-
-		bulletData.Spread = Vector(0.1,0.1,0)
-		bulletData.Num = 11
-
-		bulletData.Dir:Sub( Vector(0,0,0.05) ) --Aim down just a little bit to hit the ground more.
-
-		bulletData.Callback = function(attacker, tr, dmgInfo)
-			local effectdata = EffectData()
-			effectdata:SetStart(LerpVector(7/tr.StartPos:Distance(tr.HitPos), tr.StartPos, tr.HitPos))
-			effectdata:SetScale(math.random(6500, 9000))
-			effectdata:SetAngles(tr.Normal:Angle())
-			effectdata:SetOrigin(tr.HitPos)
-			effectdata:SetFlags(1)
-			util.Effect("jcms_laser", effectdata)
-
-			dmgInfo:SetDamageType( bit.bor(dmgInfo:GetDamageType(), DMG_BURN) )
-
-			if tr.HitWorld and tr.HitNormal:Dot(jcms.vectorUp) > 0 then --Hit world, and not a vertical wall or ceiling.
-				local fire = ents.Create("jcms_fire")
-				fire:SetPos(tr.HitPos)
-				fire:Spawn()
-
-				fire:SetRadius(45)
-				fire:SetActivationTime(CurTime() + 3)
-				fire.dieTime = CurTime() + 14
-			elseif tr.Entity and not tr.Entity:IsOnFire() and not tr.Entity:IsPlayer() then 
-				tr.Entity:Ignite(1.5)
+				if IsValid(npc.backpack) and not npc.backpack.jcms_exploded then
+					npc.backpack:FallOff()
+				end
 			end
-		end
+		end)
 	end,
 
 	proficiency = WEAPON_PROFICIENCY_GOOD

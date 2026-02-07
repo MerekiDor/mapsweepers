@@ -84,6 +84,10 @@ if SERVER then
 		local damage = selfTbl.damage
 
 		for i, ent in ipairs(ents.FindInSphere( selfPos, selfTbl:GetRadius() )) do 
+			if ent.jcms_fireproof then
+				continue
+			end
+			
 			local entTakeDamageInfo = ent.TakeDamageInfo
 			if entTakeDamageInfo then 
 				dmg:SetDamage(damage)
@@ -93,7 +97,7 @@ if SERVER then
 
 			local entClass = ent:GetClass()
 			if entClass == "prop_physics" or string.StartsWith(entClass, "npc_") then
-				if not(IsValid(selfTbl.jcms_owner) and jcms.team_SameTeam(ent, selfTbl.jcms_owner)) then
+				if not (IsValid(selfTbl.jcms_owner) and jcms.team_SameTeam(ent, selfTbl.jcms_owner)) then
 					ent:Ignite(3)
 				end
 			end
