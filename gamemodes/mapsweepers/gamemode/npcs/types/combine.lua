@@ -391,8 +391,10 @@ jcms.npc_types.combine_gunship = {
 		end
 	end,
 
-	takeDamage = function(npc, dmg)
-		jcms.npc_Gunship_TakeDamage(npc, dmg)
+	damageEffect = function(npc, target, dmgInfo)
+		if not target:IsPlayer() and not(bit.band(dmgInfo:GetDamageType(), DMG_BULLET) == 0) then --Gunships' bullets seem to have a hardcoded 10x damage buff against anything that isn't a player. 
+			dmgInfo:ScaleDamage(0.25)
+		end
 	end,
 
 	check = function(director)
@@ -504,6 +506,12 @@ jcms.npc_types.combine_cybergunship = {
 			util.Effect("jcms_bolt", effectdata)
 
 			util.BlastDamage(npc, npc, tr.HitPos, 50, 4) --50 rad, 4dmg
+		end
+	end,
+
+	damageEffect = function(npc, target, dmgInfo)
+		if not target:IsPlayer() and not(bit.band(dmgInfo:GetDamageType(), DMG_BULLET) == 0) then --Gunships' bullets seem to have a hardcoded 10x damage buff against anything that isn't a player. 
+			dmgInfo:ScaleDamage(0.25)
 		end
 	end,
 

@@ -2221,39 +2221,46 @@ end
 	end, nil, "End the mission and instantly boot into a new one", FCVAR_CHEAT)
 
 	concommand.Add("jcms_debug_enable", function(ply, cmd, args)
-		if not ply:IsPlayer() or ply:IsAdmin() then
-			if jcms.director then
-				if tostring(args[1]) == "0" then
-					jcms.director.debug = false
-					
-					for i, ply in ipairs( player.GetAll() ) do
-						ply:Kill()
-					end
-					
-					jcms.mission_Clear()
-				else
-					jcms.director.debug = true
-					for i, npc in ipairs(jcms.director.npcs) do
-						if IsValid(npc) then
-							npc:Remove()
-						end
-					end
-					
-					jcms.director.swarmNext = math.huge
-					table.Empty(jcms.director.encounters)
-					
-					for i, ent in ipairs( ents.FindByClass("jcms_npcportal") ) do
-						ent:Remove()
-					end
-					
-					ply:SetHealth(9999999)
-					jcms.printf("Debug mode ON. To revert it, use 'jcms_debug_enable 0'. All NPCs, encounters and NPC portals have been despawned, and swarms will no longer spawn.")
-				end
-			else
-				print(ply:Nick() .. ", you must be in a mission")
-			end
-		else
+		if not(not ply:IsPlayer() or ply:IsAdmin()) then
 			print(ply:Nick() .. ", this command is admin only")
+			return
+		end
+
+		if not jcms.director then 
+			print(ply:Nick() .. ", you must be in a mission")
+			return
+		end
+
+		if tostring(args[1]) == "0" then	--Send us to lobby
+			jcms.director.debug = false
+			
+			for i, ply in ipairs( player.GetAll() ) do
+				ply:Kill()
+			end
+			
+			jcms.mission_Clear()
+		else								--Enable Debug mode
+			jcms.director.debug = true
+			for i, npc in ipairs(jcms.director.npcs) do
+				if IsValid(npc) then
+					npc:Remove()
+				end
+			end
+
+			--Kick us out of the droppod
+			for i, ply in player.Iterator() do 
+				ply:ExitVehicle()
+			end
+			
+			jcms.director.swarmNext = math.huge
+			table.Empty(jcms.director.encounters)
+			
+			for i, ent in ipairs( ents.FindByClass("jcms_npcportal") ) do
+				ent:Remove()
+			end
+			
+			ply:SetHealth(9999999)
+			jcms.printf("Debug mode ON. To revert it, use 'jcms_debug_enable 0'. All NPCs, encounters and NPC portals have been despawned, and swarms will no longer spawn.")
 		end
 	end, nil, "Remove all NPC portals, delay all swarms and so on.", FCVAR_CHEAT)
 	
