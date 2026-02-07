@@ -2909,6 +2909,24 @@
 		table.Empty(jcms.hud_notifs)
 		table.Empty(jcms.hud_notifs_ammo)
 		jcms.vm_evacd = 0
+
+		-- My logic behind this is:
+		-- Surely people would use the spawnmenu more than 5 times per a single mission.
+		-- If they haven't, they're likely playing wrong or underestimating it. I think we want to remind them of its existence in this case.
+		local missionsStarted = math.max(1, jcms.statistics_GetMissionCount()) -- avoid division by zero
+		local ordersUsed = jcms.statistics_GetOther("orders")
+		local ordersPerMission = ordersUsed / missionsStarted
+
+		if ordersPerMission <= 5 then
+			timer.Simple(15, function()
+				if jcms.locPly:Alive() then
+					local str = tostring(jcms.hints[jcms.HINT_SPAWNMENU]) or "???"
+					local boundKey = input.LookupBinding("+menu") or "???"
+					str = language.GetPhrase(str):gsub("!BIND!", boundKey:upper())
+					jcms.hud_UpdateTip(false, str)
+				end
+			end)
+		end
 	end
 	
 	function jcms.hud_BeginningSequenceDraw()

@@ -937,7 +937,13 @@
 			end,
 
 			[ jcms.HINT_RESPAWN ] = function(d, ply)
-				return jcms.orders.respawnbeacon and d.deadPlayers > 0 and not game.SinglePlayer() and not jcms.util_IsPVP()
+				if jcms.orders.respawnbeacon then
+					if game.SinglePlayer() then
+						return (ply:Health() <= ply:GetMaxHealth()*0.2) and (ply:GetNWInt("jcms_cash") >= jcms.orders.respawnbeacon.cost*0.95)
+					else
+						return d.deadPlayers > 0 and not jcms.util_IsPVP()
+					end
+				end
 			end,
 
 			[ jcms.HINT_ANTIAIR ] = function(d, ply)

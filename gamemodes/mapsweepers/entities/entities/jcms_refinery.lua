@@ -116,6 +116,9 @@ if SERVER then
 				end
 
 				if canRefine then
+					if not self:GetIsSecondary() then
+						self:EmitSound("buttons/bell1.wav", 90, 137)
+					end
 					self:OnRefine(ent, miner, bringer, obtained, mass, value)
 				end
 			end

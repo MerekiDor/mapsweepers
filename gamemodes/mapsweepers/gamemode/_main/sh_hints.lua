@@ -52,7 +52,7 @@ if CLIENT then
 		[jcms.HINT_FIRSTAID] = "#jcms.hint_firstaid",
 		[jcms.HINT_AMMO] = "#jcms.hint_ammo",
 		[jcms.HINT_TURRETREP] = "#jcms.hint_turretrep",
-		[jcms.HINT_RESPAWN] = "#jcms.hint_respawn",
+		[jcms.HINT_RESPAWN] = game.SinglePlayer() and "#jcms.hint_respawn_solo" or "#jcms.hint_respawn",
 		[jcms.HINT_ANTIAIR] = "#jcms.hint_antiair",
 		[jcms.HINT_BREACH] = "#jcms.hint_breach",
 		[jcms.HINT_LEECHES] = "#jcms.hint_leeches",
