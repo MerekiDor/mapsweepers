@@ -1925,6 +1925,18 @@ jcms.offgame = jcms.offgame or NULL
 						child:Remove()
 					end
 				end
+
+				if entry.ooc then
+					local elem = scrollAreaText:Add("DLabel")
+					elem:SetFont("jcms_small_bolder")
+					elem:SetText("#jcms.codexooc")
+					elem:SetTextColor(jcms.color_bright_alt)
+					elem:DockMargin(24, 2, 24, 2)
+					elem:SetTall(24)
+					elem:Dock(TOP)
+					elem:SetZPos(0)
+					elem.isEntry = true
+				end
 				
 				local strings = {}
 				if entry.pages then
@@ -1959,6 +1971,7 @@ jcms.offgame = jcms.offgame or NULL
 							part_text = part
 						end
 
+						local elem
 						if part_type == "title" then
 							elem = scrollAreaText:Add("DLabel")
 							elem:SetFont("jcms_hud_small")
@@ -2003,8 +2016,8 @@ jcms.offgame = jcms.offgame or NULL
 
 						if elem then
 							elem:Dock(TOP)
-							elem:SetZPos(accumulatedZPos)
 							accumulatedZPos = accumulatedZPos + 1
+							elem:SetZPos(accumulatedZPos)
 							elem.isEntry = true
 						end
 					end

@@ -28,12 +28,14 @@ jcms.codex = {
 
 	{
 		level = 4,
+		ooc = true,
 		name = "#jcms.codex_world_name",
 		text = "#jcms.codex_world"
 	},
 	
 	{
 		level = 7,
+		ooc = true,
 		name = "#jcms.codex_factions_name",
 		pages = { 
 			"#jcms.codex_factions1", 
@@ -41,5 +43,66 @@ jcms.codex = {
 			"#jcms.codex_factions3", 
 			"#jcms.codex_factions4"
 		}
+	},
+
+	{
+		level = 10,
+		name = "#jcms.codex_gambling_name",
+		text = "#jcms.codex_gambling"
+	},
+
+	{
+		level = 12,
+		name = "#jcms.codex_metals_name",
+		pages = { 
+			"#jcms.codex_metals1", 
+			"#jcms.codex_metals2", 
+			"#jcms.codex_metals3", 
+			"#jcms.codex_metals4"
+		}
+	},
+
+	{
+		level = 16,
+		name = "#jcms.codex_sweepers_name",
+		text = "#jcms.codex_sweepers"
+	},
+
+	{
+		level = 21,
+		name = "#jcms.codex_jcorparmy_name",
+		text = "#jcms.codex_jcorparmy"
+	},
+
+	{
+		level = 23,
+		name = "#jcms.codex_clerks_name",
+		text = "#jcms.codex_clerks"
+	},
+
+	{
+		level = 25,
+		ooc = true,
+		name = "#jcms.codex_respawnsystem_name",
+		text = "#jcms.codex_respawnsystem"
+	},
+
+	{
+		level = 27,
+		ooc = true,
+		name = "#jcms.codex_thenarrative_name",
+		text = "#jcms.codex_thenarrative"
+	},
+
+	{
+		level = 34,
+		name = "#jcms.codex_jenergy_name",
+		text = "#jcms.codex_jenergy"
+	},
+
+	{
+		level = 40,
+		name = "#jcms.codex_theevent_name",
+		text = "#jcms.codex_theevent"
 	}
 }
