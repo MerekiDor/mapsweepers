@@ -93,16 +93,38 @@ end
         if not (IsValid(self) and IsValid(self.Owner) and IsValid(self:GetOwner())) then return end
 
         self:ShootEffects()
+
+        local startPos = (self.Owner:WorldSpaceCenter() + self.Owner:EyePos())/2
 		local bomb = ents.Create("jcms_firebomb")
-		bomb:SetPos( (self.Owner:WorldSpaceCenter() + self.Owner:EyePos())/2 )
+		bomb:SetPos(startPos)
 		bomb:SetOwner(self.Owner)
+        bomb:SetAngles(AngleRand())
 		bomb:Spawn()
 		bomb.Damage = damage
 		bomb.Attacker = self.Owner
 
+        local distToEnemy = 600
+        local addedZ = 4
+        local target = self.Owner:GetEnemy()
+        if IsValid(target) then
+            local enemyPos = target:BodyTarget(startPos)
+            distToEnemy = startPos:Distance( enemyPos )
+
+            local zDiff = enemyPos.z - startPos.z
+            
+            if zDiff > 0 then
+                addedZ = math.min(300, zDiff) + 48
+            else
+                distToEnemy = distToEnemy - zDiff*0.2
+                addedZ = math.abs(zDiff)^0.8 + 32
+            end
+        end
+
         local normal = self.Owner:GetAimVector()
         normal:Rotate( AngleRand(-aimcone, aimcone) )
-		bomb:GetPhysicsObject():SetVelocity(normal * math.random(500, 750))
+        normal:Mul(distToEnemy * 0.7 + 100)
+        normal.z = normal.z + addedZ
+		bomb:GetPhysicsObject():SetVelocity(normal)
 		
 		local ed = EffectData()
 		ed:SetEntity(self)

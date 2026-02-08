@@ -42,6 +42,7 @@ function ENT:Initialize()
 
 	if SERVER then
 		util.SpriteTrail(self, 0, Color(255, 180, 20), true, 4, 0, 2, 1, "trails/laser")
+		self:SetUseType(SIMPLE_USE)
 	end
 
 	if CLIENT then
@@ -52,6 +53,11 @@ function ENT:Initialize()
 end
 
 if SERVER then
+	
+	function ENT:OnTakeDamage(dmg)
+		self:TakePhysicsDamage(dmg)
+	end
+
 	function ENT:Use(activator)
 		if IsValid(activator) and activator:IsPlayer() and jcms.team_JCorp_player(activator) then
 			activator:PickupObject(self)
@@ -104,6 +110,16 @@ if SERVER then
 				fire.jcms_owner = self.Attacker
 			end
 		end
+
+		local dmg = DamageInfo()
+		dmg:SetDamagePosition(pos)
+		dmg:SetReportedPosition(pos)
+		dmg:SetDamageForce(jcms.vectorUp)
+		dmg:SetDamage(15)
+		dmg:SetDamageType(bit.bor(DMG_BLAST, DMG_BURN))
+		dmg:SetInflictor(self)
+		dmg:SetAttacker(IsValid(self.Attacker) and self.Attacker or self)
+		util.BlastDamageInfo(dmg, pos, 100)
 
 		self:EmitSound("ambient/fire/ignite.wav", 100, 103, 1)
 
