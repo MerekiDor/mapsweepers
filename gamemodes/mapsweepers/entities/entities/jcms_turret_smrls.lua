@@ -44,7 +44,7 @@ function ENT:Initialize()
 			
 			-- Scanning nearby area {{{
 				local startingPositions = { shootPos }
-				local pitchMin, pitchMax = jcms.turrets.smrls.pitchLockMin, jcms.turrets.smrls.pitchLockMax
+				local pitchMin, pitchMax = math.min(-90, jcms.turrets.smrls.pitchLockMin - 10), math.max(90, jcms.turrets.smrls.pitchLockMax + 20)
 				local baseAngle = self:GetAngles()
 				local up, right = baseAngle:Up(), baseAngle:Right()
 
@@ -113,7 +113,7 @@ function ENT:Initialize()
 						if not traceRes.Hit then
 							self.startNode = node
 							
-							if i > 1 then
+							if sp:DistToSqr(shootPos) > 9 then
 								self.extraStartPos = sp
 							end
 
@@ -140,7 +140,7 @@ end
 function ENT:TurretAngleIsSafe()
 	local target = self:GetTurretDesiredAngle()
 	local angle = self.turretAngle
-	return math.abs(math.AngleDifference(angle.p, target.p)) <= 48 and math.abs(math.AngleDifference(angle.y, target.y)) <= 12
+	return math.abs(math.AngleDifference(angle.y, target.y)) <= 12
 end
 
 function ENT:SetupBoosted() -- For engineer
@@ -368,10 +368,11 @@ if SERVER then
 					end
 					missile.Damping = 0.89
 					missile.LoweredDampingPath = 2
+					missile:GetPhysicsObject():SetVelocity(dir*64)
+				else
+					missile:GetPhysicsObject():SetVelocity(dir*300)
 				end
 			end
-			
-			missile:GetPhysicsObject():SetVelocity(dir*300)
 
 			missile:EmitSound("weapons/rpg/rocket1.wav", 90, 113)
 			missile:CallOnRemove( "jcms_rpg_removeMissile", function()
