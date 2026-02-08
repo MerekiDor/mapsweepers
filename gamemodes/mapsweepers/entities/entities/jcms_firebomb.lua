@@ -53,7 +53,6 @@ function ENT:Initialize()
 end
 
 if SERVER then
-	
 	function ENT:OnTakeDamage(dmg)
 		self:TakePhysicsDamage(dmg)
 	end

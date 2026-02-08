@@ -212,7 +212,7 @@ jcms.npc_commanders["zombie"] = {
 					npc = jcms.npc_Spawn(upgrade, npc:GetPos())
 
 					if upgrade == "zombie_minitank" then 
-						npc.bounty = 45 --Keep the old cost for flashpoint ones, they're meant to be a hinderance.
+						npc.jcms_bounty = 45 --Keep the old cost for flashpoint ones, they're meant to be a hinderance.
 					end
 				end
 

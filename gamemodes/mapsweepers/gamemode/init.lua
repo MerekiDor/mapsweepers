@@ -424,7 +424,8 @@ end
 		if not tr.Hit then return end
 
 		for i, ent in ipairs(ents.FindInSphere(tr.HitPos, 15)) do 
-			if ent:GetClass() == "npc_grenade_frag" then 
+			local entClass = ent:GetClass()
+			if entClass == "npc_grenade_frag" or entClass == "jcms_firebomb" then 
 				return ent
 			end
 		end
