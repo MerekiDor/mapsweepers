@@ -1919,88 +1919,101 @@ jcms.offgame = jcms.offgame or NULL
 				textArea.jText = btn.cdx.name
 				surface.PlaySound("buttons/button1.wav")
 
-				local entry = btn.cdx.entry
+				local entry = btn.cdx
 				for i, child in ipairs(scrollAreaText:GetCanvas():GetChildren()) do
 					if child.isEntry then
 						child:Remove()
 					end
 				end
+				
+				local strings = {}
+				if entry.pages then
+					for i, text in ipairs(entry.pages) do
+						table.insert(strings, language.GetPhrase(text):sub(2, -2))
+					end
+				elseif entry.text then
+					table.insert(strings, language.GetPhrase(entry.text):sub(2, -2))
+				end
 
-				for i,v in ipairs(entry) do
-					local elem
+				local accumulatedZPos = 0
+				for i, str in ipairs(strings) do
+					local parts = string.Split(str, "\n")
+					for j, part in ipairs(parts) do
+						local part_type = "text"
+						local part_text = ""
+						local _, b_index, part_num, part_beginning = part:find("^%s*(%d*)([%W%s]+) %w")
 
-					if v.type == "title" then
-						elem = scrollAreaText:Add("DLabel")
-						elem:SetFont("jcms_hud_small")
-						elem:SetText(v.text)
-						elem:SetTextColor(jcms.color_bright)
-						elem:DockMargin(0, i==1 and 2 or 12, 0, 6)
-						elem:SetTall(32)
-					elseif v.type == "caption" then
-						elem = scrollAreaText:Add("DLabel")
-						elem:SetFont("jcms_medium")
-						elem:SetText(v.text)
-						elem:SetTextColor(ColorAlpha(jcms.color_bright, 100))
-						elem:DockMargin(0, 2, 0, 4)
-					elseif v.type == "text" then
-						elem = scrollAreaText:Add("DTextEntry")
-						elem:SetFont("jcms_small_bolder")
-						elem:SetTextColor(jcms.color_bright)
-						elem:SetMultiline(true)
-						elem:DockMargin(8, 4, 64, 4)
-						
-						local text = "  " .. tostring(v.text)
-						elem:SetText(text)
-						elem:SetEditable(false)
-						elem:SetPaintBackground(false)
-						surface.SetFont("jcms_small_bolder")
-						local tw, th = surface.GetTextSize(text)
-						elem:SetTall(th * math.ceil( tw/(listPanel:GetWide()-128) ) + 8)
-					elseif v.type == "list_numbered" then
-						for j,e in ipairs(v.entries) do
-							local subelem = scrollAreaText:Add("DLabel")
-							subelem:SetFont("jcms_small_bolder")
-							subelem:SetText(j .. ".  " .. tostring(e))
-							subelem:SetTextColor(jcms.color_bright)
-							subelem:DockMargin(24, 0, 0, 0)
-							subelem:Dock(TOP)
-							subelem:SetZPos(i*30+j)
-							subelem.isEntry = true
+						if part_beginning == "-#" then
+							part_type = "caption"
+							part_text = part:sub(b_index, -1)
+						elseif part_beginning == "#" then
+							part_type = "title"
+							part_text = part:sub(b_index, -1)
+						elseif part_beginning == "-" then
+							part_type = "point"
+							part_text = part:sub(b_index, -1)
+						elseif part_beginning == "." then
+							part_type = "point_num"
+							part_text = part:sub(b_index, -1)
+						else
+							part_text = part
 						end
-					elseif v.type == "list_points" then
-						for j,e in ipairs(v.entries) do
-							subelem = scrollAreaText:Add("DTextEntry")
-							subelem:SetFont("jcms_small_bolder")
-							subelem:SetTextColor(jcms.color_bright)
-							subelem:SetMultiline(true)
-							subelem:DockMargin(8, 4, 64, 4)
+
+						if part_type == "title" then
+							elem = scrollAreaText:Add("DLabel")
+							elem:SetFont("jcms_hud_small")
+							elem:SetText(part_text)
+							elem:SetTextColor(jcms.color_bright)
+							elem:DockMargin(0, i==1 and 2 or 12, 0, 6)
+							elem:SetTall(32)
+						elseif part_type == "caption" then
+							elem = scrollAreaText:Add("DLabel")
+							elem:SetFont("jcms_medium")
+							elem:SetText(part_text)
+							elem:SetTextColor(ColorAlpha(jcms.color_bright, 100))
+							elem:DockMargin(0, 2, 0, 4)
+						else
+							elem = scrollAreaText:Add("DTextEntry")
+							elem:SetFont("jcms_small_bolder")
+							elem:SetTextColor(jcms.color_bright)
+							elem:SetMultiline(true)
 							
-							local text = "* " .. tostring(e)
-							subelem:SetText(text)
-							subelem:SetEditable(false)
-							subelem:SetPaintBackground(false)
+							local text
+							local margin = 4
+							local margin_left = 8
+							if part_type == "point" then
+								text = " ●  " .. part_text
+								margin = 0
+								margin_left = 16
+							elseif part_type == "point_num" then
+								text = " " .. part_num .. ". " .. part_text
+								margin = 0
+								margin_left = 16
+							else
+								text = "  " .. part_text
+							end
+							elem:DockMargin(margin_left, margin, 64, margin)
+							elem:SetText(text)
+							elem:SetEditable(false)
+							elem:SetPaintBackground(false)
 							surface.SetFont("jcms_small_bolder")
 							local tw, th = surface.GetTextSize(text)
-							subelem:SetTall(th * math.ceil( tw/(listPanel:GetWide()-96) ) + 8)
+							elem:SetTall(th * math.ceil( tw/(listPanel:GetWide()-128) ) + 8)
+						end
 
-							subelem:DockMargin(24, 0, 0, 0)
-							subelem:Dock(TOP)
-							subelem:SetZPos(i*30+j)
-							subelem.isEntry = true
+						if elem then
+							elem:Dock(TOP)
+							elem:SetZPos(accumulatedZPos)
+							accumulatedZPos = accumulatedZPos + 1
+							elem.isEntry = true
 						end
 					end
+				end
 
-					if elem then
-						elem:Dock(TOP)
-						elem:SetZPos(i*30)
-						elem.isEntry = true
-					end
-
-					if IsValid(scrollAreaText.VBar) then
-						scrollAreaText.VBar.Paint = BLANK_DRAW
-						scrollAreaText.VBar:SetHideButtons(true)
-						scrollAreaText.VBar.btnGrip.Paint = jcms.paint_ScrollGrip
-					end
+				if IsValid(scrollAreaText.VBar) then
+					scrollAreaText.VBar.Paint = BLANK_DRAW
+					scrollAreaText.VBar:SetHideButtons(true)
+					scrollAreaText.VBar.btnGrip.Paint = jcms.paint_ScrollGrip
 				end
 			end
 
