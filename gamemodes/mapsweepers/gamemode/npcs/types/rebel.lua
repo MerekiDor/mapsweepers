@@ -741,7 +741,7 @@ jcms.npc_types.rebel_vanguard = {
 	
 	danger = jcms.NPC_DANGER_STRONG,
     cost = 1.6,
-    swarmWeight = 0.4,
+    swarmWeight = 0.5,
     swarmLimit = 1,
 
 	class = "npc_citizen",
