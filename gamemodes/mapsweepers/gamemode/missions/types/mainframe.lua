@@ -497,7 +497,7 @@ jcms.missions.mainframe = {
 						return true
 					else
 						if (math.random() < zombieRatio) and missionData.completedTracks[1] then
-							return npcData.faction == "zombie" and not(npcData.class == "npc_jcms_spirit" or npcData.class == "npc_jcms_boomer") --todo: BANDAID FIX, ALYX DOESN'T LIKE THE CUSTOM ONES.
+							return npcData.faction == "zombie" and (not npcData.class:find("npc_jcms_")) --todo: BANDAID FIX, ALYX DOESN'T LIKE THE CUSTOM ONES.
 						else
 							return npcData.faction == "rebel"
 						end

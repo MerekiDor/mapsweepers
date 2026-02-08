@@ -1,6 +1,6 @@
 "LightmappedGeneric"
 {
-	"$basetexture" "jcms/maps/rgg_logo"
+	"$basetexture" "jcms/maps/jcorp_logotype"
 	"$decal" "1"
 	"$decalscale" "0.5"
 	"$translucent" "1"
