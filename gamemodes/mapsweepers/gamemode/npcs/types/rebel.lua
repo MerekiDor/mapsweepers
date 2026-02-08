@@ -582,7 +582,7 @@ jcms.npc_types.rebel_fighter = {
 			if wep:GetClass() == "weapon_smg" then
 				wep:SetSaveValue("m_fMaxRange1", 1000) --TODO: This is a bit low? Might want to mess with it.
 			else
-				npc:SetCurrentWeaponProficiency(WEAPON_PROFICIENCY_VERY_GOOD) --AK47 rebels are scarier, just like AR2 combine
+				npc:SetCurrentWeaponProficiency(WEAPON_PROFICIENCY_PERFECT) --AK47 rebels are scarier, just like AR2 combine
 			end
 		end
 		
