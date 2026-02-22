@@ -34,6 +34,10 @@ function ENT:SetupDataTables()
 end
 
 if SERVER then
+	ENT.GrabDistance = 300
+	ENT.GrabSearchRange = 2250 --How far away from ourselves to look for grabbables
+	ENT.GrabHuntDistance = 2000 --How far away we have to be from our enemy to look for grabbables
+
 	function ENT:Initialize()
 		self:SetModel("models/dog.mdl")
 		
@@ -134,6 +138,19 @@ if SERVER then
 			else
 				self:SetGrabbedObject(NULL)
 			end
+		elseif IsValid(self.grabTarget) then
+			local dist = self:GetPos():Distance(self.grabTarget:GetPos())
+
+			if dist < self.GrabDistance then
+				--Got in range, grab
+				self:DogGrab(self.grabTarget)
+				self.grabTarget = NULL 
+				self:ClearSchedule() --Force us to update our schedule.
+			elseif self:IsUnreachable(self.grabTarget) then 
+				--Failed to grab
+				self.grabTarget = NULL 
+				self:ClearSchedule() --Force us to update our schedule.
+			end
 		end
 	end
 	
@@ -169,7 +186,7 @@ if SERVER then
 			local viscon = enemy:Visible(enemy) and (time-self:GetEnemyLastTimeSeen(enemy))<1
 			local dist = self:GetPos():Distance(enemypos)
 			
-			if viscon and dist < 1500 then
+			if viscon and dist < 1250 then
 				self:DogThrow(enemy:WorldSpaceCenter() + enemy:GetVelocity())
 			else
 				self:SetSchedule(SCHED_ESTABLISH_LINE_OF_FIRE)
@@ -180,39 +197,32 @@ if SERVER then
 	function ENT:State_Ungrabbed()
 		local enemy = self:GetEnemy()
 
-		--Find a target to grab if we have no enemy
-		if not IsValid(enemy) then --TODO: Cooldown-based instead of just when we lack an enemy. 
-			self:SetSchedule(SCHED_COMBAT_PATROL)
-
-			for i, ent in ipairs(ents.FindInSphere(self:GetPos(), 1000)) do 
-				if self:IsGoodGrabTarget(ent) and not self:IsUnreachable(ent) then 
-					self.grabTarget = ent
-					break
-				end
-			end
-
-			return
+		--If we're out of combat and don't have one, look for a grab taret.
+		if not IsValid(self.grabTarget) and (not(self:GetNPCState() == NPC_STATE_COMBAT) or (IsValid(enemy) and enemy:GetPos():DistToSqr(self:GetPos()) < self.GrabHuntDistance ) ) then 
+			self:FindGrabTarget()
 		end
 
 		--Go grab our grab target if we have one
 		if IsValid(self.grabTarget) then 
-			if self:IsUnreachable(self.grabTarget) then return end
-
-			local dist = self:GetPos():Distance(self.grabTarget:GetPos())
-
-			if dist < 300 then
-				self:DogGrab(self.grabTarget)
-				self.grabTarget = NULL 
-			else --Go to our target
-				--[[TODO: Figure out how to send us to the turret without forced go,
-					Doing it this way makes this uninterruptable / makes it have to *reach* the target before picking it up.
-				--]]
+			--Go to our target
+			
+			--TODO: This is probably not the best way to do this, but it works for now.
+			if self:NavSetGoalPos( self.grabTarget:GetPos() ) then
 				self:SetSaveValue("m_vecLastPosition", self.grabTarget:GetPos())
 				self:SetSchedule(SCHED_FORCED_GO_RUN)
+				return
+			else
+				self:RememberUnreachable(self.grabTarget)
+				self.grabTarget = NULL
 			end
+		end
 
+		--Patrol if no grab target or enemy
+		if not IsValid(enemy) then
+			self:SetSchedule(SCHED_COMBAT_PATROL)
 			return
 		end
+
 
 		--Run after our enemy if we can't see them
 		local cTime = CurTime()
@@ -245,6 +255,16 @@ if SERVER then
 				self:SetSchedule(SCHED_CHASE_ENEMY)
 			end
 		end
+	end
+
+	function ENT:FindGrabTarget() --true if found, false if not.
+		for i, ent in ipairs(ents.FindInSphere(self:GetPos(), self.GrabSearchRange)) do 
+			if self:IsGoodGrabTarget(ent) and not self:IsUnreachable(ent) then 
+				self.grabTarget = ent
+				return true
+			end
+		end
+		return false
 	end
 
 	
@@ -363,6 +383,8 @@ if SERVER then
 			self:SetGrabbedObject(ent)
 			self:EmitSound("Weapon_PhysCannon.Pickup")
 		end
+
+		ent.jcms_dogNoCollide = constraint.NoCollide( self, ent, 0, 0, true )
 	end
 
 	function ENT:IsGoodGrabTarget(ent)
@@ -382,6 +404,10 @@ if SERVER then
 			self:AddGestureSequence(40)
 			timer.Simple(0.4, function()
 				if IsValid(self) and IsValid(grabbedEnt) then
+					if IsValid(grabbedEnt.jcms_dogNoCollide) then 
+						grabbedEnt.jcms_dogNoCollide:Remove()
+					end
+
 					self:SetGrabbedObject(NULL)
 					
 					local phys = grabbedEnt:GetPhysicsObject()

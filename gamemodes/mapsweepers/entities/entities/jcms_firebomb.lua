@@ -32,7 +32,7 @@ function ENT:SetupDataTables()
 	self:NetworkVar("Float", 0, "ExpiresAt")
 
 	if SERVER then
-		self:SetExpiresAt( CurTime() + 5 )
+		self:SetExpiresAt( CurTime() + 3.75 )
 	end
 end
 
