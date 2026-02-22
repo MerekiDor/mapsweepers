@@ -535,7 +535,7 @@ end)
 			local r, g, b = jcms.util_ColorFromIntegerUnpacked( emt.GetNWInt(ent, "jcms_sweeperShield_colour", 255) )
 			
 			local isDecayShield = swpShield > maxShield
-			local alpha = (isDecayShield and math.Rand(1, 1)) or math.Clamp(swpShield/maxShield, 0, 1)
+			local alpha = (isDecayShield and 1) or math.Clamp(swpShield/maxShield, 0, 1)
 
 			
 			render.SetColorModulation((r/200) * alpha, (g/200) * alpha, (b/200) * alpha)

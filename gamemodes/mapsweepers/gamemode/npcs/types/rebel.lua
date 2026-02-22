@@ -758,7 +758,6 @@ jcms.npc_types.rebel_vanguard = {
 	postSpawn = function(npc)
 		npc:SetMaxHealth( npc:Health() + 25 )
 		npc:SetHealth( npc:GetMaxHealth() )
-		npc:Fire("SetMedicOn")
 		npc:SetModel("models/barney.mdl")
 		npc.jcms_fireproof = true
 
@@ -824,71 +823,6 @@ jcms.npc_types.rebel_vanguard = {
 
 	proficiency = WEAPON_PROFICIENCY_GOOD
 }
-
---[[
-jcms.npc_types.rebel_engineer = {
-	portalSpawnWeight = 0.1,
-	faction = "rebel",
-	
-	danger = jcms.NPC_DANGER_STRONG,
-    cost = 1.5,
-    swarmWeight = 0.5,
-    swarmLimit = 1,
-
-	class = "npc_citizen",
-	bounty = 45,
-
-	weapons = {
-		weapon_shotgun = 1
-	},
-
-	preSpawn = function(npc)
-		npc:SetKeyValue("citizentype", "3")
-	end,
-
-	postSpawn = function(npc)
-		npc:Fire("SetMedicOn")
-
-		npc:SetMaxLookDistance(1000)
-		npc:SetArrivalDistance(250)
-
-		npc:SetSaveValue("m_flDistTooFar", 500)
-		npc:GetActiveWeapon():SetSaveValue("m_fMinRange1", 0)
-		npc:GetActiveWeapon():SetSaveValue("m_fMaxRange1", 750)
-
-		--backpack charger / tesla
-		npc.backpack = ents.Create("jcms_vanguard_backpack")
-		local attch = npc:GetAttachment(3)
-		npc.backpack:SetPos(attch.Pos - attch.Ang:Forward() * 11 - attch.Ang:Up() * 20)
-		npc.backpack:SetAngles(attch.Ang)
-		npc.backpack:SetParent(npc, 3)
-		npc.backpack:Spawn()
-		npc.backpack.jcms_owner = npc
-
-		local ed = EffectData()
-		ed:SetEntity(npc)
-		ed:SetScale(0) --Activation time
-		util.Effect("jcms_electricarcs", ed)
-	end,
-
-	takeDamage = function(npc, dmgInfo)
-		timer.Simple(0, function()
-			if IsValid(npc) and IsValid(npc.backpack) and npc:Health() <= 0 then 
-				npc.backpack:Remove()
-			end
-		end)
-	end,
-
-	think = function(npc, state)
-		--Place mines, C4.
-		--Any other objects that are relevant.
-	end,
-	
-	entityFireBullets = function(npc, bulletData)
-		bulletData.IgnoreEntity = npc.backpack
-	end
-}
---]]
 
 jcms.npc_types.rebel_odessa = {
 	portalSpawnWeight = 0.5,
@@ -1312,6 +1246,7 @@ jcms.npc_types.rebel_megacopter = {
 	
 	postSpawn = function(npc)
 		jcms.npc_Helicopter_Setup(npc, 40)
+		
 		npc:SetNWString("jcms_boss", "rebel_megacopter")
 
 		npc.jcms_heli_dropTypes[1] = "gatling"
