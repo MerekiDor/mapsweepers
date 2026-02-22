@@ -130,8 +130,10 @@ if SERVER then
 			end
 		end
 
-		if boss then --todo: Maybe use nodegraph instead of navmesh here. Would produce more reliable results.
-			jcms.npc_PortalReleaseXNPCs(self, 1, self:GetPos() + Vector(0,0,300), self.faction, boss)
+		if boss then
+			jcms.npc_PortalReleaseXNPCs(self, 1, self:GetPos() + Vector(0,0,300), self.faction, boss, function(ent, npc)
+				jcms.npc_SetupDecayingShield(npc, npc:GetMaxHealth(), 60, jcms.factions_GetColorInteger(self.faction)) --TODO: Diff colour
+			end)
 		end
 
 		--Can't fucking think of an easy/good one for zombies so we're just gonna have them horde super hard yay!!!!

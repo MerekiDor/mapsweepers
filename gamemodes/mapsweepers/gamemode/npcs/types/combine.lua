@@ -96,6 +96,10 @@
 		elseif damage < 125 then 
 			hits = 0.5
 		end
+		
+		if npc:GetNWInt("jcms_sweeperShield", -1) > 0 then 
+			hits = 0
+		end
 
 		npc.jcms_gunship_hits = npc.jcms_gunship_hits - hits
 		if npc.jcms_gunship_hits <= 0 and not npc.jcms_GunshipDead then 
@@ -395,6 +399,10 @@ jcms.npc_types.combine_gunship = {
 		if not target:IsPlayer() and not(bit.band(dmgInfo:GetDamageType(), DMG_BULLET) == 0) then --Gunships' bullets seem to have a hardcoded 10x damage buff against anything that isn't a player. 
 			dmgInfo:ScaleDamage(0.25)
 		end
+	end,
+	
+	takeDamage = function(npc, dmg)
+		jcms.npc_Gunship_TakeDamage(npc, dmg)
 	end,
 
 	check = function(director)

@@ -131,8 +131,11 @@ function ENT:SetupDataTables()
 			self:UpdateForFaction(new and "rgg" or jcms.util_GetFactionNamePVP(ent))
 			if new then 
 				self:SetSniperGlare(true)
-			elseif not jcms.util_IsPVP() then 
-				self:SetSniperGlare(false)
+			else
+				if not jcms.util_IsPVP() then 
+					self:SetSniperGlare(false)
+				end
+				ent:SetHealth(ent:GetMaxHealth()) --Repair to full HP if a sweeper hacked us
 			end
 		end
 	end)

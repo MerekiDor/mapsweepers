@@ -428,8 +428,13 @@ jcms.npc_types.antlion_guard = {
 			end
 		end)
 	end,
+	
 	scaleDamage = function(npc, hitGroup, dmgInfo)
-		if bit.band(dmgInfo:GetDamageType(), bit.bor(DMG_BLAST,DMG_BLAST_SURFACE)) ~= 0 then return end
+		if bit.band(dmgInfo:GetDamageType(), bit.bor(DMG_BLAST,DMG_BLAST_SURFACE)) ~= 0 then 
+			dmgInfo:ScaleDamage(0.75)
+			return 
+		end
+
 		local inflictor = dmgInfo:GetInflictor() 
 		if not IsValid(inflictor) then return end 
 
