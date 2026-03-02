@@ -309,6 +309,8 @@
 
 			--Respawn Beacons
 			for i, beacon in ipairs(d.respawnBeacons) do
+				if not IsValid(beacon) then continue end
+
 				local teamId = beacon:GetNWInt("jcms_pvpTeam", -1)
 				teamId = (not(teamId==-1) and teamId or 1)
 				teamCounts[teamId] = (teamCounts[teamId] or 0) + 1
@@ -368,6 +370,8 @@
 			if #beacons > 0 then
 				table.Shuffle(d.respawnBeacons)
 				for i, beacon in ipairs(d.respawnBeacons) do
+					if not IsValid(beacon) then continue end
+					
 					if (evenBusyOnes or not beacon:GetRespawnBusy()) and (not teamId or jcms.team_pvpSameTeam_optimised(teamId, beacon:GetNWInt("jcms_pvpTeam", -1))) then
 						return beacon, false
 					end

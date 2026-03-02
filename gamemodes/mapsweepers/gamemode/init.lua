@@ -182,6 +182,7 @@ end
 	hook.Add("InitPostEntity", "jcms_InitPostEnt", function()
 		RunConsoleCommand("ai_disabled", "0")
 		RunConsoleCommand("ai_ignoreplayers", "0")
+		RunConsoleCommand("sv_restrict_aspect_ratio_fov", "0") --HUD breaks on wide-screen if this is on
 		--Skill should never be anything other than 1, but I guess other addons fuck with it, because Mereki had it at 3.
 		game.SetSkillLevel( 1 ) -- TODO Maybe warn the player.
 		--This will fucking annihilate performance if it's 1. It's saved from sandbox, so playtesters have repeatedly had issues with this.
