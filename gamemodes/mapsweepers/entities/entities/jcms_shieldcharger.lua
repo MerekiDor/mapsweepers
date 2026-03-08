@@ -36,6 +36,9 @@ ENT.JCMS_Stunnable = true
 
 function ENT:Initialize()
 	if SERVER then
+		self.jcms_DontCollideWithNPCs = true
+		self:SetCustomCollisionCheck(true)
+
 		self:SetModel("models/props_combine/combine_light001a.mdl")
 		self:PhysicsInitStatic(SOLID_VPHYSICS)
 		

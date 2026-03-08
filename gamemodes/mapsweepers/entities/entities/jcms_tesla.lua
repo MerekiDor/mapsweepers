@@ -39,6 +39,9 @@ ENT.JCMS_Stunnable = true
 
 function ENT:Initialize()
 	if SERVER then
+		self.jcms_DontCollideWithNPCs = true
+		self:SetCustomCollisionCheck(true)
+
 		self:SetModel("models/props_c17/utilityconnecter006c.mdl")
 		self:SetMaterial("models/props_combine/metal_combinebridge001")
 		self:PhysicsInitStatic(SOLID_VPHYSICS)
