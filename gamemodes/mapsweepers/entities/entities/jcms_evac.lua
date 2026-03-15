@@ -137,6 +137,9 @@ if SERVER then
 			if swpNearby ~= selfTbl:GetCanCharge() then
 				selfTbl:SetCanCharge(swpNearby)
 			end
+			if self.jcms_evacPreventCharge then 
+				selfTbl:SetCanCharge(false)
+			end
 
 			if not(safe) ~= selfTbl:GetSlowCharge() then 
 				selfTbl:SetSlowCharge(not safe)
@@ -159,7 +162,7 @@ if SERVER then
 				end
 			end
 
-			if swpNearby and charge < maxcharge then
+			if selfTbl:GetCanCharge() and charge < maxcharge then
 				local cTime = CurTime()
 				if safe or selfTbl.nextSlowCharge < cTime then 
 					selfTbl:SetCharge(charge + 1)

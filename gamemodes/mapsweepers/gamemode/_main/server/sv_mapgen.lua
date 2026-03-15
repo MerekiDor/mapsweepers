@@ -625,6 +625,8 @@ jcms.MAPGEN_CONSTRUCT_DIAMETER = math.sqrt(82411875)
 		end
 
 		print("[MapSweepers] Map analysed in: " .. tostring( math.Round(SysTime() - analyseStart, 3) ) .. " seconds")
+
+		hook.Run("MapSweepers_MapAnalysisDone")
 	end
 
 	function jcms.mapgen_ExpandedAreaList(areas)
@@ -1393,10 +1395,12 @@ jcms.MAPGEN_CONSTRUCT_DIAMETER = math.sqrt(82411875)
 
 -- // Map Gen {{{
 
-	function jcms.mapgen_PlacePrefabs(maxcount, weightedTypes) --TODO: terrible name, because we have spreadprefabs
+	function jcms.mapgen_PlacePrefabs(maxcount, weightedTypes, areasToUse) --TODO: terrible name, because we have spreadprefabs
+		areasToUse = areasToUse or jcms.mapdata.validAreas
+
 		local prefabCounts = {}
 		local allAreas = {}
-		for i, area in ipairs( jcms.mapdata.validAreas ) do
+		for i, area in ipairs( areasToUse ) do
 			if not ( area:GetSizeX() < 48 or area:GetSizeY() < 48 or bit.band( area:GetAttributes(), bit.bor(NAV_MESH_AVOID, NAV_MESH_OBSTACLE_TOP) ) > 0 ) then
 				table.insert( allAreas, area )
 			end
@@ -1506,13 +1510,13 @@ jcms.MAPGEN_CONSTRUCT_DIAMETER = math.sqrt(82411875)
 			end
 		end
 
-		jcms.mapgen_PlacePrefabs(maxcount, naturalWeights)
+		jcms.mapgen_PlacePrefabs(maxcount, naturalWeights, jcms.mapdata.validAreas)
 	end
 
 	function jcms.mapgen_PlaceFactionPrefabs(maxcount, faction )
 		local facWeights = jcms.prefab_GetFactionTypesWithWeights(faction)
 		
-		jcms.mapgen_PlacePrefabs(maxcount, facWeights)
+		jcms.mapgen_PlacePrefabs(maxcount, facWeights, jcms.mapdata.validAreas)
 	end
 	
 	function jcms.mapgen_PlaceEncounters()

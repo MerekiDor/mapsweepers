@@ -30,14 +30,19 @@ ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 
 ENT.Damage = 2
 
+hook.Add("MapSweepers_MapAnalysisDone", "jcms_RadSphere_CalcSize", function()
+	local areaMult, volMult, densityMult, avgSizeMult = jcms.mapgen_GetMapSizeMultiplier()
+	local sizeMult = math.min(areaMult, volMult)
+	local densityMult = avgSizeMult / densityMult
+
+	jcms.radSphereSize = 2500 * sizeMult * densityMult
+end)
+
 function ENT:SetupDataTables()
 	self:NetworkVar("Float", 0, "CloudRange")
 
 	if SERVER then 
-		local areaMult, volMult, densityMult, avgSizeMult = jcms.mapgen_GetMapSizeMultiplier()
-		local sizeMult = math.min(areaMult, volMult)
-		local densityMult = avgSizeMult / densityMult
-		self:SetCloudRange(2500 * sizeMult * densityMult)
+		self:SetCloudRange(jcms.radSphereSize)
 	end
 end
 
