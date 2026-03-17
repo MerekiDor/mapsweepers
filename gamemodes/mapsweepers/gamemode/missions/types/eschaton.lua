@@ -90,6 +90,8 @@ jcms.missions.eschaton = { --TODO: Russian Localisation
 			end
 			missionData.nukeAreaDefaultWeights = {}
 			for i, area in ipairs(missionData.nukeAreas) do
+				if area:GetSizeX() < 20 or area:GetSizeY() < 20 then continue end --This is just to cut down the number we need to check more for perf w/ the reason that areas this thin *probably* aren't that important.
+
 				missionData.nukeAreaDefaultWeights[area] = math.sqrt(area:GetSizeX() * area:GetSizeY())
 			end
 		-- // }}}

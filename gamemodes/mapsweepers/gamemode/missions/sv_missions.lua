@@ -51,12 +51,21 @@
 	
 	jcms.missions = {}
 
-	function jcms.mission_GetRandomType(except, pvpOnly)
+	function jcms.mission_GetRandomType(except, pvpOnly, isBoss)
 		local keys = {}
 
 		for mission in pairs(jcms.missions) do
-			if mission ~= except and (not pvpOnly or jcms.missions[ mission ].pvpAllowed ) then
+			--Not our exclude mission (unless this is a boss round), out of pvp or a pvp-allowed mission, is a boss mission if we're looking for it, not a boss mission otherwise
+			if (mission ~= except or isBoss) and (not pvpOnly or jcms.missions[ mission ].pvpAllowed ) and ((not not isBoss) == (not not jcms.missions[ mission ].bossMission)) then --not not ensures both are bools (they can be nil)
 				table.insert(keys, mission)
+			end
+		end
+
+		if #keys == 0 then --Fall-back if no valid missions (no boss, no except, still respect pvp) 
+			for mission in pairs(jcms.missions) do
+				if (not pvpOnly or jcms.missions[ mission ].pvpAllowed ) and not jcms.missions[ mission ].bossMission then
+					table.insert(keys, mission)
+				end
 			end
 		end
 		
@@ -240,7 +249,9 @@
 
 	function jcms.mission_Randomize()
 		local lastMis, lastFac = jcms.runprogress_GetLastMissionTypes()
-		local newType = jcms.mission_GetRandomType( lastMis, jcms.util_IsPVP() )
+		local isBoss = jcms.runprogress.winstreak > 0 and jcms.runprogress.winstreak % 5 == 0 --Boss every 5 waves excluding 0
+
+		local newType = jcms.mission_GetRandomType( lastMis, jcms.util_IsPVP(), isBoss )
 		local data = assert(jcms.missions[ newType ], "error randomizing mission type, picked an invalid one: '" .. tostring(newType) .. "'")
 
 		game.GetWorld():SetNWString("jcms_missiontype", newType)
