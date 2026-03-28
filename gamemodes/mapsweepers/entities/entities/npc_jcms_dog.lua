@@ -447,4 +447,15 @@ if CLIENT then
 			self:DrawModel()
 		end
 	end
+
+	function ENT:FireAnimationEvent( pos, ang, event, name )
+		if event == 6004 then --footstep1
+			self:EmitSound("NPC_dog.FootstepLeft")
+		elseif event == 6005 then --foostep2
+			self:EmitSound("NPC_dog.FootstepRight")
+		end
+
+		--NPC_dog.RunFootstepLeft
+		--NPC_dog.RunFootstepRight
+	end
 end
