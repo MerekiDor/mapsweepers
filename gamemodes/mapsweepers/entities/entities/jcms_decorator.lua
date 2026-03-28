@@ -30,6 +30,10 @@ ENT.Spawnable = false
 ENT.RenderGroup = RENDERGROUP_BOTH
 
 
+function ENT:SetupDataTables()
+	self:NetworkVar("Int", 0, "RenderType")
+end
+
 if SERVER then
 	function ENT:Initialize() 
 		self:SetMoveType(MOVETYPE_NONE)
@@ -50,8 +54,25 @@ if SERVER then
 end
 
 if CLIENT then
+	ENT.mat_glow = Material "sprites/light_glow02_add"
+	ENT.mat_glow2 = Material "particle/Particle_Glow_04"
+
+	local renderTypes = {
+		[1] = function(self, flags)
+			render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
+				render.SetMaterial(self.mat_glow2)
+				render.DrawSprite(self:GetPos(), 16, 16, Color(143, 67, 229))
+			render.OverrideBlend( false )
+		end,
+	}
+
 	function ENT:Initialize()
 		self:SetPredictable(true)
+
+		local renderType = self:GetRenderType()
+		if renderType > 0 then
+			self.DrawTranslucent = renderTypes[renderType]
+		end
 	end
 end
 

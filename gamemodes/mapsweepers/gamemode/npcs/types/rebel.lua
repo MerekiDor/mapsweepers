@@ -183,46 +183,20 @@
 	end
 
 	function jcms.npc_rebel_think(npc)
-		local npcPos = npc:GetPos()
+		--Alert Sounds if we've had no enemy for > 12s
+		if IsValid(npc:GetEnemy()) then
+			local npcTbl = npc:GetTable()
+			local cTime = CurTime()
 
-		--[[
-		-- Using jump pads {{{
-			for i, ent in ipairs(ents.FindInSphere(npcPos, 50)) do
-				if ent:GetClass() == "jcms_jumppad" and ent.jcms_rebelTargetPoint then 
-					jcms.npc_LaunchTowardsPos(npc, ent.jcms_rebelTargetPoint)
-
-					ent:JumpEffect()
-					ent:BreakByBreach(jcms.vectorOrigin) --TODO: Jump dir
-
-					npc:EmitSound("odessa.nlo_cheer0" .. tostring(math.random(1,3)) )
-					break
-				end
+			if (npcTbl.jcms_rebelLastPlayerSpotted or 0) + 12 < cTime then 
+				npc:EmitSound( "jcms_rebel_spot_" .. (npcTbl.jcms_rebelVoiceAffix or "m") )
 			end
-		-- }}}
 
-		
-		--TODO: DEBUG
-		npc.jcms_nextJumppad = npc.jcms_nextJumppad or 0
-		if npc.jcms_nextJumppad > CurTime() then return end
-
-		-- Deploying Jump pads {{{
-			--todo: Don't place if there's already a pad
-			local enemy = npc:GetEnemy() 
-			--Deploy jumppads when we can't reach our enemy. --todo: Find highground when idle?
-			if IsValid(enemy) and npc:IsUnreachable(enemy) then --TODO: IsUnreachable seems like it takes int account nodes blocked by enemies/props, which makes this activate when it shouldn't.
-				local jumpStart, jumpEnd = jcms.npc_RebelGetJumpPos(npc, enemy:GetPos())
-				if jumpStart then
-					jcms.npc_RebelPlaceJump(jumpStart, angle_zero, jumpEnd, npc)
-				
-					npc:SetSaveValue("m_vecLastPosition", jumpStart )
-					npc:SetSchedule(SCHED_FORCED_GO_RUN)
-
-					npc.jcms_nextJumppad = CurTime() + 15 --TODO: DEBUG
-			
-				end
+			--Set the entire squad to not play alert sounds for a while.
+			for i, squadNPC in ipairs(ai.GetSquadMembers( npc:GetSquad() )) do
+				squadNPC.jcms_rebelLastPlayerSpotted = cTime
 			end
-		-- }}}
-		--]]
+		end
 	end
 -- // }}}
 
@@ -395,151 +369,206 @@
 	jcms.NPC_STATE_HELIPLACE = 2
 -- // }}}
 
---[[todo/NOTE: 
-	Make rebels plant C4 and Mines on things
-		--When they get a mine/C4 planted on them they should just start screaming and running at the player.
-
-	Jumppads
-
-	Make rebels shoot mines
-		--Make mines have HP and only take damage from enemies. This will have to be handled relatively carefully so that it
-		doesn't cause random-feeling detonations.
-
-		--Make rebels apply bullseyes to nearby mines. 
---]]
-
 -- // Sounds {{{
+	-- // Helicopter {{{
+		sound.Add( {
+			name = "jcms_rebelheli_idle",
+			channel = CHAN_VOICE,
+			volume = 1.0,
+			level = 150,
+			pitch = 100,
+			sound = {
+				"vo/npc/male01/answer15.wav",
+				"vo/npc/male01/answer18.wav",
+				"vo/npc/male01/answer19.wav",
+				"vo/npc/male01/answer29.wav",
+				"vo/npc/male01/answer30.wav",
+				"vo/npc/male01/getgoingsoon.wav",
+				"vo/npc/male01/gordead_ans13.wav",
+				"vo/npc/male01/gordead_ans15.wav",
+				"vo/npc/male01/hi01.wav",
+				"vo/npc/male01/holddownspot01.wav",
+				"vo/npc/male01/holddownspot02.wav",
+				"vo/npc/male01/imstickinghere01.wav",
+				"vo/npc/male01/okimready01.wav",
+				"vo/npc/male01/question02.wav",
+				"vo/npc/male01/question03.wav",
+				"vo/npc/male01/question04.wav",
+				"vo/npc/male01/question05.wav",
+				"vo/npc/male01/question06.wav",
+				"vo/npc/male01/question07.wav"
+			}
+		} )
+		
+		sound.Add( {
+			name = "jcms_rebelheli_taunt",
+			channel = CHAN_VOICE,
+			volume = 1.0,
+			level = 150,
+			pitch = 100,
+			sound = {
+				"vo/npc/male01/evenodds.wav",
+				"vo/npc/male01/gethellout.wav",
+				"vo/npc/male01/gordead_ques17.wav",
+				"vo/npc/male01/heretohelp02.wav",
+				"vo/npc/male01/likethat.wav",
+				--"vo/npc/male01/no02.wav", --(Moved to hurt)
+				"vo/npc/male01/gordead_ans17.wav",
+				"vo/npc/male01/notthemanithought01.wav",
+				--"vo/npc/male01/ok02.wav",
+				--"vo/npc/male01/overhere01.wav",
+				"vo/npc/male01/question16.wav",
+				"vo/npc/male01/question17.wav",
+				"vo/npc/male01/question21.wav",
+				"vo/npc/male01/runforyourlife01.wav",
+				"vo/npc/male01/runforyourlife02.wav",
+				--"vo/npc/male01/squad_affirm06.wav",
+				--"vo/npc/male01/squad_away01.wav",
+				--"vo/npc/male01/stopitfm.wav", --(Moved to hurt)
+				"vo/npc/male01/strider_run.wav",
+				"vo/npc/male01/thislldonicely01.wav",
+				"vo/npc/male01/vquestion01.wav",
+				"vo/npc/male01/watchwhat.wav",
+				"vo/npc/male01/wetrustedyou01.wav",
+				"vo/npc/male01/wetrustedyou02.wav",
+				"vo/npc/male01/yeah02.wav"
+			}
+		} )
+		
+		sound.Add( {
+			name = "jcms_rebelheli_spot",
+			channel = CHAN_VOICE,
+			volume = 1.0,
+			level = 150,
+			pitch = 100,
+			sound = {
+				"vo/npc/male01/gordead_ques03b.wav",
+				"vo/npc/male01/gordead_ques03a.wav",
+				"vo/npc/male01/gordead_ques05.wav",
+				--"vo/npc/male01/gotone01.wav",
+				--"vo/npc/male01/gotone02.wav",
+				"vo/npc/male01/heretheycome01.wav",
+				"vo/npc/male01/incoming02.wav",
+				--"vo/npc/male01/okimready03.wav",
+				"vo/npc/male01/overhere01.wav",
+				"vo/npc/male01/overthere02.wav",
+				--"vo/npc/male01/squad_away01.wav",
+				"vo/npc/male01/upthere02.wav",
+				"vo/canals/shanty_yourefm.wav",
+				"vo/canals/male01/gunboat_owneyes.wav",
+				"vo/canals/male01/stn6_incoming.wav",
+				"vo/coast/cardock/le_gotgordon.wav",
+				"vo/npc/male01/abouttime01.wav",
+				--"vo/npc/male01/ahgordon02.wav"
+			}
+		} )
 
-	sound.Add( {
-		name = "jcms_rebelheli_idle",
-		channel = CHAN_VOICE,
-		volume = 1.0,
-		level = 150,
-		pitch = 100,
-		sound = {
-			"vo/npc/male01/answer15.wav",
-			"vo/npc/male01/answer18.wav",
-			"vo/npc/male01/answer19.wav",
-			"vo/npc/male01/answer29.wav",
-			"vo/npc/male01/answer30.wav",
-			"vo/npc/male01/getgoingsoon.wav",
-			"vo/npc/male01/gordead_ans13.wav",
-			"vo/npc/male01/gordead_ans15.wav",
-			"vo/npc/male01/hi01.wav",
-			"vo/npc/male01/holddownspot01.wav",
-			"vo/npc/male01/holddownspot02.wav",
-			"vo/npc/male01/imstickinghere01.wav",
-			"vo/npc/male01/okimready01.wav",
-			"vo/npc/male01/question02.wav",
-			"vo/npc/male01/question03.wav",
-			"vo/npc/male01/question04.wav",
-			"vo/npc/male01/question05.wav",
-			"vo/npc/male01/question06.wav",
-			"vo/npc/male01/question07.wav"
-		}
-	} )
-	
-	sound.Add( {
-		name = "jcms_rebelheli_taunt",
-		channel = CHAN_VOICE,
-		volume = 1.0,
-		level = 150,
-		pitch = 100,
-		sound = {
-			"vo/npc/male01/evenodds.wav",
-			"vo/npc/male01/gethellout.wav",
-			"vo/npc/male01/gordead_ques17.wav",
-			"vo/npc/male01/heretohelp02.wav",
-			"vo/npc/male01/likethat.wav",
-			--"vo/npc/male01/no02.wav", --(Moved to hurt)
-			"vo/npc/male01/gordead_ans17.wav",
-			"vo/npc/male01/notthemanithought01.wav",
-			--"vo/npc/male01/ok02.wav",
-			--"vo/npc/male01/overhere01.wav",
-			"vo/npc/male01/question16.wav",
-			"vo/npc/male01/question17.wav",
-			"vo/npc/male01/question21.wav",
-			"vo/npc/male01/runforyourlife01.wav",
-			"vo/npc/male01/runforyourlife02.wav",
-			--"vo/npc/male01/squad_affirm06.wav",
-			--"vo/npc/male01/squad_away01.wav",
-			--"vo/npc/male01/stopitfm.wav", --(Moved to hurt)
-			"vo/npc/male01/strider_run.wav",
-			"vo/npc/male01/thislldonicely01.wav",
-			"vo/npc/male01/vquestion01.wav",
-			"vo/npc/male01/watchwhat.wav",
-			"vo/npc/male01/wetrustedyou01.wav",
-			"vo/npc/male01/wetrustedyou02.wav",
-			"vo/npc/male01/yeah02.wav"
-		}
-	} )
-	
-	sound.Add( {
-		name = "jcms_rebelheli_spot",
-		channel = CHAN_VOICE,
-		volume = 1.0,
-		level = 150,
-		pitch = 100,
-		sound = {
-			"vo/npc/male01/gordead_ques03b.wav",
-			"vo/npc/male01/gordead_ques03a.wav",
-			"vo/npc/male01/gordead_ques05.wav",
-			--"vo/npc/male01/gotone01.wav",
-			--"vo/npc/male01/gotone02.wav",
-			"vo/npc/male01/heretheycome01.wav",
-			"vo/npc/male01/incoming02.wav",
-			--"vo/npc/male01/okimready03.wav",
-			"vo/npc/male01/overhere01.wav",
-			"vo/npc/male01/overthere02.wav",
-			--"vo/npc/male01/squad_away01.wav",
-			"vo/npc/male01/upthere02.wav",
-			"vo/canals/shanty_yourefm.wav",
-			"vo/canals/male01/gunboat_owneyes.wav",
-			"vo/canals/male01/stn6_incoming.wav",
-			"vo/coast/cardock/le_gotgordon.wav",
-			"vo/npc/male01/abouttime01.wav",
-			--"vo/npc/male01/ahgordon02.wav"
-		}
-	} )
+		sound.Add( {
+			name = "jcms_rebelheli_hurt",
+			channel = CHAN_VOICE,
+			volume = 1.0,
+			level = 150,
+			pitch = 100,
+			sound = {
+				"vo/npc/male01/stopitfm.wav",
+				"vo/npc/male01/no02.wav",
+				"vo/npc/male01/gordead_ans04.wav",
+				"vo/npc/male01/gordead_ans05.wav",
+				"vo/npc/male01/gordead_ans07.wav",
+				"vo/npc/male01/help01.wav",
+				"vo/npc/male01/hitingut01.wav",
+				"vo/npc/male01/imhurt02.wav",
+				"vo/npc/male01/onyourside.wav",
+				"vo/npc/male01/myleg01.wav",
+				"vo/npc/male01/myarm01.wav"
+			}
+		} )
+		
+		sound.Add( {
+			name = "jcms_rebelheli_die",
+			channel = CHAN_VOICE,
+			volume = 1.0,
+			level = 150,
+			pitch = 100,
+			sound = {
+				--"vo/canals/matt_closecall.wav",
+				--"vo/canals/premassacre.wav",
+				"vo/canals/male01/gunboat_farewell.wav",
+				"vo/coast/odessa/male01/nlo_cubdeath01.wav",
+				"vo/coast/odessa/male01/nlo_cubdeath02.wav",
+				"vo/npc/male01/gordead_ans02.wav",
+				"vo/npc/male01/gordead_ques14.wav",
+				--"vo/npc/male01/gordead_ans17.wav" -- That's not Gordon Freeman
+			}
+		} )
+	-- // }}}
 
-	sound.Add( {
-		name = "jcms_rebelheli_hurt",
-		channel = CHAN_VOICE,
-		volume = 1.0,
-		level = 150,
-		pitch = 100,
-		sound = {
-			"vo/npc/male01/stopitfm.wav",
-			"vo/npc/male01/no02.wav",
-			"vo/npc/male01/gordead_ans04.wav",
-			"vo/npc/male01/gordead_ans05.wav",
-			"vo/npc/male01/gordead_ans07.wav",
-			"vo/npc/male01/help01.wav",
-			"vo/npc/male01/hitingut01.wav",
-			"vo/npc/male01/imhurt02.wav",
-			"vo/npc/male01/onyourside.wav",
-			"vo/npc/male01/myleg01.wav",
-			"vo/npc/male01/myarm01.wav"
-		}
-	} )
-	
-	sound.Add( {
-		name = "jcms_rebelheli_die",
-		channel = CHAN_VOICE,
-		volume = 1.0,
-		level = 150,
-		pitch = 100,
-		sound = {
-			--"vo/canals/matt_closecall.wav",
-			--"vo/canals/premassacre.wav",
-			"vo/canals/male01/gunboat_farewell.wav",
-			"vo/coast/odessa/male01/nlo_cubdeath01.wav",
-			"vo/coast/odessa/male01/nlo_cubdeath02.wav",
-			"vo/npc/male01/gordead_ans02.wav",
-			"vo/npc/male01/gordead_ques14.wav",
-			--"vo/npc/male01/gordead_ans17.wav" -- That's not Gordon Freeman
-		}
-	} )
+	-- // Rebel {{{
+		sound.Add({
+			name = "jcms_rebel_spot_m",
+			channel = CHAN_VOICE,
+			volume = 1,
+			level = 90,
+			pitch = 100,
+			sound = {
+				"vo/canals/male01/stn6_incoming.wav",
+				"vo/coast/barn/male01/getoffroad01.wav",
+
+				"vo/coast/bugbait/sandy_help.wav",
+				"vo/coast/bugbait/sandy_youthere.wav",
+
+				"vo/npc/male01/behindyou01.wav",
+				"vo/npc/male01/behindyou02.wav",
+
+				"vo/npc/male01/getdown02.wav",
+				"vo/npc/male01/goodgod.wav",
+				"vo/npc/male01/gotone01.wav",
+				"vo/npc/male01/headsup01.wav",
+				"vo/npc/male01/headsup02.wav",
+				"vo/npc/male01/help01.wav2",
+
+				--"vo/npc/male01/hi01.wav", --Funny, but way too quiet
+				--"vo/npc/male01/hi02.wav",
+
+				"vo/npc/male01/incoming02.wav",
+				--"vo/npc/male01/ohno.wav", --Quiet
+				"vo/npc/male01/overhere01.wav",
+				"vo/npc/male01/overthere01.wav",
+				"vo/npc/male01/overthere02.wav",
+			}
+		})
+
+		sound.Add({
+			name = "jcms_rebel_spot_f",
+			channel = CHAN_VOICE,
+			volume = 1,
+			level = 90,
+			pitch = 100,
+			sound = {
+				"vo/canals/female01/stn6_incoming.wav",
+				"vo/coast/barn/female01/getoffroad01.wav",
+
+				"vo/npc/female01/behindyou01.wav",
+				"vo/npc/female01/behindyou02.wav",
+
+				"vo/npc/female01/getdown02.wav",
+				"vo/npc/female01/goodgod.wav",
+				"vo/npc/female01/gordead_ans17.wav",
+				"vo/npc/female01/headsup01.wav",
+				"vo/npc/female01/headsup02.wav",
+				"vo/npc/female01/help01.wav",
+				"vo/npc/female01/heretheycome01.wav",
+				"vo/npc/female01/incoming02.wav",
+				--"vo/npc/female01/lookoutfm01.wav",
+				--"vo/npc/female01/lookoutfm02.wav",
+				"vo/npc/female01/ohno.wav",
+				"vo/npc/female01/overhere01.wav",
+				"vo/npc/female01/overthere01.wav",
+				"vo/npc/female01/overthere02.wav",
+			}
+		})
+
+	-- // }}}
 -- // }}}
 
 jcms.npc_commanders["rebel"] = {
@@ -587,10 +616,53 @@ jcms.npc_types.rebel_fighter = {
 		end
 		
 		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
+
+		npc.jcms_rebelVoiceAffix = string.find(npc:GetModel(), "female") and "f" or "m"
 	end,
 
 	think = function(npc) 
 		jcms.npc_rebel_think(npc)
+		
+		local npcPos = npc:GetPos()
+
+		--[[
+		-- Using jump pads {{{
+			for i, ent in ipairs(ents.FindInSphere(npcPos, 50)) do
+				if ent:GetClass() == "jcms_jumppad" and ent.jcms_rebelTargetPoint then 
+					jcms.npc_LaunchTowardsPos(npc, ent.jcms_rebelTargetPoint)
+
+					ent:JumpEffect()
+					ent:BreakByBreach(jcms.vectorOrigin) --TODO: Jump dir
+
+					npc:EmitSound("odessa.nlo_cheer0" .. tostring(math.random(1,3)) )
+					break
+				end
+			end
+		-- }}}
+
+		
+		--TODO: DEBUG
+		npc.jcms_nextJumppad = npc.jcms_nextJumppad or 0
+		if npc.jcms_nextJumppad > CurTime() then return end
+
+		-- Deploying Jump pads {{{
+			--todo: Don't place if there's already a pad
+			local enemy = npc:GetEnemy() 
+			--Deploy jumppads when we can't reach our enemy. --todo: Find highground when idle?
+			if IsValid(enemy) and npc:IsUnreachable(enemy) then --TODO: IsUnreachable seems like it takes int account nodes blocked by enemies/props, which makes this activate when it shouldn't.
+				local jumpStart, jumpEnd = jcms.npc_RebelGetJumpPos(npc, enemy:GetPos())
+				if jumpStart then
+					jcms.npc_RebelPlaceJump(jumpStart, angle_zero, jumpEnd, npc)
+				
+					npc:SetSaveValue("m_vecLastPosition", jumpStart )
+					npc:SetSchedule(SCHED_FORCED_GO_RUN)
+
+					npc.jcms_nextJumppad = CurTime() + 15 --TODO: DEBUG
+			
+				end
+			end
+		-- }}}
+		--]]
 
 		-- HEAL SCHED 166
 		npc:SetCondition(npc:ConditionID( "COND_CIT_PLAYERHEALREQUEST" )) --77
@@ -633,6 +705,11 @@ jcms.npc_types.rebel_breacher = {
 		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
 
 		npc.jcms_breacher_maskHealth = 20
+
+		npc:SetMaxHealth(30) --Default 40, makes them a little squishier to compenste for the mask
+		npc:SetHealth(npc:GetMaxHealth())
+
+		npc.jcms_rebelVoiceAffix = string.find(npc:GetModel(), "female") and "f" or "m"
 	end,
 
 	takeDamage = function(npc, dmgInfo) --Clean up our mask on death
@@ -696,7 +773,9 @@ jcms.npc_types.rebel_breacher = {
 		end
 	end,
 
-	think = function(npc) 
+	think = function(npc)
+		jcms.npc_rebel_think(npc)
+
 		local npcPos = npc:WorldSpaceCenter()
 		local enemy = npc:GetEnemy()
 		local wep = npc:GetActiveWeapon()
@@ -787,6 +866,10 @@ jcms.npc_types.rebel_vanguard = {
 		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
 	end,
 
+	think = function(npc)
+		jcms.npc_rebel_think(npc)
+	end,
+
 	takeDamage = function(npc, dmgInfo)
 		if IsValid(npc.backpack) and not npc.backpack.jcms_exploded and bit.band(dmgInfo:GetDamageType(), bit.bor(DMG_BUCKSHOT, DMG_BULLET) ) > 0 then
 			dmgInfo:ScaleDamage(0.2)
@@ -823,6 +906,196 @@ jcms.npc_types.rebel_vanguard = {
 
 	proficiency = WEAPON_PROFICIENCY_GOOD
 }
+
+--[[
+jcms.npc_types.rebel_teleporter = {
+	portalSpawnWeight = 0.65,
+	faction = "rebel",
+	
+	danger = jcms.NPC_DANGER_FODDER,
+    cost = 1.25,
+    swarmWeight = 0.5,
+
+	class = "npc_citizen",
+	bounty = 45,
+
+	weapons = {
+		weapon_shotgun = 4,
+	},
+	
+	preSpawn = function(npc)
+		npc:SetKeyValue("citizentype", "3")
+	end,
+	
+	postSpawn = function(npc)
+		local wep = npc:GetActiveWeapon()
+		if IsValid(wep) then
+			wep:SetSaveValue("m_fMaxRange1", 650) --TODO: Increase our range if player is unreachable.
+		end
+
+		npc.jcms_breacher_mask = ents.Create("jcms_decorator")
+		npc.jcms_breacher_mask:SetRenderType(1) --Glowing head
+		npc.jcms_breacher_mask:SetModel("models/props_silo/welding_helmet.mdl")
+		npc.jcms_breacher_mask:Spawn()
+		npc.jcms_breacher_mask:SetupAsBoneFollower(npc, 6, Angle(0,15,180))
+
+		npc:ManipulateBoneScale( 6, Vector(0.25, 0.25, 0.1))
+		
+		npc:CapabilitiesAdd(CAP_MOVE_SHOOT)
+		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
+
+		npc.jcms_breacher_maskHealth = 20
+		
+		npc:SetMaxHealth(30) --Default 40, makes them a little squishier to compenste for the mask
+		npc:SetHealth(npc:GetMaxHealth())
+
+		npc.jcms_rgg_nextTeleport = CurTime()
+		npc.jcms_rgg_nextTeleportLong = CurTime()
+
+		npc.jcms_rgg_teleporting = false
+	end,
+
+	takeDamage = function(npc, dmgInfo) --Clean up our mask on death
+		timer.Simple(0, function()
+			if IsValid(npc) and IsValid(npc.jcms_breacher_mask) and npc:Health() < 0 and not npc.jcms_died then 
+				local gib = ents.Create("gib") --auto cleanup
+				gib:SetModel("models/props_silo/welding_helmet.mdl")
+				gib:SetPos(npc.jcms_breacher_mask:GetPos())
+				gib:SetAngles(npc.jcms_breacher_mask:GetAngles())
+				gib:Spawn()
+				gib:PhysicsInitSphere(5)
+
+				gib:GetPhysicsObject():Wake()
+				gib:GetPhysicsObject():ApplyForceCenter(Vector(0,0,150) + VectorRand(-35,35)) --dmgInfo:GetDamageForce() * 0.1 
+				timer.Simple(2, function()
+					if IsValid(gib) then gib:Dissolve() end
+				end)
+
+				npc.jcms_breacher_mask:Remove()
+
+				npc.jcms_died = true
+			end
+		end)
+	end,
+	
+	scaleDamage = function(npc, hitGroup, dmgInfo)
+		if not(hitGroup == 1) or npc.jcms_breacher_maskHealth <= 0 then return end --Only headshots
+		local inflictor = dmgInfo:GetInflictor() 
+		if not IsValid(inflictor) then return end 
+		local attkVec = npc:GetPos() - inflictor:GetPos()
+		attkVec.z = 0
+		local attkNorm = attkVec:GetNormalized()
+		local npcAng = npc:GetAngles():Forward()
+
+		local dot = attkNorm:Dot(-npcAng)
+		local angDiff = math.acos(dot)
+
+		if angDiff < math.pi/2 then --Heavy damage resist from the front, weak from behind.
+			npc:EmitSound("SolidMetal.BulletImpact", 100, 100, 1)
+
+			local effectdata = EffectData()
+			effectdata:SetEntity(npc)
+			effectdata:SetOrigin(dmgInfo:GetDamagePosition() - attkNorm)
+			effectdata:SetStart(dmgInfo:GetDamagePosition() + attkNorm )
+			effectdata:SetSurfaceProp(2)
+			effectdata:SetDamageType(dmgInfo:GetDamageType())
+
+			util.Effect("impact", effectdata)
+
+			npc.jcms_breacher_maskHealth = npc.jcms_breacher_maskHealth - dmgInfo:GetDamage()
+			if npc.jcms_breacher_maskHealth < 0 then
+				if IsValid(npc.jcms_breacher_mask) then 
+					npc.jcms_breacher_mask:Remove()
+				end
+				
+				npc:EmitSound("physics/metal/metal_sheet_impact_hard6.wav")
+				npc:EmitSound("Breakable.Metal")
+			end
+
+			dmgInfo:ScaleDamage(0.05) --If you're doing *that* much damage you might as well just outright kill them
+		end
+	end,
+
+	think = function(npc) 
+		jcms.npc_rebel_think(npc)
+
+		local npcPos = npc:WorldSpaceCenter()
+		local enemy = npc:GetEnemy()
+		local wep = npc:GetActiveWeapon()
+
+		if IsValid(enemy)  and IsValid(wep) and wep:Clip1() > 0 and npc:IsLineOfSightClear( enemy ) and npcPos:DistToSqr(enemy:WorldSpaceCenter()) > 200^2 and not(npc:GetCurrentSchedule() == SCHED_FORCED_GO_RUN) then
+			npc:SetSaveValue("m_vecLastPosition", enemy:WorldSpaceCenter())
+			npc:SetSchedule(SCHED_FORCED_GO_RUN)
+		end
+
+		-- // Generic Teleport to destination
+			if npc.jcms_rgg_teleporting then 
+				local start = npc:WorldSpaceCenter()
+
+				if npc.jcms_teleportPos:LengthSqr() > 1 then -- They may sometimes teleport to world origin if waypoint is invalid.
+					npc:SetPos(npc.jcms_teleportPos + Vector(0,0,10))
+					if npc:GetPathDistanceToGoal() > 0 then
+						npc:AdvancePath()
+					end
+
+					local ed = EffectData()
+					ed:SetFlags(3)
+					ed:SetEntity(npc)
+					ed:SetOrigin(start)
+					util.Effect("jcms_chargebeam", ed)
+				end
+
+				npc.jcms_rgg_teleporting = false
+			end
+		-- // }}}
+
+		-- // Short range teleport {{{
+			if npc.jcms_rgg_nextTeleport < CurTime() and npc:GetPathDistanceToGoal() > 150 then 
+				npc.jcms_rgg_teleporting = true
+
+				--Make a bunch of tesla effects on us before we teleport.
+				local ed = EffectData()
+				ed:SetEntity(npc)
+				ed:SetScale(1.1) --Activation time
+				ed:SetMagnitude(16)
+				ed:SetColor( jcms.util_ColorIntegerFast(230, 32, 255) )
+				ed:SetMaterialIndex(1)
+				util.Effect("jcms_electricarcs", ed)
+
+				npc.jcms_teleportPos = npc:GetNextWaypointPos()
+
+				npc.jcms_rgg_nextTeleport = CurTime() + 2.5
+				
+				return
+			end
+		-- // }}}
+
+		-- // Long range teleport {{{
+			if npc.jcms_rgg_nextTeleportLong < CurTime() and IsValid(enemy) then
+				--Make a bunch of tesla effects on us before we teleport.
+				local ed = EffectData()
+				ed:SetEntity(npc)
+				ed:SetScale(1.1) --Activation time
+				ed:SetMagnitude(16)
+				ed:SetColor( jcms.util_ColorIntegerFast(230, 32, 255) )
+				ed:SetMaterialIndex(1)
+				util.Effect("jcms_electricarcs", ed)
+				
+				-- // Find a good target node {{{
+					local nodes = jcms.pathfinder.ain_nodeSplat(enemy:WorldSpaceCenter(), 800, npc:GetHullType(), CAP_MOVE_GROUND)
+
+					local weightedNodes = {}
+					for i, node in ipairs(nodes) do 
+						--TODO: filter out too close, weight by furthest to existing NPCs
+					end
+				-- // }}}
+			end
+		-- // }}}
+	end,
+
+	proficiency = WEAPON_PROFICIENCY_VERY_GOOD
+}
+--]]
 
 jcms.npc_types.rebel_odessa = {
 	portalSpawnWeight = 0.5,
