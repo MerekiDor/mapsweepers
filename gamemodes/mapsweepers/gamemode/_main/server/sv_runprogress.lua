@@ -88,7 +88,7 @@ function jcms.runprogress_GetStartingCash(ply_or_sid64)
 	end
 	sid64 = "_" .. sid64 --Stop JSONToTable from obliterating us.
 
-	return jcms.runprogress.playerStartingCash[ sid64 ] or jcms.cvar_cash_start:GetInt()
+	return jcms.runprogress.playerStartingCash[ sid64 ] or (jcms.cvar_cash_start:GetInt() + jcms.runprogress.winstreak * jcms.cvar_cash_victory:GetInt())
 end
 
 function jcms.runprogress_UpdateAllPlayers()
