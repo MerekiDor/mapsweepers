@@ -294,6 +294,78 @@ if SERVER then
 			end
 		end
 	}
+
+	terms.sort = {
+		weight = 1,
+
+		generate = function(ent)
+			local numbers = {}
+			
+			local total = math.random(11, 14)
+			for i = 1, total do
+				local n = math.Remap(i, 1, total, 0, 31) + math.random(0, 2)
+
+				if math.random() < n%1 then
+					n = math.ceil(n)
+				else
+					n = math.floor(n)
+				end
+
+				table.insert(numbers, n)
+			end
+			table.Shuffle(numbers)
+			
+			return "0 " .. table.concat(numbers, " ")
+		end,
+
+		command = function(ent, cmd, data, ply)
+			if not ent:GetNWBool("jcms_terminal_locked") then return end
+			local parts = string.Split(data, " ")
+
+			local selectedIndex = cmd + 1
+			local selectedPart = parts[ selectedIndex ]
+			if (selectedIndex <= 1) or (not selectedPart) then return false end
+
+			if parts[1] == "0" then
+				table.remove(parts, 1)
+				return true, tostring(cmd) .. " " .. table.concat(parts, " ")
+			else
+				local currentIndex = tonumber( parts[1] ) + 1
+				local currentPart = parts[ currentIndex ]
+
+				if (currentIndex <= 1) or (not currentPart) then return false end
+				if currentIndex ~= selectedIndex then
+					parts[ currentIndex ], parts[ selectedIndex ] = parts[ selectedIndex ], parts[ currentIndex ]
+
+					local isSorted = true
+					local sortDelta = 0
+					for i=3, #parts do
+						local n_curr = tonumber(parts[ i ]) or 0
+						local n_prev = tonumber(parts[i-1]) or 0
+						if (sortDelta == 0) then
+							if n_curr > n_prev then
+								sortDelta = 1
+							elseif n_curr < n_prev then
+								sortDelta = -1
+							end
+						elseif (sortDelta == -1 and n_curr > n_prev) or (sortDelta == 1 and n_curr < n_prev) then
+							isSorted = false
+							break
+						end
+					end
+
+					if isSorted then
+						jcms.terminal_Unlock(ent, ply, true)
+					end
+
+					table.remove(parts, 1)
+					return true, "0 " .. table.concat(parts, " ")
+				else
+					return false
+				end
+			end
+		end
+	}
 end
 
 if CLIENT then
@@ -595,5 +667,52 @@ if CLIENT then
 		cam.PopModelMatrix()
 
 		return hovBtnIndex
+	end
+
+	terms.sort = function(ent, mx, my, w, h, modedata)
+		local color_bg, color_fg, color_accent = jcms.terminal_GetColors(ent)
+		draw.SimpleText([=[Sort these pillars]=], "jcms_hud_small", w/2, 0, color_bg, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+		draw.SimpleText([=[Sort these pillars]=], "jcms_hud_small", w/2, -2, color_fg, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+
+		local parts = modedata:Split(" ")
+		local currentIndex = tonumber(parts[1])
+		local currentI = 0
+		if currentIndex > 0 then currentI = currentIndex + 1 end
+		local pad = 4
+
+		local total = #parts
+		local pillarWidth = math.ceil(w / (total + 3))
+		local pillarHeight = math.max(48, math.ceil((h - 48)*0.5))
+		local hoverIndex = 0
+		for i=2, total do
+			local x = math.Remap(i, 2, total, 0, w - pillarWidth)
+			local ph = math.Remap(tonumber(parts[i]), 0, 32, 0.05, 0.95)*pillarHeight
+			surface.SetDrawColor(color_bg)
+			surface.DrawOutlinedRect(x, 48, pillarWidth, pillarHeight, 2)
+			surface.DrawRect(x + pad, 48 + (pillarHeight - ph) + pad, pillarWidth - pad*2, ph - pad*2)
+			
+			render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
+			cam.PushModelMatrix(jcms.terminal_getGlitchMatrix(4, 0.05), true)
+				surface.SetDrawColor(currentI == i and color_accent or color_fg)
+				if hoverIndex == 0 and mx >= x and my >= 48 and mx <= x + pillarWidth and my <= 48 + pillarHeight then
+					surface.DrawOutlinedRect(x, 48, pillarWidth, pillarHeight, 3)
+					hoverIndex = i - 1
+				end
+				surface.DrawRect(x + pad, 48 + (pillarHeight - ph) + pad, pillarWidth - pad*2, ph - pad*2)
+			cam.PopModelMatrix()
+			render.OverrideBlend( false )
+		end
+
+		if currentIndex > 0 and hoverIndex ~= 0 and hoverIndex ~= currentIndex then
+			local x1 = math.Remap(hoverIndex, 1, total-1, pillarWidth/2, w - pillarWidth*0.5)
+			local x2 = math.Remap(currentIndex, 1, total-1, pillarWidth/2, w - pillarWidth*0.5)
+			surface.SetDrawColor(color_accent)
+			surface.DrawRect(math.min(x1, x2), 72 + pillarHeight, math.abs(x2-x1), 3)
+
+			surface.DrawRect(x1-3, 56 + pillarHeight, 6, 16)
+			surface.DrawRect(x2-3, 56 + pillarHeight, 6, 16)
+		end
+
+		return hoverIndex
 	end
 end
