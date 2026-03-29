@@ -1186,7 +1186,7 @@
 
 								local tagx = w-48-(tagSize+4)*i
 
-								surface.SetDrawColor(jcms.color_bright_alt)
+								surface.SetDrawColor(jcms.mission_GetTagColor(tag))
 
 								if not hoveredTag and  mx >= tagx and my >= tagy and mx < tagx + 32 and my < tagy + 32 then
 									hoveredTag = tag
@@ -1231,12 +1231,13 @@
 							local tw2, th2 = surface.GetTextSize(hoveredTagName)
 							tw2 = tw2 + 32
 
-							surface.SetDrawColor(jcms.color_bright_alt)
+							local col = jcms.mission_GetTagColor(hoveredTag)
+							surface.SetDrawColor(col)
 							jcms.hud_DrawNoiseRect(lastTagX-tw2,tagy,tw2,th2)
 							surface.DrawRect(lastTagX, tagy, 2, th2)
 							surface.DrawRect(lastTagX-tw2-2, tagy, 2, th2)
-							draw.SimpleText(hoveredTagName, font, lastTagX-tw2/2, tagy+th2/2, jcms.color_bright_alt, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-							draw.SimpleText(hoveredTagDesc, lowres and "DefaultSmall" or "jcms_small", lastTagX, tagy+th2+4, ColorAlpha(jcms.color_bright_alt, 100), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+							draw.SimpleText(hoveredTagName, font, lastTagX-tw2/2, tagy+th2/2, col, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+							draw.SimpleText(hoveredTagDesc, lowres and "DefaultSmall" or "jcms_small", lastTagX, tagy+th2+4, ColorAlpha(col, 100), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
 						end
 
 						if jcms.util_GetMapGenProgress() <= 0 then

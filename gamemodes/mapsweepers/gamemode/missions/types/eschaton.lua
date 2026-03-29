@@ -20,7 +20,7 @@
 --]]
 
 --"Mega Hell isn't a cool enough name" OK MERKEI HOW ABOUT NOW HAIS THIS GOIOD ENOUGHF RO YOU ARE YOY HAPPY
-jcms.missions.eschaton = { --TODO: Russian Localisation
+jcms.missions.eschaton = {
 	faction = "everyone",
 	pvpAllowed = false,
 	bossMission = true,

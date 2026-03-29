@@ -3220,7 +3220,7 @@ jcms.offgame = jcms.offgame or NULL
 
 			function mistype:OnSelect(index, text, missionName)
 				factiontype:Clear()
-				local missionData = assert(jcms.missions[ missionName ], "that's an unknown mission type")
+				local missionData = assert(jcms.missions[ missionName ], "that's an unknown mission type '"..tostring(missionName).."'")
 
 				if missionData.faction ~= "any" then
 					factiontype:AddChoice("#jcms." .. missionData.faction, "", true)

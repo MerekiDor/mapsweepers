@@ -69,6 +69,11 @@
 		payload = {
 			faction = "any",
 			tags = { "hacking" }
+		},
+
+		eschaton = {
+			faction = "everyone",
+			tags = { "bossmission", "rarebosses" }
 		}
 	}
 
@@ -84,6 +89,7 @@
 		["datadownload"] = true,
 		["infestation"] = true,
 		["mainframe"] = true,
+		["eschaton"] = true,
 		["payload"] = true,
 		["hell"] = true
 	}
@@ -138,6 +144,10 @@
 
 			return sorted
 		end
+	end
+
+	function jcms.mission_GetTagColor(tag)
+		return tag == "bossmission" and jcms.color_alert or jcms.color_bright_alt
 	end
 
 -- // }}}
