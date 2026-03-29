@@ -193,8 +193,10 @@
 			end
 
 			--Set the entire squad to not play alert sounds for a while.
-			for i, squadNPC in ipairs(ai.GetSquadMembers( npc:GetSquad() or "" )) do
-				squadNPC.jcms_rebelLastPlayerSpotted = cTime
+			if npc:GetSquad() then
+				for i, squadNPC in ipairs(ai.GetSquadMembers( npc:GetSquad() )) do
+					squadNPC.jcms_rebelLastPlayerSpotted = cTime
+				end
 			end
 		end
 	end
@@ -517,8 +519,8 @@
 				"vo/coast/bugbait/sandy_help.wav",
 				"vo/coast/bugbait/sandy_youthere.wav",
 
-				"vo/npc/male01/behindyou01.wav",
-				"vo/npc/male01/behindyou02.wav",
+				--"vo/npc/male01/behindyou01.wav",
+				--"vo/npc/male01/behindyou02.wav",
 
 				"vo/npc/male01/getdown02.wav",
 				"vo/npc/male01/goodgod.wav",
@@ -548,8 +550,8 @@
 				"vo/canals/female01/stn6_incoming.wav",
 				"vo/coast/barn/female01/getoffroad01.wav",
 
-				"vo/npc/female01/behindyou01.wav",
-				"vo/npc/female01/behindyou02.wav",
+				--"vo/npc/female01/behindyou01.wav",
+				--"vo/npc/female01/behindyou02.wav",
 
 				"vo/npc/female01/getdown02.wav",
 				"vo/npc/female01/goodgod.wav",
@@ -561,7 +563,7 @@
 				"vo/npc/female01/incoming02.wav",
 				--"vo/npc/female01/lookoutfm01.wav",
 				--"vo/npc/female01/lookoutfm02.wav",
-				"vo/npc/female01/ohno.wav",
+				--"vo/npc/female01/ohno.wav",
 				"vo/npc/female01/overhere01.wav",
 				"vo/npc/female01/overthere01.wav",
 				"vo/npc/female01/overthere02.wav",
@@ -600,12 +602,6 @@ jcms.npc_types.rebel_fighter = {
 	end,
 	
 	postSpawn = function(npc)
-		--TODO: Rare ammo bearer rebels with explosive backpacks. Functionally the same but they act as living dynamic resupplies. Would allow people to use more weapons & be a cool gimmick. Also gets people moving.
-
-		npc:SetMaxHealth( npc:Health() + 5 )
-		npc:SetHealth( npc:GetMaxHealth() )
-		npc:Fire("SetMedicOn") 
-
 		local wep = npc:GetActiveWeapon()
 		if IsValid(wep) then
 			if wep:GetClass() == "weapon_smg" then
@@ -618,17 +614,35 @@ jcms.npc_types.rebel_fighter = {
 		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
 
 		npc.jcms_rebelVoiceAffix = string.find(npc:GetModel(), "female") and "f" or "m"
+
+		npc.jcms_rebel_carrierVariant = math.random() < 0.15
+		if npc.jcms_rebel_carrierVariant then
+			local backpack = ents.Create("jcms_decorator")
+			backpack:SetModel("models/items/boxmrounds.mdl")
+			backpack:Spawn()
+			backpack:SetupAsBoneFollower(npc, 3, Angle(90,15,180))
+			backpack:SetPos(backpack:GetPos() + backpack:GetAngles():Forward() * -6.5 + backpack:GetAngles():Right() * -8)
+
+			npc.jcms_rebel_carrierBackpack = backpack
+		else
+			npc:Fire("SetMedicOn") 
+		end
 	end,
+
+	--128 - shot freeze
+	--104 --deathpose front
 
 	think = function(npc) 
 		jcms.npc_rebel_think(npc)
 		
+		--78 --throw sequence
+
 		local npcPos = npc:GetPos()
 
 		--[[
 		-- Using jump pads {{{
 			for i, ent in ipairs(ents.FindInSphere(npcPos, 50)) do
-				if ent:GetClass() == "jcms_jumppad" and ent.jcms_rebelTargetPoint then 
+				if ent.jcms_rebelTargetPoint and ent:GetClass() == "jcms_jumppad" then 
 					jcms.npc_LaunchTowardsPos(npc, ent.jcms_rebelTargetPoint)
 
 					ent:JumpEffect()
@@ -666,6 +680,22 @@ jcms.npc_types.rebel_fighter = {
 
 		-- HEAL SCHED 166
 		npc:SetCondition(npc:ConditionID( "COND_CIT_PLAYERHEALREQUEST" )) --77
+	end,
+
+	takeDamage = function(npc, dmgInfo) --Ammo drop for the carrier variant
+		if not npc.jcms_rebel_carrierVariant then return end
+
+		timer.Simple(0, function()
+			if IsValid(npc) and npc:Health() < 0 and not npc.jcms_died then 
+				local resup = ents.Create("jcms_dynamicsupply")
+				resup:SetPos(npc.jcms_rebel_carrierBackpack:GetPos())
+				resup:Spawn()
+
+				npc.jcms_rebel_carrierBackpack:Remove()
+
+				npc.jcms_died = true
+			end
+		end)
 	end,
 
 	proficiency = WEAPON_PROFICIENCY_VERY_GOOD
