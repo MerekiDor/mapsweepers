@@ -1,0 +1,14 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/jcms/jcorp_evac_old"
+	"$bumpmap" "models/jcms/jcorp_evac_old_normal"
+
+	"$phong" 1
+	"$phongexponenttexture" "models/jcms/jcorp_evac_old_metallic"
+	"$phongboost" 1.0
+	"$phongfresnelranges"		"[0 0.5 1]"
+
+	"$selfillum" 1
+	"$selfillummask" "models/jcms/jcorp_evac_illum"
+}
+

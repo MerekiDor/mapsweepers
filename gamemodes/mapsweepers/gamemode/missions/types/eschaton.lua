@@ -65,6 +65,7 @@ jcms.missions.eschaton = { --TODO: Russian Localisation
 
 			missionData.evacEnt = jcms.mission_DropEvac(chosenArea:GetCenter(), 5)
 			missionData.evacEnt:SetMaxCharge(missionData.duration)
+			missionData.evacEnt:SetMaterial("models/jcms/jcorp_evac_old")
 
 			missionData.evacEnt.jcms_evacPreventCharge = true
 		-- // }}}
