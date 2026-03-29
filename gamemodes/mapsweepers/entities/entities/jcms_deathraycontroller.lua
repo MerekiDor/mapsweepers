@@ -28,6 +28,7 @@ ENT.Spawnable = false
 ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
  
 ENT.Speed = 300
+ENT.IsNPCTeam = false
 ENT.IsIdleUntilActive = false
 
 if SERVER then 
@@ -102,7 +103,7 @@ if SERVER then
 			local priority
 			local tgpos = target:WorldSpaceCenter()
 			if jcms.team_JCorp(target) then
-				if not IsValid(self.jcms_owner) or jcms.team_pvpSameTeam(self.jcms_owner, target) then
+				if not self.IsNPCTeam and (not IsValid(self.jcms_owner) or jcms.team_pvpSameTeam(self.jcms_owner, target)) then
 					priority = math.min(target:GetMaxHealth(), target:Health()) - self:DistanceSqrToTrace(tgpos, tr)^(2/3) - 10000000
 				else
 					--Basically roughly treat enemy players like a 1500hp target
@@ -112,6 +113,7 @@ if SERVER then
 				priority = (1.5 * math.max(target:GetMaxHealth() - 5, 10)) - self:DistanceSqrToTrace(tgpos, tr)/2
 			end
 			
+			--TODO: This trace is probably really expensive given how often this runs.
 			local beampos = self:GetPos()
 			beampos.x = tgpos.x
 			beampos.y = tgpos.y

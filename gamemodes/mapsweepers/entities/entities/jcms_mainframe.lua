@@ -28,14 +28,15 @@ ENT.Category = "Map Sweepers"
 ENT.Spawnable = false
 ENT.RenderGroup = RENDERGROUP_BOTH
 
-ENT.Radius = 2400
+ENT.ShieldRadius = 2400
 ENT.ChargePerSecond = 3
 ENT.ChargeInterval = 0.5
 
-ENT.BombardmentInterval = 30
+ENT.JammingRadius = 1500
 
-ENT.MissileBlastDamage = 90
-ENT.MissileBlastRadius = 250
+
+ENT.BombardmentInterval = 30
+ENT.SupplyDropInterval = 90
 
 function ENT:SetupDataTables()
 	self:NetworkVar("Bool", 0, "ShieldJCorp")
@@ -49,124 +50,135 @@ if SERVER then
 		
 		self.bombardmentActive = false
 		self.nextBombardment = CurTime() + 50
+		self.nextSupplyDrop = CurTime() + 90
+		self.supplyDrops = {}
 	end
 
 	function ENT:Think()
 		-- Shield charging behaviour
 		if self:GetShieldJCorp() then 
 			for i, ply in ipairs(jcms.GetAliveSweepers()) do
-				if (ply:Armor() < ply:GetMaxArmor()) and (ply:WorldSpaceCenter():DistToSqr(self:WorldSpaceCenter()) <= self.Radius^2) then
+				if (ply:Armor() < ply:GetMaxArmor()) and (ply:WorldSpaceCenter():DistToSqr(self:WorldSpaceCenter()) <= self.ShieldRadius^2) then
 					self:ChargeShield(ply)
 				end
 			end
 		else
-			--Charging
-			for i, ent in ipairs(ents.FindInSphere(self:WorldSpaceCenter(), self.Radius)) do 
-				if ent:IsNPC() and not ent.jcms_noSweeperShields and not jcms.team_JCorp_ent(ent) then 
-					if ent:WorldSpaceCenter():DistToSqr(self:WorldSpaceCenter()) <= (self.Radius/2)^2 and ent:GetNWInt("jcms_sweeperShield_max", -1) == -1 then 
-						local colInt = jcms.factions_GetColorInteger("rebel")
+			--Jammer
+			--[[
+			local selfPos = self:WorldSpaceCenter()
 
+			for i, target in ipairs(ents.FindInSphere( selfPos, self.JammingRadius )) do
+				if IsValid(target) and target.JCMS_Stunnable and jcms.team_JCorp_ent(target) then
+					if not target.jcms_stunEnd or target.jcms_stunEnd < CurTime() then
 						local ed = EffectData()
-						ed:SetEntity(ent)
-						ed:SetFlags(2)
-						ed:SetColor(colInt)
-						util.Effect("jcms_shieldeffect", ed)
-						ent:EmitSound("items/suitchargeok1.wav", 50, 120)
-
-							
+						ed:SetMagnitude(1.5)
+						ed:SetOrigin(target:WorldSpaceCenter())
+						ed:SetRadius(50)
+						ed:SetNormal(jcms.vectorUp)
+						ed:SetFlags(5)
+						ed:SetColor( jcms.util_ColorIntegerFast(230, 185, 255) )
+						util.Effect("jcms_blast", ed)
+	
 						local ed = EffectData()
 						ed:SetFlags(3)
-						ed:SetEntity(ent)
-						ed:SetOrigin(self:WorldSpaceCenter())
+						ed:SetEntity(target)
+						ed:SetOrigin(selfPos)
 						util.Effect("jcms_chargebeam", ed)
-
-						--30 max, 5 regen, 1.5 delay
-						jcms.npc_SetupSweeperShields(ent, 30, 5, 1.5, colInt)
+	
+						target:EmitSound("NPC_Turret.Die")
 					end
-					self:ChargeShield(ent)
+	
+					local ed = EffectData()
+					ed:SetScale(self.JammingTime + 0.5)
+					ed:SetMagnitude( 0.2 * 512)
+					ed:SetEntity(target)
+					util.Effect("jcms_teslahitboxes_dur", ed)
+	
+					target.jcms_stunEnd = CurTime() + self.JammingTime
 				end
 			end
+			--]]
+		end
+
+		--Supply drops
+		for i=#self.supplyDrops, 1, -1 do
+			local ent = self.supplyDrops[i] 
+			if not IsValid(ent) then 
+				table.remove(ent)
+			end
+		end
+		if self.nextSupplyDrop < CurTime() and #self.supplyDrops < 10 then
+			local largestZone = jcms.mapdata.zoneList[jcms.mapdata.largestZone]
+			local targetArea = largestZone[math.random(#largestZone)] --TODO: Would be better weighted
+			local pos = targetArea:GetCenter()
+
+			local classTypes = {
+				["jcms_tank"] = 0.01,
+				["jcms_restock_ammo"] = 1,
+				["jcms_restock_heal"] = 1,
+			}
+			local classChoice = jcms.util_ChooseByWeight(classTypes)
+
+			--Awful.
+			local spawnedEnt
+			if classChoice == "jcms_tank" then 
+				local spawnedEnt, flare = jcms.spawnmenu_Airdrop(pos, "jcms_tank", 10, "#jcms.tank", Color(143, 67, 229))
+			elseif classChoice == "jcms_restock_ammo" then
+				local crate, flare = jcms.spawnmenu_Airdrop(pos, "jcms_restock", 10, "#jcms.restock", Color(143, 67, 229))
+				crate:SetAmmoCashInside( 300 )
+				crate:SetHealthInside( 0 )
+				crate:SetLocalAngularVelocity( AngleRand(48, 128) )
+				crate:SetMaterial("models/jcms/".."jcorp".."_crate_ammo")
+				spawnedEnt = crate
+			elseif classChoice == "jcms_restock_heal" then 
+				local crate, flare = jcms.spawnmenu_Airdrop(pos, "jcms_restock", 10, "#jcms.firstaid", Color(143, 67, 229))
+				crate:SetAmmoCashInside( 0 )
+				crate:SetHealthInside( 100 )
+				crate:SetLocalAngularVelocity( AngleRand(48, 128) )
+				crate:SetMaterial("models/jcms/".."jcorp".."_crate_heal")
+				spawnedEnt = crate
+			end
+
+			table.insert(self.supplyDrops, spawnedEnt)
+			self.nextSupplyDrop = CurTime() + self.SupplyDropInterval
 		end
 
 		--Death rays
-		if (self.nextBombardment < CurTime()) and not (jcms.director and jcms.director.debug) then 
-			if self.bombardmentActive then --JCorp Death-beams
-				for i=1, 3, 1 do
-					local targetArea = jcms.mapgen_UseRandomArea() --Convenient way of targeting some-place valid.
+		if (self.nextBombardment < CurTime()) and not (jcms.director and jcms.director.debug) then
+			for i=1, 3, 1 do
+				local targetArea = jcms.mapgen_UseRandomArea() --Convenient way of targeting some-place valid.
 
-					local beam = ents.Create("jcms_deathraycontroller")
-					local rad = 32
-					local prep = 4.5
+				local beam = ents.Create("jcms_deathraycontroller")
+				local rad = 32
+				local prep = 4.5
 
-					beam.Speed = 150
-					beam.beamRadius = rad
-					beam:SetPos(targetArea:GetCenter())
-					beam:Spawn()
-					beam.beamPrepTime = prep
-					beam.beamLifeTime = 20
-					beam.jcms_owner = self
-					
-					beam.deathRay.DPS = 60
-					beam.deathRay.DPS_DIRECT = 60
-					beam.deathRay:SetBeamRadius(rad)
-					beam.deathRay:SetBeamPrepTime(prep)
-					beam.deathRay.jcms_owner = self
-					beam.deathRay:SetBeamLifeTime(20)
+				beam.Speed = 185
+				beam.beamRadius = rad
+				beam:SetPos(targetArea:GetCenter())
+				beam:Spawn()
+				beam.beamPrepTime = prep
+				beam.beamLifeTime = 20
+				beam.jcms_owner = self
+				
+				beam.deathRay.DPS = 60
+				beam.deathRay.DPS_DIRECT = 60
+				beam.deathRay:SetBeamRadius(rad)
+				beam.deathRay:SetBeamPrepTime(prep)
+				beam.deathRay.jcms_owner = self
+				beam.deathRay:SetBeamLifeTime(20)
 
+				if not self.bombardmentActive then 
+					beam.deathRay:SetBeamColour( Vector(0.7, 0.1, 1) )
+					beam.IsNPCTeam = true
+				else
 					if jcms.util_IsPVP() then
-						beam.deathRay:SetBeamColour( Vector(0.7, 0.1, 1) )
+						beam.deathRay:SetBeamColour(Vector(0, 1, 1))
 					else
 						beam.deathRay:SetBeamColour( Vector(1, 0.1, 0.1) )
 					end
-
-					beam.IsIdleUntilActive = true --Don't track until we're actually fully formed.
 				end
-			elseif jcms.npc_airCheck() then --Missiles 
-				local pos = self:WorldSpaceCenter() + (jcms.vectorUp * 180)
-				local ang = Angle(0,0,0)
 
-				for i=1, 6, 1 do 
-					timer.Simple(i/2, function()
-						if not IsValid(self) then return end
-						
-						local aliveSweepers = jcms.GetAliveSweepers()
-						local target = aliveSweepers[math.random(#aliveSweepers)]
-						if not IsValid(target) then return end
-
-						local filter = RecipientFilter()
-						filter:AddAllPlayers()
-						self:EmitSound("PropAPC.FireRocket", 140, 100, 1, CHAN_STATIC, 0, 0, filter)
-
-						local targetPos = target:WorldSpaceCenter() + Vector(math.Rand(-400, 400), math.Rand(-400, 400) ,0)
-
-						local missile = ents.Create("jcms_micromissile")
-						missile:SetPos(pos)
-						missile:SetAngles(ang)
-						missile:SetOwner(self)
-						missile.Damage = self.MissileBlastDamage
-						missile.Radius = self.MissileBlastRadius
-						missile.Proximity = self.MissileBlastRadius/4
-						missile.jcms_owner = self
-						missile.Target = targetPos
-						missile.Speed = 1750
-						missile.ActivationTime = CurTime() + 0.5
-						local col = jcms.factions_GetColor("rebel")
-						missile:SetBlinkColor( Vector(col.r/255, col.g/255, col.b/255) )
-						missile:Spawn()
-
-						missile.jcms_isPlayerMissile = false
-
-						missile.Path = jcms.pathfinder.navigate(missile:GetPos(), targetPos)
-						missile.Damping = 1
-						
-						missile:EmitSound("weapons/rpg/rocket1.wav", 90)
-						missile:CallOnRemove( "jcms_rpg_removeMissile", function()
-							missile:StopSound("weapons/rpg/rocket1.wav")
-						end)
-						
-						missile:GetPhysicsObject():SetVelocity(jcms.vectorUp*800)
-					end)
-				end
+				beam.IsIdleUntilActive = true --Don't track until we're actually fully formed.
 			end
 
 			self.nextBombardment = CurTime() + self.BombardmentInterval
@@ -227,6 +239,7 @@ if CLIENT then
 	
 	function ENT:Initialize()
 		self.chargeEffectX = 0
+		self:SetRenderBounds(jcms.vectorOrigin, jcms.vectorOrigin, Vector(self.JammingRadius, self.JammingRadius, self.JammingRadius) )
 	end
 
 	function ENT:OnRemove()
@@ -464,12 +477,12 @@ if CLIENT then
 					local foundEnts = {}
 					if self:GetShieldJCorp() then 
 						for i, ply in ipairs(jcms.GetAliveSweepers()) do
-							if ply:Health() > 0 and (ply:Armor() < ply:GetMaxArmor()) and (ply:WorldSpaceCenter():DistToSqr(self:WorldSpaceCenter()) <= selfTbl.Radius^2) then
+							if ply:Health() > 0 and (ply:Armor() < ply:GetMaxArmor()) and (ply:WorldSpaceCenter():DistToSqr(self:WorldSpaceCenter()) <= selfTbl.ShieldRadius^2) then
 								table.insert(foundEnts, ply)
 							end
 						end
 					else
-						for i, ent in ipairs(ents.FindInSphere(self:WorldSpaceCenter(), selfTbl.Radius)) do 
+						for i, ent in ipairs(ents.FindInSphere(self:WorldSpaceCenter(), selfTbl.ShieldRadius)) do 
 							if ent:IsNPC() then 
 								local maxShield = ent:GetNWInt("jcms_sweeperShield_max", -1)
 								if not(maxShield == -1) and (ent:GetNWInt("jcms_sweeperShield", -1) < maxShield) then
@@ -526,4 +539,60 @@ if CLIENT then
 		-- // }}}
 	end
 
+	--[[
+	function ENT:DrawTranslucent()
+		self:DrawStaticOverlay()
+	end
+
+	ENT.mat_noise = Material "jcms/noise.png"
+	function ENT:DrawStaticOverlay() --TODO: Move to cl_init.lua somewhere
+		render.SetStencilEnable(true)
+		render.ClearStencil()
+		render.SetStencilTestMask(255)
+		render.SetStencilWriteMask(255)
+
+		render.SetStencilCompareFunction(STENCIL_ALWAYS)
+		render.SetStencilPassOperation(STENCIL_REPLACE)
+		render.SetStencilFailOperation(STENCIL_KEEP)
+		render.SetStencilZFailOperation(STENCIL_KEEP)
+		render.SetStencilReferenceValue(1)
+		
+		render.OverrideBlend(true, BLEND_ZERO, BLEND_ONE, BLENDFUNC_ADD)
+
+		local selfPos = self:GetPos()
+		local range = self.JammingRadius
+		if EyePos():DistToSqr(selfPos) > range^2 then 
+			render.SetColorMaterial()
+			render.DrawSphere(selfPos, range, 22, 22, color_white)
+			
+			render.SetStencilReferenceValue(0)
+			render.SetStencilPassOperation(STENCIL_REPLACE)
+			render.DrawSphere(selfPos, -range, 22, 22, color_white)
+		else
+			render.ClearStencilBufferRectangle( 0,0, ScrW(), ScrH(), 1 )
+
+			render.SetStencilReferenceValue(0)
+			render.SetStencilPassOperation(STENCIL_REPLACE)
+
+			render.SetColorMaterial()
+			render.DrawSphere(selfPos, -range, 22, 22, color_white)
+		end
+		
+		render.OverrideBlend(false)
+		
+		render.SetStencilCompareFunction(STENCIL_EQUAL)
+		render.SetStencilReferenceValue(1)
+
+		render.OverrideBlend(true, BLEND_ONE, BLEND_ONE, BLENDFUNC_ADD)
+			cam.Start2D()
+				surface.SetMaterial(self.mat_noise)
+				surface.SetDrawColor(220 * 0.75, 180 * 0.75, 250 * 0.75)
+				jcms.hud_DrawNoiseRect(0, 0, ScrW(), ScrH())
+			cam.End2D()
+		render.OverrideBlend(false)
+		
+		render.SetStencilEnable( false )
+		render.ClearStencil()
+	end
+	--]]
 end
