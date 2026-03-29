@@ -45,7 +45,7 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 		end
 	end
 
-	local isEntAndAttackerSameTeam = jcms.team_SameTeam(attacker, ent)
+	local isEntAndAttackerSameTeam = IsValid(attacker) and jcms.team_SameTeam(attacker, ent)
 
 	if isEntAndAttackerSameTeam then
 		if attacker:IsPlayer() and jcms.team_NPC(attacker) and not (IsValid(inflictor) and inflictor.jcms_canHurtSelfAsNPC) then

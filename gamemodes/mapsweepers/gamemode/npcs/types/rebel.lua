@@ -193,7 +193,7 @@
 			end
 
 			--Set the entire squad to not play alert sounds for a while.
-			for i, squadNPC in ipairs(ai.GetSquadMembers( npc:GetSquad() )) do
+			for i, squadNPC in ipairs(ai.GetSquadMembers( npc:GetSquad() or "" )) do
 				squadNPC.jcms_rebelLastPlayerSpotted = cTime
 			end
 		end
