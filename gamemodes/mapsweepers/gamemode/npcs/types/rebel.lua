@@ -1597,6 +1597,7 @@ jcms.npc_types.rebel_megacopter = {
 			effectdata:SetAngles(tr.Normal:Angle())
 			effectdata:SetOrigin(tr.HitPos)
 			effectdata:SetFlags(1)
+			effectdata:SetMaterialIndex(0)
 			util.Effect("jcms_laser", effectdata)
 
 			dmgInfo:SetDamageType( bit.bor(dmgInfo:GetDamageType(), DMG_BURN) )

@@ -113,11 +113,13 @@ jcms.turrets = {
 		damagetype = DMG_BUCKSHOT,
 		attackPattern = { 19, 18, 16, 17 },
 		muzzleflashScale = 1.4,
+		pvpMuzzleflashFlags = { [2] = 1 },
 		muzzleflashFlag = 2,
 		clip = 100,
 		
 		radius = 750,
 		tracer = "jcms_laser",
+		tracerUsesPVPTeam = true,
 
 		updateRate = 5, --How often do we try to acquire targets (optimisation)
 		

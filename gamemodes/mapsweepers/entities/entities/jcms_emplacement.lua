@@ -160,7 +160,11 @@ if SERVER then
 		local effectdata3 = EffectData()
 		effectdata3:SetEntity(self)
 		effectdata3:SetScale(math.Rand(0.9, 1.4)+heat)
-		effectdata3:SetFlags(2)
+		if IsValid(attacker) then
+			effectdata3:SetFlags( attacker:GetNWInt("jcms_pvpTeam", -1) == 2 and 1 or 2)
+		else
+			effectdata3:SetFlags(2)
+		end
 		util.Effect("jcms_muzzleflash", effectdata3)
 
 		local mypos = self:GetPos()
@@ -187,6 +191,13 @@ if SERVER then
 			ed:SetAngles(spreadAngle)
 			ed:SetOrigin(tr.HitPos)
 			ed:SetFlags(0)
+
+			if IsValid(attacker) then
+				ed:SetMaterialIndex( math.max(0, attacker:GetNWInt("jcms_pvpTeam", -1)) )
+			else
+				ed:SetMaterialIndex(0)
+			end
+
 			util.Effect("jcms_laser", ed)
 
 			if IsValid(tr.Entity) then
@@ -198,7 +209,13 @@ if SERVER then
 				dmg:SetReportedPosition(self:GetPos())
 				dmg:SetDamageType(isGunship and DMG_BLAST or bit.bor(DMG_BULLET, DMG_AIRBOAT) )
 				dmg:SetInflictor(self)
-				dmg:SetAttacker(attacker)
+
+				if IsValid(attacker) then
+					dmg:SetAttacker(attacker)
+				else
+					dmg:SetAttacker(self)
+				end
+
 				tr.Entity:DispatchTraceAttack(dmg, tr)
 			end
 		end

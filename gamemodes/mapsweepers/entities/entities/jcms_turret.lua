@@ -485,6 +485,8 @@ if SERVER then
 		effectdata:SetFlags(tracerFlag)
 		if tracerUsesPVPTeam then
 			effectdata:SetMaterialIndex(math.max(0, self:GetNWInt("jcms_pvpTeam", -1)))
+		else
+			effectdata:SetMaterialIndex(0)
 		end
 		util.Effect(tracerEffect, effectdata)
 		
