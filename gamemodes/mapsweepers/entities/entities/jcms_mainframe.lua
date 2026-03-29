@@ -104,7 +104,7 @@ if SERVER then
 		for i=#self.supplyDrops, 1, -1 do
 			local ent = self.supplyDrops[i] 
 			if not IsValid(ent) then 
-				table.remove(ent)
+				table.remove(self.supplyDrops, i)
 			end
 		end
 		if self.nextSupplyDrop < CurTime() and #self.supplyDrops < 10 then
