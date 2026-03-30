@@ -216,11 +216,23 @@
 		end
 	end
 
-	function jcms.npc_rebel_flinch(npc, attacker, dur)
-		-- Flinch animation (jury rigged from some unused animations){{{
-			local gestureLayer = npc:AddGestureSequence(104) --TODO: Use the other death anims too
+	function jcms.npc_rebel_flinch(npc, attacker, dur, hitGroup)
+		-- Flinch animation (jury rigged from some unused animations) {{{
+			--left, right, or forward flinch based on hitgroup (arms are left/right)
+			local sequence = hitGroup == 4 and 104 or hitGroup == 5 and 103 or 101
+			if npc.jcms_rebelVoiceAffix == "f" then 
+				--female rebels have completely different sequence numbers for these.
+				sequence = hitGroup == 4 and 82 or hitGroup == 5 and 81 or 79
+			end
+			
+			local weight = 0.4
+			if sequence == 101 then --This anim is more exaggerated
+				weight = weight * 0.75
+			end
+
+			local gestureLayer = npc:AddGestureSequence(sequence)
 			npc:SetLayerPlaybackRate(gestureLayer, 7.5)
-			npc:SetLayerWeight( gestureLayer, 0.5 + (npc.jcms_rebelVoiceAffix == "f" and 0.2 or 0) ) --Male & female have drastically different anims, so f gets more weight to make it easier to see.
+			npc:SetLayerWeight(gestureLayer, weight) 
 			
 			timer.Simple(0.15, function()
 				if not IsValid(npc) then return end
@@ -236,6 +248,31 @@
 		if IsValid(attacker) then
 			npc:IgnoreEnemyUntil(attacker, cTime + dur)
 		end
+	end
+
+	function jcms.npc_rebel_miniFlinch(npc, hitGroup)
+		-- Flinch animation (jury rigged from some unused animations) {{{
+			--left, right, or forward flinch based on hitgroup (arms are left/right)
+			local sequence = hitGroup == 4 and 104 or hitGroup == 5 and 103 or 101
+			if npc.jcms_rebelVoiceAffix == "f" then 
+				--female rebels have completely different sequence numbers for these.
+				sequence = hitGroup == 4 and 82 or hitGroup == 5 and 81 or 79
+			end
+			
+			local weight = 0.15
+			if sequence == 101 then --This anim is more exaggerated
+				weight = weight * 0.75
+			end
+
+			local gestureLayer = npc:AddGestureSequence(sequence)
+			npc:SetLayerPlaybackRate(gestureLayer, 6.5)
+			npc:SetLayerWeight(gestureLayer, weight) 
+			
+			timer.Simple(0.15, function()
+				if not IsValid(npc) then return end
+				npc:RemoveLayer(gestureLayer)
+			end)
+		-- }}}
 	end
 -- // }}}
 
@@ -668,10 +705,11 @@ jcms.npc_types.rebel_fighter = {
 
 		npc.jcms_flinchAccum = 0
 		npc.jcms_lastFlinchAccum = CurTime()
+		npc.jcms_lastMiniFlinch = CurTime()
 	end,
 
 	--128 - shot freeze
-	--104 --deathpose front
+	--104 --deathpose front --101?
 
 	think = function(npc) 
 		jcms.npc_rebel_think(npc)
@@ -724,21 +762,6 @@ jcms.npc_types.rebel_fighter = {
 	end,
 
 	takeDamage = function(npc, dmgInfo) --Ammo drop for the carrier variant
-		-- // Flinching {{{
-			--TODO: Mini-flinches would be nice too.
-
-			--0.25s of tolerance for dmg accumulation
-			if CurTime() - npc.jcms_lastFlinchAccum > 0.25 then
-				npc.jcms_flinchAccum = 0
-			end
-
-			--if we take > half our health(20) in dmg in a short timespan, flinch
-			npc.jcms_flinchAccum = npc.jcms_flinchAccum + dmgInfo:GetDamage()
-			if npc.jcms_flinchAccum > npc:GetMaxHealth()/2 then 
-				jcms.npc_rebel_flinch(npc, dmgInfo:GetAttacker(), 0.5)
-			end
-		-- // }}}
-
 		if not npc.jcms_rebel_carrierVariant then return end
 
 		timer.Simple(0, function()
@@ -752,6 +775,23 @@ jcms.npc_types.rebel_fighter = {
 				npc.jcms_died = true
 			end
 		end)
+	end,
+
+	scaleDamage = function(npc, hitGroup, dmgInfo)
+		-- // Flinching {{{
+			--0.25s of tolerance for dmg accumulation
+			if CurTime() - npc.jcms_lastFlinchAccum > 0.25 then
+				npc.jcms_flinchAccum = 0
+			end
+
+			--if we take > half our health(20) in dmg in a short timespan, flinch
+			npc.jcms_flinchAccum = npc.jcms_flinchAccum + dmgInfo:GetDamage()
+			if npc.jcms_flinchAccum > npc:GetMaxHealth()/2 then 
+				jcms.npc_rebel_flinch(npc, dmgInfo:GetAttacker(), 0.5, hitGroup)
+			elseif CurTime() > npc.jcms_lastMiniFlinch + 0.1 then
+				jcms.npc_rebel_miniFlinch(npc, hitGroup)
+			end
+		-- // }}}
 	end,
 
 	proficiency = WEAPON_PROFICIENCY_VERY_GOOD
@@ -800,6 +840,7 @@ jcms.npc_types.rebel_breacher = {
 		
 		npc.jcms_flinchAccum = 0
 		npc.jcms_lastFlinchAccum = CurTime()
+		npc.jcms_lastMiniFlinch = CurTime()
 	end,
 
 	takeDamage = function(npc, dmgInfo) --Clean up our mask on death
@@ -826,6 +867,10 @@ jcms.npc_types.rebel_breacher = {
 	end,
 	
 	scaleDamage = function(npc, hitGroup, dmgInfo)
+		if CurTime() > npc.jcms_lastMiniFlinch + 0.1 then
+			jcms.npc_rebel_miniFlinch(npc, hitGroup)
+		end
+
 		if not(hitGroup == 1) or npc.jcms_breacher_maskHealth <= 0 then return end --Only headshots
 		local inflictor = dmgInfo:GetInflictor() 
 		if not IsValid(inflictor) then return end 
@@ -855,7 +900,7 @@ jcms.npc_types.rebel_breacher = {
 					npc.jcms_breacher_mask:Remove()
 				end
 
-				jcms.npc_rebel_flinch(npc, dmgInfo:GetAttacker(), 0.75)
+				jcms.npc_rebel_flinch(npc, dmgInfo:GetAttacker(), 0.75, hitGroup)
 				
 				npc:EmitSound("physics/metal/metal_sheet_impact_hard6.wav")
 				npc:EmitSound("Breakable.Metal")
