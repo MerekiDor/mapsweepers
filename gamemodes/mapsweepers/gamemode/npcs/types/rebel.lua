@@ -184,10 +184,10 @@
 
 	function jcms.npc_rebel_think(npc)
 		--Alert Sounds if we've had no enemy for > 12s
-		if IsValid(npc:GetEnemy()) then
-			local npcTbl = npc:GetTable()
-			local cTime = CurTime()
-
+		local cTime = CurTime()
+		local npcTbl = npc:GetTable()
+		local enemy = npc:GetEnemy()
+		if IsValid(enemy) and npc:Visible(enemy) then
 			if (npcTbl.jcms_rebelLastPlayerSpotted or 0) + 12 < cTime then 
 				npc:EmitSound( "jcms_rebel_spot_" .. (npcTbl.jcms_rebelVoiceAffix or "m") )
 			end
@@ -198,6 +198,21 @@
 					squadNPC.jcms_rebelLastPlayerSpotted = cTime
 				end
 			end
+		end
+
+		if (not IsValid(enemy) or not npc:Visible(enemy)) and cTime > npcTbl.jcms_nextIdleLine then 
+			--Idle voice lines every once in awhile
+			npc:EmitSound("jcms_rebelheli_idle")
+			
+			--Set the entire squad to not play idle sounds for a while.
+			local delay = math.random(10, 25)
+			if npc:GetSquad() then
+				for i, squadNPC in ipairs(ai.GetSquadMembers( npc:GetSquad() )) do
+					squadNPC.jcms_nextIdleLine = cTime + delay
+				end
+			end
+
+			npcTbl.jcms_nextIdleLine = cTime + delay
 		end
 	end
 
@@ -545,7 +560,7 @@
 				--"vo/npc/male01/behindyou02.wav",
 
 				"vo/npc/male01/getdown02.wav",
-				"vo/npc/male01/goodgod.wav",
+				--"vo/npc/male01/goodgod.wav",
 				"vo/npc/male01/gotone01.wav",
 				"vo/npc/male01/headsup01.wav",
 				"vo/npc/male01/headsup02.wav",
@@ -576,7 +591,7 @@
 				--"vo/npc/female01/behindyou02.wav",
 
 				"vo/npc/female01/getdown02.wav",
-				"vo/npc/female01/goodgod.wav",
+				--"vo/npc/female01/goodgod.wav",
 				"vo/npc/female01/gordead_ans17.wav",
 				"vo/npc/female01/headsup01.wav",
 				"vo/npc/female01/headsup02.wav",
@@ -635,6 +650,7 @@ jcms.npc_types.rebel_fighter = {
 		
 		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
 
+		npc.jcms_nextIdleLine = CurTime() + math.random(15, 25)
 		npc.jcms_rebelVoiceAffix = string.find(npc:GetModel(), "female") and "f" or "m"
 
 		npc.jcms_rebel_carrierVariant = math.random() < 0.15
@@ -709,6 +725,8 @@ jcms.npc_types.rebel_fighter = {
 
 	takeDamage = function(npc, dmgInfo) --Ammo drop for the carrier variant
 		-- // Flinching {{{
+			--TODO: Mini-flinches would be nice too.
+
 			--0.25s of tolerance for dmg accumulation
 			if CurTime() - npc.jcms_lastFlinchAccum > 0.25 then
 				npc.jcms_flinchAccum = 0
@@ -777,6 +795,7 @@ jcms.npc_types.rebel_breacher = {
 		npc:SetMaxHealth(30) --Default 40, makes them a little squishier to compenste for the mask
 		npc:SetHealth(npc:GetMaxHealth())
 
+		npc.jcms_nextIdleLine = CurTime() + math.random(15, 25)
 		npc.jcms_rebelVoiceAffix = string.find(npc:GetModel(), "female") and "f" or "m"
 		
 		npc.jcms_flinchAccum = 0
@@ -937,6 +956,8 @@ jcms.npc_types.rebel_vanguard = {
 		npc:GetActiveWeapon():SetSaveValue("m_fMinRange1", 0)
 		npc:GetActiveWeapon():SetSaveValue("m_fMaxRange1", 750)
 		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
+
+		npc.jcms_nextIdleLine = CurTime() + math.random(10, 35)
 	end,
 
 	think = function(npc)
