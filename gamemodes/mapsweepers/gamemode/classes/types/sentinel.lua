@@ -274,7 +274,7 @@ if SERVER then
 			end
 		else
 			--Shield charge on kill.
-			local charge = math.ceil((npc.jcms_bounty or 1) / 30) --We receive some shield even if our target has no bounty.
+			local charge = math.ceil(jcms.runprogress_GetDifficulty() * (npc.jcms_bounty or 1) / 30) --We receive some shield even if our target has no bounty.
 		
 			if charge > 0 then
 				local oldArmor = ply:Armor()
