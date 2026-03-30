@@ -200,6 +200,28 @@
 			end
 		end
 	end
+
+	function jcms.npc_rebel_flinch(npc, attacker, dur)
+		-- Flinch animation (jury rigged from some unused animations){{{
+			local gestureLayer = npc:AddGestureSequence(104) --TODO: Use the other death anims too
+			npc:SetLayerPlaybackRate(gestureLayer, 7.5)
+			npc:SetLayerWeight( gestureLayer, 0.5 + (npc.jcms_rebelVoiceAffix == "f" and 0.2 or 0) ) --Male & female have drastically different anims, so f gets more weight to make it easier to see.
+			
+			timer.Simple(0.15, function()
+				if not IsValid(npc) then return end
+				npc:RemoveLayer(gestureLayer)
+			end)
+		-- }}}
+
+		local cTime = CurTime()
+		--This is the best way I could find to 'stun' rebels.
+		if IsValid(npc:GetEnemy()) then
+			npc:IgnoreEnemyUntil(npc:GetEnemy(), cTime + dur)
+		end
+		if IsValid(attacker) then
+			npc:IgnoreEnemyUntil(attacker, cTime + dur)
+		end
+	end
 -- // }}}
 
 -- // [HELICOPTERS] Rebel-Specific Functions {{{
@@ -627,6 +649,9 @@ jcms.npc_types.rebel_fighter = {
 		else
 			npc:Fire("SetMedicOn") 
 		end
+
+		npc.jcms_flinchAccum = 0
+		npc.jcms_lastFlinchAccum = CurTime()
 	end,
 
 	--128 - shot freeze
@@ -683,6 +708,19 @@ jcms.npc_types.rebel_fighter = {
 	end,
 
 	takeDamage = function(npc, dmgInfo) --Ammo drop for the carrier variant
+		-- // Flinching {{{
+			--0.25s of tolerance for dmg accumulation
+			if CurTime() - npc.jcms_lastFlinchAccum > 0.25 then
+				npc.jcms_flinchAccum = 0
+			end
+
+			--if we take > half our health(20) in dmg in a short timespan, flinch
+			npc.jcms_flinchAccum = npc.jcms_flinchAccum + dmgInfo:GetDamage()
+			if npc.jcms_flinchAccum > npc:GetMaxHealth()/2 then 
+				jcms.npc_rebel_flinch(npc, dmgInfo:GetAttacker(), 0.5)
+			end
+		-- // }}}
+
 		if not npc.jcms_rebel_carrierVariant then return end
 
 		timer.Simple(0, function()
@@ -740,6 +778,9 @@ jcms.npc_types.rebel_breacher = {
 		npc:SetHealth(npc:GetMaxHealth())
 
 		npc.jcms_rebelVoiceAffix = string.find(npc:GetModel(), "female") and "f" or "m"
+		
+		npc.jcms_flinchAccum = 0
+		npc.jcms_lastFlinchAccum = CurTime()
 	end,
 
 	takeDamage = function(npc, dmgInfo) --Clean up our mask on death
@@ -790,10 +831,12 @@ jcms.npc_types.rebel_breacher = {
 			util.Effect("impact", effectdata)
 
 			npc.jcms_breacher_maskHealth = npc.jcms_breacher_maskHealth - dmgInfo:GetDamage()
-			if npc.jcms_breacher_maskHealth < 0 then
+			if npc.jcms_breacher_maskHealth <= 0 then
 				if IsValid(npc.jcms_breacher_mask) then 
 					npc.jcms_breacher_mask:Remove()
 				end
+
+				jcms.npc_rebel_flinch(npc, dmgInfo:GetAttacker(), 0.75)
 				
 				npc:EmitSound("physics/metal/metal_sheet_impact_hard6.wav")
 				npc:EmitSound("Breakable.Metal")
