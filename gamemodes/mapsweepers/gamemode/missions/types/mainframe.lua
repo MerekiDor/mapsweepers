@@ -511,27 +511,4 @@ jcms.missions.mainframe = {
 		else
 		end
 	end,
-
-	--[[
-	finalizeQueue = function(queue, d, totalCost, dangerCap, validTypes)
-		local missionData = d.missionData
-		if not(missionData.completedTracks and missionData.completedTracks[1]) then return end
-
-		--Probably not the most efficient possible solution.
-		local zombies = {}
-		local rebels = {}
-		for i, spawnType in ipairs(queue) do
-			local data = jcms.npc_types[ spawnType ]
-
-			if data.faction == "zombie" then
-				table.insert(zombies, spawnType)
-			else
-				table.insert(rebels, spawnType)
-			end
-		end
-
-		table.Add(zombies, rebels)
-		table.CopyFromTo(zombies, queue)
-	end
-	--]]
 }

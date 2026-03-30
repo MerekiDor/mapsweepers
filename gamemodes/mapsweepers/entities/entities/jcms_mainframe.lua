@@ -36,6 +36,7 @@ ENT.JammingRadius = 1500
 
 
 ENT.BombardmentInterval = 30
+ENT.BombardmentIntervalRGG = 45
 ENT.SupplyDropInterval = 90
 
 function ENT:SetupDataTables()
@@ -157,7 +158,7 @@ if SERVER then
 				beam:SetPos(targetArea:GetCenter())
 				beam:Spawn()
 				beam.beamPrepTime = prep
-				beam.beamLifeTime = 20
+				beam.beamLifeTime = self.bombardmentActive and 17.5 or 20
 				beam.jcms_owner = self
 				
 				beam.deathRay.DPS = 60
@@ -181,7 +182,7 @@ if SERVER then
 				beam.IsIdleUntilActive = true --Don't track until we're actually fully formed.
 			end
 
-			self.nextBombardment = CurTime() + self.BombardmentInterval
+			self.nextBombardment = CurTime() + (self.bombardmentActive and self.BombardmentIntervalRGG or self.BombardmentInterval)
 		end
 
 		self:NextThink(CurTime() + self.ChargeInterval)
