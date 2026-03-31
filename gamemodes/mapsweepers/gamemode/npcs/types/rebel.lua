@@ -277,7 +277,6 @@
 -- // }}}
 
 -- // [HELICOPTERS] Rebel-Specific Functions {{{
-
 	function jcms.npc_Helicopter_Setup(npc, dropDelay)
 		npc.jcms_heli_dmgProgress = 0
 		npc.jcms_heli_nextDrop = CurTime() + dropDelay
@@ -706,6 +705,13 @@ jcms.npc_types.rebel_fighter = {
 		npc:SetKeyValue("citizentype", "3")
 
 		npc.jcms_rebel_carrierVariant = math.random() < 0.15
+		if not npc.jcms_rebel_carrierVariant then --Medic model
+			npc:SetKeyValue("spawnflags", bit.bor(npc:GetKeyValues().spawnflags, 131072))
+		end
+	end,
+	
+	postSpawn = function(npc)
+		
 		if npc.jcms_rebel_carrierVariant then --Ammo carrier
 			local backpack = ents.Create("jcms_decorator")
 			backpack:SetModel("models/items/boxmrounds.mdl")
@@ -715,12 +721,9 @@ jcms.npc_types.rebel_fighter = {
 
 			npc.jcms_rebel_carrierBackpack = backpack
 		else --Healer
-			npc:SetKeyValue("spawnflags", bit.bor(npc:GetKeyValues().spawnflags, 131072))
 			npc:Fire("SetMedicOn") 
 		end
-	end,
-	
-	postSpawn = function(npc)
+
 		local wep = npc:GetActiveWeapon()
 		if IsValid(wep) then
 			if wep:GetClass() == "weapon_smg" then
