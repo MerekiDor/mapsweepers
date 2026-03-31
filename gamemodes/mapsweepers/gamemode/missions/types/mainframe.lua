@@ -362,6 +362,71 @@ jcms.missions.mainframe = {
 			end
 		-- // }}}
 
+		-- // Jammer Pillars {{{
+			--TODO: Count scaled by map characteristics?	
+			jcms.mapgen_Wait( 0.9 )
+
+			local defaultAreaWeights = {}
+			local areaVectors = {}
+			for i, area in ipairs(jcms.mapgen_MainZone()) do
+				local sizeX, sizeY = area:GetSizeX(), area:GetSizeY()
+				if sizeX < 75 or sizeY < 75 then continue end
+
+				--Weight by area size
+				defaultAreaWeights[area] = math.sqrt(sizeX * sizeY) 
+				
+				--Avoid outdoors
+				local centre = area:GetCenter() 
+				local indoorTrace = util.TraceLine({
+					start = centre,
+					endpos = centre + Vector(0,0,32768),
+					mask = MASK_SOLID_BRUSHONLY
+				})
+				defaultAreaWeights[area] = defaultAreaWeights[area] * (indoorTrace.HitSky and 0.01 or 1)
+
+				--Avoid high vis
+				defaultAreaWeights[area] = defaultAreaWeights[area] / (math.max(#area:GetVisibleAreas(), 1)) ^(1/3)
+				areaVectors[area] = centre
+			end
+
+
+			--Try to spawn 6 jammers
+			local chosenAreas = {}
+			for i=1, 6 do 
+				local weightedAreas = {}
+				for area, weight in pairs(defaultAreaWeights) do 
+					local closestDist = math.huge
+					for i, otherArea in ipairs(chosenAreas) do --Don't spawn too close to others.
+						local dist = areaVectors[area]:Distance( areaVectors[otherArea] )
+						closestDist = (closestDist < dist and closestDist) or dist
+					end
+					
+					if not(closestDist == math.huge) then
+						weight = weight * math.sqrt(closestDist)
+					end
+					
+					weightedAreas[area] = weight
+				end
+
+				local chosenArea = jcms.util_ChooseByWeight(weightedAreas)
+				if not chosenArea then break end
+
+				table.insert(chosenAreas, chosenArea)
+			end
+
+			local jammers = {{}, {}, {}}
+			for i, area in ipairs(chosenAreas) do 
+				local jammer = ents.Create("jcms_jammerstatic")
+				jammer:SetPos(area:GetCenter())
+				jammer:Spawn()
+
+				table.insert( jammers[((i -1) % #jammers) + 1], jammer) 
+			end
+
+			missionData.mainframe.jammers = jammers
+		-- // }}}
+
+		jcms.mapgen_Wait( 1 )
 		jcms.mapgen_PlaceNaturals( jcms.mapgen_AdjustCountForMapSize(12) )
 		jcms.mapgen_PlaceEncounters()
 	end,
@@ -451,6 +516,12 @@ jcms.missions.mainframe = {
 
 			jcms.net_SendTip("all", true, "#jcms.mainframe_completion2", completion)
 			missionData.mainframe:SetShieldJCorp(true)
+			
+			for i, subTbl in ipairs(missionData.mainframe.jammers) do 
+				for i, jammer in ipairs(subTbl) do 
+					jammer:SetIsActive(false)
+				end
+			end
 		end,
 		[3] = function(missionData) --Death-ray bombardment
 			local completion = 0

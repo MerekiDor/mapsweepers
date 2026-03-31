@@ -202,7 +202,7 @@
 
 		if (not IsValid(enemy) or not npc:Visible(enemy)) and cTime > npcTbl.jcms_nextIdleLine then 
 			--Idle voice lines every once in awhile
-			npc:EmitSound("jcms_rebelheli_idle")
+			npc:EmitSound("jcms_rebel_idle_m") --TODO: Male/female
 			
 			--Set the entire squad to not play idle sounds for a while.
 			local delay = math.random(10, 25)
@@ -581,6 +581,37 @@
 
 	-- // Rebel {{{
 		sound.Add({
+			name = "jcms_rebel_idle_m",
+			channel = CHAN_VOICE,
+			volume = 1,
+			level = 90,
+			pitch = 100,
+			sound = {
+				"vo/npc/male01/answer15.wav",
+				"vo/npc/male01/answer18.wav",
+				"vo/npc/male01/answer19.wav",
+				"vo/npc/male01/answer29.wav",
+				"vo/npc/male01/answer30.wav",
+				"vo/npc/male01/getgoingsoon.wav",
+				"vo/npc/male01/gordead_ans13.wav",
+				"vo/npc/male01/gordead_ans15.wav",
+				"vo/npc/male01/hi01.wav",
+				"vo/npc/male01/holddownspot01.wav",
+				"vo/npc/male01/holddownspot02.wav",
+				"vo/npc/male01/imstickinghere01.wav",
+				"vo/npc/male01/okimready01.wav",
+				"vo/npc/male01/question02.wav",
+				"vo/npc/male01/question03.wav",
+				"vo/npc/male01/question04.wav",
+				"vo/npc/male01/question05.wav",
+				"vo/npc/male01/question06.wav",
+				"vo/npc/male01/question07.wav"
+			}
+		})
+
+		--TODO: Female version of above (and maybe more lines, I just copy pasted the rebel heli ones)
+
+		sound.Add({
 			name = "jcms_rebel_spot_m",
 			channel = CHAN_VOICE,
 			volume = 1,
@@ -673,6 +704,20 @@ jcms.npc_types.rebel_fighter = {
 	
 	preSpawn = function(npc)
 		npc:SetKeyValue("citizentype", "3")
+
+		npc.jcms_rebel_carrierVariant = math.random() < 0.15
+		if npc.jcms_rebel_carrierVariant then --Ammo carrier
+			local backpack = ents.Create("jcms_decorator")
+			backpack:SetModel("models/items/boxmrounds.mdl")
+			backpack:Spawn()
+			backpack:SetupAsBoneFollower(npc, 3, Angle(90,15,180))
+			backpack:SetPos(backpack:GetPos() + backpack:GetAngles():Forward() * -6.5 + backpack:GetAngles():Right() * -8)
+
+			npc.jcms_rebel_carrierBackpack = backpack
+		else --Healer
+			npc:SetKeyValue("spawnflags", bit.bor(npc:GetKeyValues().spawnflags, 131072))
+			npc:Fire("SetMedicOn") 
+		end
 	end,
 	
 	postSpawn = function(npc)
@@ -689,19 +734,6 @@ jcms.npc_types.rebel_fighter = {
 
 		npc.jcms_nextIdleLine = CurTime() + math.random(15, 25)
 		npc.jcms_rebelVoiceAffix = string.find(npc:GetModel(), "female") and "f" or "m"
-
-		npc.jcms_rebel_carrierVariant = math.random() < 0.15
-		if npc.jcms_rebel_carrierVariant then
-			local backpack = ents.Create("jcms_decorator")
-			backpack:SetModel("models/items/boxmrounds.mdl")
-			backpack:Spawn()
-			backpack:SetupAsBoneFollower(npc, 3, Angle(90,15,180))
-			backpack:SetPos(backpack:GetPos() + backpack:GetAngles():Forward() * -6.5 + backpack:GetAngles():Right() * -8)
-
-			npc.jcms_rebel_carrierBackpack = backpack
-		else
-			npc:Fire("SetMedicOn") 
-		end
 
 		npc.jcms_flinchAccum = 0
 		npc.jcms_lastFlinchAccum = CurTime()

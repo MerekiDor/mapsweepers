@@ -36,8 +36,9 @@ ENT.JammingRadius = 1500
 
 
 ENT.BombardmentInterval = 30
-ENT.BombardmentIntervalRGG = 45
+ENT.BombardmentIntervalRGG = 60
 ENT.SupplyDropInterval = 90
+ENT.JammerSwitchInterval = 120
 
 function ENT:SetupDataTables()
 	self:NetworkVar("Bool", 0, "ShieldJCorp")
@@ -52,6 +53,10 @@ if SERVER then
 		self.bombardmentActive = false
 		self.nextBombardment = CurTime() + 50
 		self.nextSupplyDrop = CurTime() + 90
+		self.nextJammerSwitch = CurTime() + 120
+	
+		self.jammers = {{}, {}} --Set by mainframe mission gen
+		self.jammerIndex = 1
 		self.supplyDrops = {}
 	end
 
@@ -64,126 +69,123 @@ if SERVER then
 				end
 			end
 		else
-			--Jammer
-			--[[
-			local selfPos = self:WorldSpaceCenter()
+			if self.nextJammerSwitch < CurTime() then 
+				self.jammerIndex = (self.jammerIndex % #self.jammers) + 1
 
-			for i, target in ipairs(ents.FindInSphere( selfPos, self.JammingRadius )) do
-				if IsValid(target) and target.JCMS_Stunnable and jcms.team_JCorp_ent(target) then
-					if not target.jcms_stunEnd or target.jcms_stunEnd < CurTime() then
-						local ed = EffectData()
-						ed:SetMagnitude(1.5)
-						ed:SetOrigin(target:WorldSpaceCenter())
-						ed:SetRadius(50)
-						ed:SetNormal(jcms.vectorUp)
-						ed:SetFlags(5)
-						ed:SetColor( jcms.util_ColorIntegerFast(230, 185, 255) )
-						util.Effect("jcms_blast", ed)
-	
-						local ed = EffectData()
-						ed:SetFlags(3)
-						ed:SetEntity(target)
-						ed:SetOrigin(selfPos)
-						util.Effect("jcms_chargebeam", ed)
-	
-						target:EmitSound("NPC_Turret.Die")
+				for i, subTbl in ipairs(self.jammers) do 
+					for i, jammer in ipairs(subTbl) do 
+						jammer:SetIsActive(false)
 					end
-	
-					local ed = EffectData()
-					ed:SetScale(self.JammingTime + 0.5)
-					ed:SetMagnitude( 0.2 * 512)
-					ed:SetEntity(target)
-					util.Effect("jcms_teslahitboxes_dur", ed)
-	
-					target.jcms_stunEnd = CurTime() + self.JammingTime
 				end
-			end
-			--]]
-		end
 
-		--Supply drops
-		for i=#self.supplyDrops, 1, -1 do
-			local ent = self.supplyDrops[i] 
-			if not IsValid(ent) then 
-				table.remove(self.supplyDrops, i)
-			end
-		end
-		if self.nextSupplyDrop < CurTime() and #self.supplyDrops < 10 then
-			local largestZone = jcms.mapdata.zoneList[jcms.mapdata.largestZone]
-			local targetArea = largestZone[math.random(#largestZone)] --TODO: Would be better weighted
-			local pos = targetArea:GetCenter()
-
-			local classTypes = {
-				["jcms_tank"] = 0.01,
-				["jcms_restock_ammo"] = 1,
-				["jcms_restock_heal"] = 1,
-			}
-			local classChoice = jcms.util_ChooseByWeight(classTypes)
-
-			--Awful.
-			local spawnedEnt
-			if classChoice == "jcms_tank" then 
-				local spawnedEnt, flare = jcms.spawnmenu_Airdrop(pos, "jcms_tank", 10, "#jcms.tank", Color(143, 67, 229))
-			elseif classChoice == "jcms_restock_ammo" then
-				local crate, flare = jcms.spawnmenu_Airdrop(pos, "jcms_restock", 10, "#jcms.restock", Color(143, 67, 229))
-				crate:SetAmmoCashInside( 300 )
-				crate:SetHealthInside( 0 )
-				crate:SetLocalAngularVelocity( AngleRand(48, 128) )
-				crate:SetMaterial("models/jcms/".."jcorp".."_crate_ammo")
-				spawnedEnt = crate
-			elseif classChoice == "jcms_restock_heal" then 
-				local crate, flare = jcms.spawnmenu_Airdrop(pos, "jcms_restock", 10, "#jcms.firstaid", Color(143, 67, 229))
-				crate:SetAmmoCashInside( 0 )
-				crate:SetHealthInside( 100 )
-				crate:SetLocalAngularVelocity( AngleRand(48, 128) )
-				crate:SetMaterial("models/jcms/".."jcorp".."_crate_heal")
-				spawnedEnt = crate
-			end
-
-			table.insert(self.supplyDrops, spawnedEnt)
-			self.nextSupplyDrop = CurTime() + self.SupplyDropInterval
-		end
-
-		--Death rays
-		if (self.nextBombardment < CurTime()) and not (jcms.director and jcms.director.debug) then
-			for i=1, 3, 1 do
-				local targetArea = jcms.mapgen_UseRandomArea() --Convenient way of targeting some-place valid.
-
-				local beam = ents.Create("jcms_deathraycontroller")
-				local rad = 32
-				local prep = 4.5
-
-				beam.Speed = 185
-				beam.beamRadius = rad
-				beam:SetPos(targetArea:GetCenter())
-				beam:Spawn()
-				beam.beamPrepTime = prep
-				beam.beamLifeTime = self.bombardmentActive and 17.5 or 20
-				beam.jcms_owner = self
+				for i, jammer in ipairs(self.jammers[self.jammerIndex]) do 
+					local timerName = "jcms_"..tostring(jammer).."beep"
+					local function ping()
+						if not IsValid(jammer) then
+							timer.Remove(timerName)
+							return
+						end
 				
-				beam.deathRay.DPS = 60
-				beam.deathRay.DPS_DIRECT = 60
-				beam.deathRay:SetBeamRadius(rad)
-				beam.deathRay:SetBeamPrepTime(prep)
-				beam.deathRay.jcms_owner = self
-				beam.deathRay:SetBeamLifeTime(20)
-
-				if not self.bombardmentActive then 
-					beam.deathRay:SetBeamColour( Vector(0.7, 0.1, 1) )
-					beam.IsNPCTeam = true
-				else
-					if jcms.util_IsPVP() then
-						beam.deathRay:SetBeamColour(Vector(0, 1, 1))
-					else
-						beam.deathRay:SetBeamColour( Vector(1, 0.1, 0.1) )
+						jammer:EmitSound("buttons/button3.wav", 100, 80)
 					end
+	
+					timer.Create(timerName, 1, 3, ping) --3s
+
+					timer.Simple(4, function()
+						if not IsValid(jammer) then return end
+						jammer:SetIsActive(true)
+					end)
 				end
 
-				beam.IsIdleUntilActive = true --Don't track until we're actually fully formed.
+				self.nextJammerSwitch = CurTime() + self.JammerSwitchInterval
 			end
-
-			self.nextBombardment = CurTime() + (self.bombardmentActive and self.BombardmentIntervalRGG or self.BombardmentInterval)
 		end
+
+		-- // {{{ Supply drops
+			for i=#self.supplyDrops, 1, -1 do
+				local ent = self.supplyDrops[i] 
+				if not IsValid(ent) then 
+					table.remove(self.supplyDrops, i)
+				end
+			end
+			if self.nextSupplyDrop < CurTime() and #self.supplyDrops < 10 then
+				local largestZone = jcms.mapgen_MainZone()
+				local targetArea = largestZone[math.random(#largestZone)] --TODO: Would be better weighted
+				local pos = targetArea:GetCenter()
+
+				local classTypes = {
+					["jcms_tank"] = 0.01,
+					["jcms_restock_ammo"] = 1,
+					["jcms_restock_heal"] = 1,
+				}
+				local classChoice = jcms.util_ChooseByWeight(classTypes)
+
+				--Awful.
+				local spawnedEnt
+				if classChoice == "jcms_tank" then 
+					local spawnedEnt, flare = jcms.spawnmenu_Airdrop(pos, "jcms_tank", 10, "#jcms.tank", Color(143, 67, 229))
+				elseif classChoice == "jcms_restock_ammo" then
+					local crate, flare = jcms.spawnmenu_Airdrop(pos, "jcms_restock", 10, "#jcms.restock", Color(143, 67, 229))
+					crate:SetAmmoCashInside( 300 )
+					crate:SetHealthInside( 0 )
+					crate:SetLocalAngularVelocity( AngleRand(48, 128) )
+					crate:SetMaterial("models/jcms/".."jcorp".."_crate_ammo")
+					spawnedEnt = crate
+				elseif classChoice == "jcms_restock_heal" then 
+					local crate, flare = jcms.spawnmenu_Airdrop(pos, "jcms_restock", 10, "#jcms.firstaid", Color(143, 67, 229))
+					crate:SetAmmoCashInside( 0 )
+					crate:SetHealthInside( 100 )
+					crate:SetLocalAngularVelocity( AngleRand(48, 128) )
+					crate:SetMaterial("models/jcms/".."jcorp".."_crate_heal")
+					spawnedEnt = crate
+				end
+
+				table.insert(self.supplyDrops, spawnedEnt)
+				self.nextSupplyDrop = CurTime() + self.SupplyDropInterval
+			end
+		-- // }}}
+
+		-- // Death rays {{{
+			if (self.nextBombardment < CurTime()) and not (jcms.director and jcms.director.debug) then
+				for i=1, not self.bombardmentActive and 6 or 3, 1 do
+					local targetArea = jcms.mapgen_UseRandomArea() --Convenient way of targeting some-place valid.
+
+					local beam = ents.Create("jcms_deathraycontroller")
+					local rad = 32
+					local prep = 4.5
+
+					beam.Speed = 185
+					beam.beamRadius = rad
+					beam:SetPos(targetArea:GetCenter())
+					beam:Spawn()
+					beam.beamPrepTime = prep
+					beam.beamLifeTime = not self.bombardmentActive and 17.5 or 20
+					beam.jcms_owner = self
+					
+					beam.deathRay.DPS = 60
+					beam.deathRay.DPS_DIRECT = 60
+					beam.deathRay:SetBeamRadius(rad)
+					beam.deathRay:SetBeamPrepTime(prep)
+					beam.deathRay.jcms_owner = self
+					beam.deathRay:SetBeamLifeTime(20)
+
+					if not self.bombardmentActive then 
+						beam.deathRay:SetBeamColour( Vector(0.7, 0.1, 1) )
+						beam.IsNPCTeam = true
+					else
+						if jcms.util_IsPVP() then
+							beam.deathRay:SetBeamColour(Vector(0, 1, 1))
+						else
+							beam.deathRay:SetBeamColour( Vector(1, 0.1, 0.1) )
+						end
+					end
+
+					beam.IsIdleUntilActive = true --Don't track until we're actually fully formed.
+				end
+
+				self.nextBombardment = CurTime() + (not self.bombardmentActive and self.BombardmentIntervalRGG or self.BombardmentInterval)
+			end
+		-- // }}}
 
 		self:NextThink(CurTime() + self.ChargeInterval)
 		return true
