@@ -169,8 +169,14 @@ function ENT:SetupDataTables()
 	self:NetworkVar("Entity", 0, "TankOtherPart")
 	self:NetworkVar("Bool", 0, "TankIsTower")
 	self:NetworkVar("Float", 0, "HealthFraction")
+	self:NetworkVar("Float", 1, "NextAttack1")
+	self:NetworkVar("Float", 2, "NextAttack2")
+	self:NetworkVar("Float", 3, "Firerate1")
+	self:NetworkVar("Float", 4, "Firerate2")
 	if SERVER then
 		self:SetHealthFraction(1)
+		self:SetFirerate1(2.5)
+		self:SetFirerate2(0.4)
 	end
 end
 
@@ -586,7 +592,8 @@ if SERVER then
 					tower:EmitSound("npc/dog/dog_pneumatic1.wav", 100, 100, 1)
 				end)
 
-				tower.nextShot = CurTime() + 2.5
+				tower.nextShot = CurTime() + self:GetFirerate1()
+				self:SetNextAttack1(tower.nextShot)
 				
 				local ed = EffectData()
 				ed:SetEntity(tower)
@@ -645,7 +652,8 @@ if SERVER then
 				missile.Damping = math.Rand(0.8, 1.0)
 				missile.NeverLoseTarget = true
 				
-				tower.nextShotAlt = CurTime() + 0.4
+				tower.nextShotAlt = CurTime() + self:GetFirerate2()
+				self:SetNextAttack2(tower.nextShotAlt)
 				
 				local ed = EffectData()
 				ed:SetEntity(tower)
@@ -759,12 +767,28 @@ if CLIENT then
 		local tower = self:GetTankOtherPart()
 		local health2Width = 800
 		local health2Frac = math.Clamp(IsValid(tower) and tower:GetHealthFraction() or 0, 0, 1)
+		local ammoX = health2Width + 100
+
+		local hasTower = health2Frac > 0
 		
 		surface.SetDrawColor(jcms.color_dark)
 		surface.DrawRect(-healthWidth/2, -114, healthWidth, 32)
 		surface.DrawRect(-health2Width/2, -114-48, health2Width, 24)
+
+		local a1, a2 = -math.pi*1.2, 0
+		local b1, b2 = -math.pi, math.pi*0.2
+
+		if hasTower then
+			draw.SimpleText("∞", "jcms_hud_superhuge", -ammoX, -72, jcms.color_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			draw.SimpleText("∞", "jcms_hud_superhuge", ammoX, -72, jcms.color_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			jcms.draw_Circle(-ammoX, -72, 100, 100, 16, 9, a1, a2)
+			jcms.draw_Circle(ammoX, -72, 100, 100, 16, 9, b1, b2)
+		end
 		
+		local time = CurTime()
 		render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
+			local frac1 = 1 - math.Clamp( (self:GetNextAttack1()-time)/self:GetFirerate1(), 0, 1 )
+			local frac2 = 1 - math.Clamp( (self:GetNextAttack2()-time)/self:GetFirerate2(), 0, 1 )
 			surface.SetDrawColor(jcms.color_pulsing)
 			surface.DrawRect(-256, -64, 512, 6)
 			surface.DrawRect(-400, -64+16, 800, 4)
@@ -776,6 +800,20 @@ if CLIENT then
 			surface.SetDrawColor(health2Frac < 0.4 and jcms.color_alert or jcms.color_bright)
 			jcms.hud_DrawStripedRect(-health2Width/2, -114-48-off+2, health2Width, 24-4)
 			surface.DrawRect(-health2Width/2, -114-48-off, health2Width*health2Frac, 24)
+
+			if hasTower then
+				local dim = ColorAlpha(jcms.color_bright, 20)
+				local col1 = frac1 >= 1 and jcms.color_bright or dim
+				local col2 = frac2 >= 0.9 and jcms.color_bright or dim
+				draw.SimpleText("∞", "jcms_hud_superhuge", -ammoX-4, -76, col1, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+				draw.SimpleText("∞", "jcms_hud_superhuge", ammoX+4, -76, col2, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+				draw.SimpleText("#jcms.tank_attack1", "jcms_hud_medium", -ammoX-4, 0, col1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+				draw.SimpleText("#jcms.tank_attack2", "jcms_hud_medium", ammoX+4, 0, col2, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+				surface.SetDrawColor(col1)
+				jcms.draw_Circle(-ammoX-4, -76, 98, 100, 16, 9, a2, Lerp(frac1, a2, a1))
+				surface.SetDrawColor(col2)
+				jcms.draw_Circle(ammoX+4, -76, 98, 100, 16, 9, Lerp(frac2, b1, b2), b1)
+			end
 		render.OverrideBlend( false )
 	end
 	
@@ -806,7 +844,13 @@ if CLIENT then
 		local myang = self:GetAngles()
 		local speed = self:GetVelocity():Length()
 		
-		origin = mypos + myang:Up()*30 + angles:Forward() * -200 + angles:Up() * 72
+		local frac = math.Clamp(math.Remap(angles.pitch, 0, -89, 0, 1), 0, 1)
+		local up1 = Lerp(frac, 30, 150)
+		local up2 = Lerp(frac, 72, 92)
+		local fwd = Lerp(frac, -200, -150)
+		local right = 0
+
+		origin = mypos + myang:Up()*up1 + angles:Forward()*fwd + angles:Up()*up2 + angles:Right()*right
 		angles.roll = math.AngleDifference(angles.roll, -myang.roll)*0.25
 		
 		return {
