@@ -237,7 +237,10 @@ if SERVER then
 					vel:Add(diff)
 					ent:SetVelocity(vel)
 				end
-				ent:TakeDamageInfo(dmg)
+
+				if not ent:IsPlayer() then
+					ent:TakeDamageInfo(dmg)
+				end
 			end
 		end
 
