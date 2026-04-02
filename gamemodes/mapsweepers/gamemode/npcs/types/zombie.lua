@@ -540,7 +540,8 @@ jcms.npc_types.zombie_crawler = {
 
 		npc.jcms_dmgMult = 5
 
-		npc:SetCollisionGroup(COLLISION_GROUP_WEAPON)
+		ent.jcms_DontCollideWithNPCs = true
+		ent:SetCustomCollisionCheck(true)
 	end
 
 	--TODO: THESE GUYS SHOULD LEAP
@@ -844,6 +845,7 @@ jcms.npc_types.zombie_spirit = {
 	end
 }
 
+--[[
 jcms.npc_types.zombie_latcher = {
 	portalSpawnWeight = 0,
 	faction = "zombie",
@@ -859,6 +861,7 @@ jcms.npc_types.zombie_latcher = {
 		return jcms.npc_capCheck("npc_jcms_latcher", 4)
 	end
 }
+--]]
 
 jcms.npc_types.zombie_spawner = {
 	faction = "zombie",

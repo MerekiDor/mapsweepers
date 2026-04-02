@@ -659,10 +659,10 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 
 	jcms.npc_entityAssignmentData = {
 		["npc_manhack"] = { bounty = 2, faction = "combine" },
-		["npc_headcrab"] = { bounty = 1, faction = "zombie" },
-		["npc_headcrab_fast"] = { bounty = 1, faction = "zombie" },
-		["npc_headcrab_poison"] = { bounty = 2, faction = "zombie" },
-		["npc_headcrab_black"] = { bounty = 2, faction = "zombie" },
+		["npc_headcrab"] = { bounty = 1, faction = "zombie", nocollidewithnpcs = true },
+		["npc_headcrab_fast"] = { bounty = 1, faction = "zombie", nocollidewithnpcs = true },
+		["npc_headcrab_poison"] = { bounty = 2, faction = "zombie", nocollidewithnpcs = true },
+		["npc_headcrab_black"] = { bounty = 2, faction = "zombie", nocollidewithnpcs = true },
 
 		["npc_combine_s"] = { bounty = 70, faction = "combine" },
 		["npc_metropolice"] = { bounty = 40, faction = "combine" },
@@ -682,6 +682,11 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 				if data.bounty then
 					ent.jcms_bounty = data.bounty
 					ent.jcms_damageShare = {}
+				end
+
+				if data.nocollidewithnpcs then 
+					ent.jcms_DontCollideWithNPCs = true
+					ent:SetCustomCollisionCheck(true)
 				end
 
 				jcms.npc_UpdateRelations(ent)
