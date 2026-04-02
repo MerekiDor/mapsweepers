@@ -110,6 +110,8 @@ if SERVER then
 
 	function ENT:OnTakeDamage(dmg)
 		if self:GetIsDying() then return 0 end
+		
+		self:Extinguish()
 
 		local melee = bit.band(dmg:GetDamageType(), bit.bor(DMG_SLASH, DMG_CLUB)) > 0
 		

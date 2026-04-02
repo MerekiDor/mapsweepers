@@ -577,7 +577,7 @@ jcms.offgame = jcms.offgame or NULL
 
 			local hasNMNavAddon = false
 			for i, addon in ipairs( engine.GetAddons() ) do
-				if addon.wsid == "2905690962" then
+				if addon.wsid == "2905690962" and addon.mounted then 
 					hasNMNavAddon = true
 					break
 				end
@@ -604,6 +604,10 @@ jcms.offgame = jcms.offgame or NULL
 				function close:DoClick()
 					popup:Remove()
 				end
+				
+				close:SetEnabled(true)
+				close.Paint = jcms.paint_ButtonFilled
+
 				timer.Simple(1.5, function()
 					if IsValid(close) then
 						close:SetEnabled(true)

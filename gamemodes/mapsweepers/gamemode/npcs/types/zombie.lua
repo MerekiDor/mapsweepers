@@ -775,6 +775,7 @@ jcms.npc_types.zombie_combine = {
 	end,
 
 	takeDamage = function(npc, dmg)
+		npc:Extinguish()
 		timer.Simple(0, function()
 			if IsValid(npc) then
 				for i, ent in ipairs(ents.FindInSphere(npc:GetAttachment( 8 ).Pos, 1)) do --8 = Grenade attach pos
