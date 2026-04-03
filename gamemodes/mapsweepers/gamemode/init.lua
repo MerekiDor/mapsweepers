@@ -393,7 +393,7 @@ end
 	end)
 
 	hook.Add("ShouldCollide", "jcms_customCollision", function(ent1, ent2)
-		if ent1:IsNPC() or ent2:IsNPC() and ent1.jcms_DontCollideWithNPCs or ent2.jcms_DontCollideWithNPCs then
+		if (ent1:IsNPC() and ent2.jcms_DontCollideWithNPCs) or (ent2:IsNPC() and ent1.jcms_DontCollideWithNPCs) then
 			return false
 		end
 	end)

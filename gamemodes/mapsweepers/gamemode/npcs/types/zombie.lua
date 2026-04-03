@@ -500,6 +500,12 @@ jcms.npc_types.zombie_husk = {
 		end
 	end,
 
+	takeDamage = function(npc, dmg)
+		if bit.band(dmg:GetDamageType(), bit.bor(DMG_BLAST_SURFACE, DMG_BLAST)) > 0 then
+			dmg:ScaleDamage(0.5)
+		end
+	end,
+
 	think = jcms.npc_SlowZombieThink
 }
 
@@ -540,8 +546,8 @@ jcms.npc_types.zombie_crawler = {
 
 		npc.jcms_dmgMult = 5
 
-		ent.jcms_DontCollideWithNPCs = true
-		ent:SetCustomCollisionCheck(true)
+		npc.jcms_DontCollideWithNPCs = true
+		npc:SetCustomCollisionCheck(true)
 	end
 
 	--TODO: THESE GUYS SHOULD LEAP
@@ -567,6 +573,12 @@ jcms.npc_types.zombie_poison = {
 		npc.jcms_dmgMult = 5
 
 		jcms.npc_setupNPCAINNav(npc)
+	end,
+
+	takeDamage = function(npc, dmg)
+		if bit.band(dmg:GetDamageType(), bit.bor(DMG_BLAST_SURFACE, DMG_BLAST)) > 0 then
+			dmg:ScaleDamage(0.5)
+		end
 	end,
 
 	think = jcms.npc_SlowZombieThink
