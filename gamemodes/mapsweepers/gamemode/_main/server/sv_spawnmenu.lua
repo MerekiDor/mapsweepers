@@ -410,7 +410,7 @@
 				jcms.net_SendLocator("all", nil, "#jcms.shelling", pos, jcms.LOCATOR_WARNING, 5)
 
 				local blast_radius = 400
-				local blast_damage = 200
+				local blast_damage = 150
 				local pvpTeam = ply:GetNWInt("jcms_pvpTeam", -1)
 				if pvpTeam == -1 then pvpTeam = 1 end --Default 1 to work with normal mode.
 

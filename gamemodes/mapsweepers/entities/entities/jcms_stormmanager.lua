@@ -52,15 +52,18 @@ if SERVER then
 
 	function ENT:OnRemove() 
 		self.fogController:SetKeyValue("farz", self.fogDefaultZ)
+		jcms.rangeCap_SetSource(self, nil)
 	end
 
 	function ENT:Think()
 		self:IncrRain()
 
-		if self.rainStage >= 0.99 then 
+		if self.rainStage >= 0.99 then --TODO: Not hugely efficient
 			self.fogController:SetKeyValue("farz", 2500)
+			jcms.rangeCap_SetSource(self, 2500)
 		else
 			self.fogController:SetKeyValue("farz", self.fogDefaultZ)
+			jcms.rangeCap_SetSource(self, nil)
 		end
 
 		if self.rainStage <= 0.5 then return end 

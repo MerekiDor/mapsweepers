@@ -24,7 +24,7 @@
 		--Game was never really designed for this many players, zombie missions in particular end up feeling very empty with 16 people. This should help.
 		local swpCountReduce = math.max(#team.GetPlayers(1) - 6, 0) * 250
 
-		if npc:GetPathDistanceToGoal() > math.max(2000 - swpCountReduce, 250) then
+		if npc:GetPathDistanceToGoal() > 500 then
 			local npcPos = npc:WorldSpaceCenter()
 			local npcNextPos = npc:GetCurWaypointPos()
 
@@ -44,7 +44,7 @@
 				local endVisible = ply:VisibleVec( npcNextPos )
 
 				local swpEyePos = ply:EyePos()
-				local maxDist = (3500 - swpCountReduce)^2
+				local maxDist = math.min((3250 - swpCountReduce)^2, jcms.rangeCap^2) --TODO: would be better if rangecap affected visibility instead, so that we didn't get the vfx
 				local far = npcNextPos:DistToSqr(swpEyePos) > maxDist and npcPos:DistToSqr(swpEyePos) > maxDist --are we and our dest super far
 
 				local visibleForThisSwp = startVisible or endVisible --are we or our destination visible
@@ -921,6 +921,24 @@ jcms.npc_types.zombie_spawner = {
 	check = function(director)
 		--At a certain point these reduce difficulty by muscling-out every other enemy type. We have minitanks as a fallback.
 		return jcms.npc_capCheck("npc_jcms_zombiespawner", 4)
+	end
+}
+
+jcms.npc_types.zombie_spewer = {
+	faction = "zombie",
+
+	danger = jcms.NPC_DANGER_BOSS,
+	cost = 1.25,
+	swarmWeight = 0.35,
+
+	class = "npc_jcms_zombiespewer",
+	bounty = 350,
+	
+	isStatic = true, 
+
+	check = function(director)
+		--More than 3 has no effect (and I wouldn't want it to anyway, if it scaled dynamically it'd blind you eventually)
+		return jcms.npc_capCheck("npc_jcms_zombiespewer", 3)
 	end
 }
 

@@ -262,7 +262,7 @@ if SERVER then
 	function ENT:TurretRadius() --make rebel turrets in open areas less trivial to deal with/more engaging.
 		 local selfTbl = self:GetTable() 
 		local mul = (selfTbl.GetHackedByRebels(self) and 2) or 1
-		return selfTbl.GetTurretField(self, "radius") * mul
+		return math.min(selfTbl.GetTurretField(self, "radius") * mul, jcms.rangeCap)
 	end
 	
 	function ENT:TurretDamageType()

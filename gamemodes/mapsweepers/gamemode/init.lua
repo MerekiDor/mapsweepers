@@ -52,6 +52,7 @@ include "_main/server/sv_runprogress.lua"
 include "_main/server/sv_leaderboard.lua"
 include "_main/server/sv_turrets.lua"
 include "_main/server/sv_damagehandling.lua"
+include "_main/server/sv_rangecap.lua"
 
 -- // Mission Includes {{{
 	do 
