@@ -51,18 +51,23 @@
 		end,
 
 		swarmCalcCooldown = function(director, baseCooldown, swarmCost)
-			local flashpoints = director.missionData.flashpoints
+			if missionData.evacuating then
+				-- 100% charged flashpoints during evac was WAY too brutal (used to be 0.5x of the already-accelerated base cooldown)
+				return baseCooldown * 0.8
+			else
+				local flashpoints = director.missionData.flashpoints
 
-			local totalCharge, totalMaxCharge = 0, 0
-			for i, fp in ipairs(flashpoints) do
-				if IsValid(fp) then
-					local charge, maxcharge = fp:GetCharge(), fp:GetMaxCharge()
-					totalCharge = totalCharge + charge
-					totalMaxCharge = totalMaxCharge + maxcharge
+				local totalCharge, totalMaxCharge = 0, 0
+				for i, fp in ipairs(flashpoints) do
+					if IsValid(fp) then
+						local charge, maxcharge = fp:GetCharge(), fp:GetMaxCharge()
+						totalCharge = totalCharge + charge
+						totalMaxCharge = totalMaxCharge + maxcharge
+					end
 				end
-			end
 
-			return Lerp(totalCharge/totalMaxCharge, baseCooldown, baseCooldown/2)
+				return Lerp(totalCharge/totalMaxCharge, baseCooldown, baseCooldown/2)
+			end
 		end,
 		
 		getObjectives = function(missionData)
