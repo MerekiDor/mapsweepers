@@ -37,6 +37,7 @@ ENT.Proximity = 80
 ENT.Expires = 10*60 -- lasts 10 minutes
 ENT.PushOwnerForce = 5
 ENT.BreachDoors = false
+ENT.DestroysBuildings = false -- If true, destroys static defenses in PVP
 
 function ENT:Initialize()
 	if SERVER then
@@ -101,6 +102,15 @@ if SERVER then
 			end
 		end
 	end)
+
+	function jcms.DestroyBuildingsHookFunction(ent, dmginfo)
+		local attacker = dmginfo:GetAttacker()
+		if not (IsValid(attacker) and IsValid(ent)) then return end
+
+		if (dmginfo:GetDamage() >= 44) and isfunction(ent.BreakByBreach) and (not jcms.team_pvpSameTeam(attacker, ent)) then
+			ent:BreakByBreach(dmginfo:GetDamageForce())
+		end
+	end
 
 	function ENT:Detach()
 		local removed = constraint.RemoveAll(self)
@@ -229,7 +239,22 @@ if SERVER then
 			self:EmitSound("explode_"..math.random(3,4))
 		end
 		
-		util.BlastDamage(self, IsValid(self.jcms_owner) and self.jcms_owner or self, pos, self.Radius, self.Damage)
+		if self.DestroysBuildings then
+			hook.Add("PostEntityTakeDamage", "jcms_destroyBuildings", jcms.DestroyBuildingsHookFunction)
+		end
+
+		do
+			-- pcall so that we don't accidentally throw an error and keep the hook forever
+			local s, rtn = pcall(util.BlastDamage, self, IsValid(self.jcms_owner) and self.jcms_owner or self, pos, self.Radius, self.Damage)
+			
+			if not s then 
+				ErrorNoHaltWithStack(rtn)
+			end
+		end
+
+		if self.DestroysBuildings then
+			hook.Remove("PostEntityTakeDamage", "jcms_destroyBuildings")
+		end
 		
 		self.blasts = self.blasts + 1
 		self.blastTime = CurTime()

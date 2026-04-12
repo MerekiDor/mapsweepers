@@ -907,6 +907,7 @@
 				mine.BlastCount = 1
 				mine.BlastCooldown = 1
 				mine.RequiredTargets = 9999
+				mine.DestroysBuildings = true
 				mine.Proximity = 0
 				mine.Expires = 10
 				mine.jcms_owner = ply
