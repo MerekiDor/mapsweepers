@@ -97,8 +97,6 @@ if SERVER then
 end
 
 if CLIENT then
-	ENT.mat_noise = Material "jcms/noise.png"
-
 	function ENT:Initialize()
 		self:SetRenderBounds(jcms.vectorOrigin, jcms.vectorOrigin, Vector(self.JammingRadius, self.JammingRadius, self.JammingRadius) )
 	end
@@ -111,52 +109,6 @@ if CLIENT then
 
 	--TODO: Would be nice if progress until we activate/deactivate was displayed in the same manner as datadownload HP
 	function ENT:DrawStaticOverlay()
-		render.SetStencilEnable(true)
-		render.ClearStencil()
-		render.SetStencilTestMask(255)
-		render.SetStencilWriteMask(255)
-
-		render.SetStencilCompareFunction(STENCIL_ALWAYS)
-		render.SetStencilPassOperation(STENCIL_REPLACE)
-		render.SetStencilFailOperation(STENCIL_KEEP)
-		render.SetStencilZFailOperation(STENCIL_KEEP)
-		render.SetStencilReferenceValue(1)
-		
-		render.OverrideBlend(true, BLEND_ZERO, BLEND_ONE, BLENDFUNC_ADD)
-
-		local selfPos = self:GetPos()
-		local range = self.JammingRadius
-		if EyePos():DistToSqr(selfPos) > range^2 then 
-			render.SetColorMaterial()
-			render.DrawSphere(selfPos, range, 22, 22, color_white)
-			
-			render.SetStencilReferenceValue(0)
-			render.SetStencilPassOperation(STENCIL_REPLACE)
-			render.DrawSphere(selfPos, -range, 22, 22, color_white)
-		else
-			render.ClearStencilBufferRectangle( 0,0, ScrW(), ScrH(), 1 )
-
-			render.SetStencilReferenceValue(0)
-			render.SetStencilPassOperation(STENCIL_REPLACE)
-
-			render.SetColorMaterial()
-			render.DrawSphere(selfPos, -range, 22, 22, color_white)
-		end
-		
-		render.OverrideBlend(false)
-		
-		render.SetStencilCompareFunction(STENCIL_EQUAL)
-		render.SetStencilReferenceValue(1)
-
-		render.OverrideBlend(true, BLEND_ONE, BLEND_ONE, BLENDFUNC_ADD)
-			cam.Start2D()
-				surface.SetMaterial(self.mat_noise)
-				surface.SetDrawColor(220/2, 180/2, 250/2)
-				jcms.hud_DrawNoiseRect(0, 0, ScrW(), ScrH())
-			cam.End2D()
-		render.OverrideBlend(false)
-		
-		render.SetStencilEnable( false )
-		render.ClearStencil()
+		jcms.render_JammerSphere( self:GetPos(), self.JammingRadius )
 	end
 end

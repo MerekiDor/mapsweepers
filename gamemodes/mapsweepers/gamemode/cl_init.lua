@@ -987,7 +987,65 @@ end)
 			right = norm:Cross(jcms.vectorUp)
 		end
 	end
-	
+
+	do
+		local mat_tesla = Material "trails/electric.vmt"
+		function jcms.render_JammerSphere(pos, rad)
+			render.SetStencilEnable(true)
+			render.ClearStencil()
+			render.SetStencilTestMask(255)
+			render.SetStencilWriteMask(255)
+
+			render.SetStencilCompareFunction(STENCIL_ALWAYS)
+			render.SetStencilPassOperation(STENCIL_REPLACE)
+			render.SetStencilFailOperation(STENCIL_KEEP)
+			render.SetStencilZFailOperation(STENCIL_KEEP)
+			render.SetStencilReferenceValue(1)
+			
+			render.OverrideBlend(true, BLEND_ZERO, BLEND_ONE, BLENDFUNC_ADD)
+			if EyePos():DistToSqr(pos) > rad^2 then 
+				render.SetColorMaterial()
+				render.DrawSphere(pos, rad, 22, 22, color_white)
+				
+				render.SetStencilReferenceValue(0)
+				render.SetStencilPassOperation(STENCIL_REPLACE)
+				render.DrawSphere(pos, -rad, 22, 22, color_white)
+			else
+				render.ClearStencilBufferRectangle( 0,0, ScrW(), ScrH(), 1 )
+
+				render.SetStencilReferenceValue(0)
+				render.SetStencilPassOperation(STENCIL_REPLACE)
+
+				render.SetColorMaterial()
+				render.DrawSphere(pos, -rad, 22, 22, color_white)
+			end
+			
+			render.OverrideBlend(false)
+			
+			render.SetStencilCompareFunction(STENCIL_EQUAL)
+			render.SetStencilReferenceValue(1)
+
+			render.OverrideBlend(true, BLEND_ONE, BLEND_ONE, BLENDFUNC_ADD)
+				cam.Start2D()
+					surface.SetMaterial(jcms.mat_noise)
+					surface.SetDrawColor(220/2, 180/2, 250/2)
+					jcms.hud_DrawNoiseRect(0, 0, ScrW(), ScrH())
+				cam.End2D()
+			render.OverrideBlend(false)
+			
+			render.SetStencilEnable( false )
+			render.ClearStencil()
+
+			-- render.SetMaterial(mat_tesla)
+			-- for i=1, 4 do
+			-- 	local pos2 = AngleRand():Forward()
+			-- 	pos2:Mul(rad)
+			-- 	pos2:Add(pos)
+			-- 	render.DrawBeam(pos, pos2, 32, 0, 1, surface.GetDrawColor())
+			-- end
+		end
+	end
+		
 	hook.Add("PostPlayerDraw", "jcms_classDraw", function(ply, flags)
 		local classData = jcms.class_GetData(ply)
 		if classData and classData.Render then

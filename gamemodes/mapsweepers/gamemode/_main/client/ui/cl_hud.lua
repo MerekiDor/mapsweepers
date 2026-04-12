@@ -32,6 +32,7 @@
 	jcms.mat_lock = Material "jcms/lock.png"
 	jcms.mat_maze = Material "jcms/maze.png"
 	jcms.mat_ring = Material "effects/select_ring"
+	jcms.mat_noise = Material "jcms/noise.png"
 
 	jcms.mat_leader_pvp = Material "jcms/leader_pvp_hexagon.png"
 	jcms.mat_leader_pve = Material "jcms/leader_pve_hexagon.png"

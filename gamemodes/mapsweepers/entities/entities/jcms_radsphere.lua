@@ -84,7 +84,6 @@ end
 if CLIENT then 
 	ENT.mat_trail = Material "materials/trails/laser.vmt"
 	ENT.mat_glow = Material "particle/Particle_Glow_04"
-	ENT.mat_noise = Material "jcms/noise.png"
 	ENT.distanceToEyes = 500
 
 	function ENT:Initialize()
@@ -201,7 +200,7 @@ if CLIENT then
 			local frac = math.sqrt(1 - EyePos():Distance( self:GetPos() ) / self:GetCloudRange())
 
 			if frac > 0 then
-				surface.SetMaterial(self.mat_noise)
+				surface.SetMaterial(jcms.mat_noise)
 				surface.SetDrawColor(128, 255, 128, frac * 256)
 				jcms.hud_DrawNoiseRect(0, 0, ScrW(), ScrH())
 			end
