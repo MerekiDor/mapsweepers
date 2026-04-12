@@ -1,0 +1,9 @@
+"UnlitGeneric"
+{
+	"$basetexture" "jcms/maps/jcorp_sign1"
+	"$nofog" "1"
+	"$decal" "1"
+	"$selfillum" "1"
+	"$translucent" "1"
+	"$decalscale" "0.25"
+}
