@@ -51,7 +51,7 @@
 		end,
 
 		swarmCalcCooldown = function(director, baseCooldown, swarmCost)
-			if missionData.evacuating then
+			if director.missionData.evacuating then
 				-- 100% charged flashpoints during evac was WAY too brutal (used to be 0.5x of the already-accelerated base cooldown)
 				return baseCooldown * 0.8
 			else
