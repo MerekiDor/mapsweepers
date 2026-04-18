@@ -2127,8 +2127,10 @@
 
 	jcms.hud_infoTargetFuncs_boss = function(ent, blend, bossType)
 		local colDark, colBright = jcms.color_dark, jcms.color_bright
+		local colShield = jcms.color_bright_alt
 		surface.SetAlphaMultiplier(blend)
 		if bossType then
+			local time = CurTime()%1
 			local bossName = language.GetPhrase("jcms.bestiary_" .. bossType)
 			local tw = draw.SimpleText(bossName, "jcms_hud_small", 12, 64, colDark, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 			surface.SetMaterial(jcms.mat_boss)
@@ -2143,6 +2145,10 @@
 			end
 			hpFrac = math.Clamp(hpFrac, 0, 1)
 
+			local shield = ent:GetNWInt("jcms_sweeperShield", 0)
+			local shieldMax = ent:GetNWInt("jcms_sweeperShield_max", 0)
+			local shieldFrac = math.Clamp(shield / ent:GetMaxHealth(), 0, 1)
+			local shieldMaxFrac = math.Clamp(shieldMax / ent:GetMaxHealth(), 0, 1)
 			surface.DrawRect(-hpw/2, 100, hpw, hph)
 
 			render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
@@ -2152,7 +2158,27 @@
 				
 				surface.DrawRect(-hpw/2, 96, hpw*hpFrac, hph)
 				if hpFrac < 1 then
-					jcms.hud_DrawStripedRect(-hpw/2+hpw*hpFrac, 96+hph/4, hpw*(1-hpFrac), hph/2, 64, CurTime()*64)
+					jcms.hud_DrawStripedRect(-hpw/2+hpw*hpFrac, 96+hph/4, hpw*(1-hpFrac), hph/2, 64, time*64)
+				end
+
+				if shieldMax > 0 or shieldFrac > 0 then
+					local pad = 6
+					surface.SetDrawColor(colShield)
+					
+					if shieldMaxFrac > 0 then
+						surface.DrawOutlinedRect(-hpw/2-pad, 100-pad, (hpw+pad*2)*shieldMaxFrac, hph+pad*2, 2)
+					end
+					
+					if shieldFrac > shieldMaxFrac then
+						surface.DrawRect(-hpw/2, 100, hpw*shieldMaxFrac, hph)
+						
+						local extraPos = -hpw/2 + hpw*shieldMaxFrac
+						local extraFrac = shieldFrac - shieldMaxFrac
+						jcms.hud_DrawStripedRect(extraPos, 100, hpw*extraFrac, hph, 48, time*64)
+						surface.DrawRect(extraPos + hpw*extraFrac, 100-pad, 4, hph+pad*2)
+					elseif shieldFrac > 0 then
+						surface.DrawRect(-hpw/2, 100, hpw*shieldFrac, hph)
+					end
 				end
 			render.OverrideBlend( false )
 		end
