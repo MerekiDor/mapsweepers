@@ -41,11 +41,24 @@ class.hurtMul = 1
 class.hurtReduce = 1
 class.speedMul = 1
 
+function class.AmmoConservationEffects(ply, weapon)
+	if not IsValid(ply) then return end
+	if not IsValid(weapon) then return end
+
+	if game.SinglePlayer() then
+		jcms.net_SendAmmoRecycle(ply, weapon)
+	elseif CLIENT then
+		jcms.hud_DoAmmoConservationEffect()
+	end
+end
+
 function class.Think(ply)
 	if CLIENT and ply ~= LocalPlayer() then return end
 
 	local wep = ply:GetActiveWeapon()
 	if not IsValid(wep) then return end
+
+	local effectsFunction = class.AmmoConservationEffects
 
 	if not wep:IsScripted() then
 		-- Vanilla weapons
@@ -64,6 +77,10 @@ function class.Think(ply)
 
 				wep:SetClip1( clip + restored )
 				wep.lastClip1 = wep:Clip1()
+
+				if restored > 0 then
+					effectsFunction(ply, wep)
+				end
 			end
 		end
 	elseif not wep.jcms_infantryOwner then
@@ -79,15 +96,9 @@ function class.Think(ply)
 				if owner == self.jcms_infantryOwner then
 					if (num > 0 and not pool) then
 						if util.SharedRandom("InfantryAmmoRestore", 0, 1, CurTime()) >= 0.5 then
-							if self:GetMaxClip1() < 10 then --not helpful for high-capacity weapons.
-								timer.Simple(0, function()
-									if IsValid(self) and not SERVER then
-										self:EmitSound("buttons/lever6.wav", 75, 150, 1, CHAN_STATIC)
-										self:EmitSound("buttons/lever7.wav", 75, 100, 1, CHAN_STATIC)
-									end
-								end)
-							end
 							return originalFunction(self, num, pool)
+						else
+							effectsFunction(owner, self)
 						end
 					else
 						return originalFunction(self, num, pool)
@@ -107,15 +118,8 @@ function class.Think(ply)
 					local consumed = 0
 					if util.SharedRandom("InfantryAmmoRestore", 0, 1, CurTime()) >= 0.5 then
 						consumed = originalFunction(self, count, ...)
-
-						if self:GetMaxClip1() < 10 then --not helpful for high-capacity weapons.
-							timer.Simple(0, function()
-								if IsValid(self) and not CLIENT then
-									self:EmitSound("buttons/lever6.wav", 75, 150, 1, CHAN_STATIC)
-									self:EmitSound("buttons/lever7.wav", 75, 100, 1, CHAN_STATIC)
-								end
-							end)
-						end
+					else
+						effectsFunction(owner, self)
 					end
 					return consumed -- I don't remember why this line is needed, I think I was trying to get TFA fixed months ago?
 				else
@@ -132,15 +136,8 @@ function class.Think(ply)
 					local consumed = 0
 					if util.SharedRandom("InfantryAmmoRestore", 0, 1, CurTime())  >= 0.5 then
 						consumed = originalFunction(self, count, ...)
-
-						if self:GetMaxClip1() < 10 then --not helpful for high-capacity weapons.
-							timer.Simple(0, function()
-								if IsValid(self) and not CLIENT then
-									self:EmitSound("buttons/lever6.wav", 75, 150, 1, CHAN_STATIC)
-									self:EmitSound("buttons/lever7.wav", 75, 100, 1, CHAN_STATIC)
-								end
-							end)
-						end
+					else
+						effectsFunction(owner, self)
 					end
 					return consumed
 				else

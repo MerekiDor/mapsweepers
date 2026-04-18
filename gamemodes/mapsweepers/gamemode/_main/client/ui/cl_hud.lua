@@ -33,6 +33,7 @@
 	jcms.mat_maze = Material "jcms/maze.png"
 	jcms.mat_ring = Material "effects/select_ring"
 	jcms.mat_noise = Material "jcms/noise.png"
+	jcms.mat_recycle = Material "jcms/recycle.png"
 
 	jcms.mat_leader_pvp = Material "jcms/leader_pvp_hexagon.png"
 	jcms.mat_leader_pve = Material "jcms/leader_pve_hexagon.png"
@@ -221,6 +222,8 @@
 	jcms.hud_dead = 0
 	jcms.hud_ammofracLast = 0
 	jcms.hud_ammofracAnim = 1
+	jcms.hud_recycleAnim = 0
+	jcms.hud_recycleCount = 0
 
 	jcms.hud_spawnmenuAnim = 0
 	jcms.hud_spawnmenuAnimScrollTip = 0
@@ -251,19 +254,20 @@
 	
 	function jcms.hud_FrameUpdate(plyObserverMode) --Updates that run every frame
 		local me = jcms.locPly
+		local dt = FrameTime()
 
 		if me:Alive() then
 			if plyObserverMode == OBS_MODE_CHASE then
-				jcms.hud_dead = math.min(1, math.max(jcms.hud_dead - FrameTime(), 0))
+				jcms.hud_dead = math.min(1, math.max(jcms.hud_dead - dt, 0))
 			else
 				jcms.hud_dead = 0
 			end
 		else
-			jcms.hud_dead = math.max(0, jcms.hud_dead) + FrameTime()
+			jcms.hud_dead = math.max(0, jcms.hud_dead) + dt
 		end
 
 		if jcms.hud_targetAnim > 1 and not IsValid(jcms.hud_target) then
-			jcms.hud_targetAnim = jcms.hud_targetAnim - FrameTime()
+			jcms.hud_targetAnim = jcms.hud_targetAnim - dt
 		else
 			jcms.hud_targetAnim = (jcms.hud_targetAnim * 8 + (not IsValid(me:GetNWEntity("jcms_vehicle")) and IsValid(jcms.hud_target) and 1.5 or 0)) / 9
 		end
@@ -271,16 +275,21 @@
 		jcms.hud_spawnmenuAnim = (jcms.hud_spawnmenuAnim * 6 + (jcms.spawnmenu_isOpen and 1 or 0)) / 7
 
 		if jcms.spawnmenu_scrolled then
-			jcms.hud_spawnmenuAnimScrollTip = math.max(0, jcms.hud_spawnmenuAnimScrollTip - FrameTime() * 4)
+			jcms.hud_spawnmenuAnimScrollTip = math.max(0, jcms.hud_spawnmenuAnimScrollTip - dt * 4)
 		else
 			jcms.hud_spawnmenuAnimScrollTip = (jcms.spawnmenu_selectedOption and jcms.hud_spawnmenuAnim > 0.99) and (jcms.hud_spawnmenuAnimScrollTip*6 + 1)/7 or math.min(jcms.hud_spawnmenuAnim, jcms.hud_spawnmenuAnimScrollTip)
+		end
+
+		jcms.hud_recycleAnim = math.max(jcms.hud_recycleAnim - dt*0.666, 0)
+		if jcms.hud_recycleAnim <= 0 then
+			jcms.hud_recycleCount = 0
 		end
 		
 		jcms.hud_UpdateNotifs()
 		jcms.hud_UpdateLocators()
 
 		if jcms.locPly:KeyDown(IN_RELOAD) and plyObserverMode == OBS_MODE_CHASE and jcms.locPly:GetNWInt("jcms_desiredteam", 0) < 2 and not jcms.util_IsPVP() then
-			jcms.hud_npcConfirmation = math.Clamp( jcms.hud_npcConfirmation + FrameTime(), 0, 1 )
+			jcms.hud_npcConfirmation = math.Clamp( jcms.hud_npcConfirmation + dt, 0, 1 )
 
 			if not jcms.hud_npcConfirmed and jcms.hud_npcConfirmation >= 1 then
 				jcms.hud_npcConfirmed = true
@@ -848,8 +857,20 @@
 					render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
 						draw.SimpleText(ammoOff2, "jcms_hud_big", -32-tw1 - offset2, -96, jcms.color_bright_alt, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
 					render.OverrideBlend( false )
-					
 				end
+			end
+
+			if jcms.hud_recycleAnim > 0 then
+				local anim = jcms.hud_recycleAnim
+				local count = jcms.hud_recycleCount
+
+				size = 72 + 48*math.ease.InBack(anim)
+
+				surface.SetAlphaMultiplier( math.Clamp(anim*8, 0, 1)^2 * (anim >= 0.96 and 1 or 0.3) )
+				surface.SetDrawColor(jcms.color_bright_alt)
+				surface.SetMaterial(jcms.mat_recycle)
+				surface.DrawTexturedRectRotated(64, 0, size, size, CurTime()*-180)
+				draw.SimpleText(count, "jcms_hud_small", 64, 0, jcms.color_bright_alt, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 			end
 		else
 			local offset = 4
@@ -1136,6 +1157,7 @@
 			end
 
 			local ammofracAnim = jcms.hud_ammofracAnim
+			local recycleAnim = jcms.hud_recycleAnim
 			
 			render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
 				local crosshairGap = jcms.hud_GetCrosshairGap(me, wep) + jcms.cachedValues.crosshair_gap*2
@@ -1168,16 +1190,34 @@
 					if size <= 16 then
 						size = crosshairGap + wide * 2 + 4
 					end
-					surface.SetDrawColor(R*ammofracAnim, G*ammofracAnim, B*ammofracAnim, 128)
+
+					if recycleAnim > 0 then
+						local frac = math.ease.InBack(recycleAnim)
+						local R2, G2, B2 = jcms.color_bright_alt:Unpack()
+						surface.SetDrawColor(Lerp(frac, R, R2), Lerp(frac, G, G2), Lerp(frac, B, B2))
+
+						size = size - frac*8
+					else
+						surface.SetDrawColor(R*ammofracAnim, G*ammofracAnim, B*ammofracAnim, 128)
+					end
 
 					--NOTE: Very expensive.
 					jcms.draw_Circle(0, 0, size, size, wide*2, 6, -math.pi/2*ammofrac, math.pi/2*ammofrac)
 					jcms.draw_Circle(0, 0, size, size, wide*2, 6, -math.pi/2*ammofrac + math.pi, math.pi/2*ammofrac + math.pi)
 				elseif ammofracAnim > 0 and styleAmmo == 3 or styleAmmo == 4 and clip1 > 0 then
+					local clipText = clip1
+					if recycleAnim > 0 then
+						local frac = math.ease.InBack(recycleAnim)
+						local R2, G2, B2 = jcms.color_bright_alt:Unpack()
+						surface.SetTextColor(Lerp(frac, R, R2), Lerp(frac, G, G2), Lerp(frac, B, B2))
+						clipText = clipText .. " +" .. jcms.hud_recycleCount
+					else
+						surface.SetTextColor(R*ammofracAnim, G*ammofracAnim, B*ammofracAnim, 128)
+					end
+
 					surface.SetFont("jcms_hud_medium")
-					surface.SetTextColor(R*ammofracAnim, G*ammofracAnim, B*ammofracAnim, 128)
 					surface.SetTextPos(off, off)
-					surface.DrawText(clip1)
+					surface.DrawText(clipText)
 				end
 				
 				local dotMode = jcms.cachedValues.crosshair_dot
@@ -2183,8 +2223,6 @@
 			render.OverrideBlend( false )
 		end
 	end
-
-
 
 	jcms.hud_infoTargetFuncs = {
 		["player"] = function(ply, blend)
@@ -3253,6 +3291,15 @@
 			end
 		end
 		surface.SetAlphaMultiplier(1)
+	end
+
+-- // }}}
+
+-- // Ammo conservation {{{
+
+	function jcms.hud_DoAmmoConservationEffect()
+		jcms.hud_recycleCount = jcms.hud_recycleCount + 1
+		jcms.hud_recycleAnim = 1
 	end
 
 -- // }}}

@@ -28,7 +28,7 @@ local bits_ply, bits_ent, bits_wld = 2, 2, 4
 		local PLY_VOTE = 1
 		local PLY_DOUBLEJUMP = 2
 		
-		local ENT_ = 0
+		local ENT_AMMORECYCLE = 0
 
 		local WLD_OBJECTIVES_AND_DAMAGE = 0
 		local WLD_ORDERS = 1
@@ -929,6 +929,14 @@ if SERVER then
 			jcms.net_SendLeaderboard(to, true)
 		end
 	end
+
+	function jcms.net_SendAmmoRecycle(to, weapon)
+		net.Start("jcms_msg")
+			net.WriteBool(false)
+			net.WriteEntity(weapon)
+			net.WriteUInt(ENT_AMMORECYCLE, bits_ent)
+		net.Send(to)
+	end
 end
 
 if CLIENT then
@@ -980,7 +988,12 @@ if CLIENT then
 	}
 
 	local ent_messages = {
-		[0] = function(ent)
+		[ ENT_AMMORECYCLE ] = function(ent)
+			local curWeapon = jcms.locPly:GetActiveWeapon()
+
+			if curWeapon == ent then
+				jcms.hud_DoAmmoConservationEffect()
+			end
 		end
 	}
 
