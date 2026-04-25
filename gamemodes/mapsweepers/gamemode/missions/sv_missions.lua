@@ -247,7 +247,7 @@
 			local otherFactions = {}
 			
 			for i, faction in ipairs(jcms.factions_GetOrder()) do
-				otherFactions[ faction ] = (currentFaction == lastFac) and 0.000001 or 1
+				otherFactions[ faction ] = (faction == lastFac) and 0.000001 or 1 
 			end
 
 			local newFaction = jcms.util_ChooseByWeight(otherFactions)
