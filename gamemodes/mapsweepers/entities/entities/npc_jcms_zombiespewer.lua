@@ -160,6 +160,7 @@ hook.Add("jcms_Spewer_UpdateRangeCap", "jcms_Spewer_UpdateRangeCap", function()
 end)
 
 if CLIENT then
+	ENT.GlowMat = Material("models/jcms/zombiespewer/body") --TEMP
 	function ENT:Initialize()
 		hook.Add("PreDrawSkyBox", tostring(self), function()
 			local data = {}
@@ -193,6 +194,13 @@ if CLIENT then
 		--TODO: These seem to stack(?). Might want to separate this into a hook added/removed when the first/last are spawned and removed.
 		--local cSine = (1 + math.sin(CurTime()))/2
 		--jcms.colormod_Hold("zombiespewer", Color(64, 0, 0), 0.7 + cSine * math.random() * 0.1 , 1, 2)
+	end
+
+	function ENT:DrawTranslucent()
+		self:DrawModel()
+
+		render.SetMaterial(self.GlowMat)
+		render.DrawSphere(self:GetPos() + Vector(0,0,100), 30, 16, 16)
 	end
 
 	function ENT:OnRemove()

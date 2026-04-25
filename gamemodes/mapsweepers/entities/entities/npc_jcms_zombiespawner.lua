@@ -190,6 +190,8 @@ if SERVER then
 end
 
 if CLIENT then
+	ENT.GlowMat = Material("models/jcms/zombiespewer/body") --TEMP
+
 	function ENT:Think()
 		-- Burst in bloody particles.
 		if FrameTime() > 0 and math.random() < 0.23 and self:GetSequenceName( self:GetSequence() ) == "death" then
@@ -231,5 +233,12 @@ if CLIENT then
 
 		util.ScreenShake(self:GetPos(), 4, 60, 2, 500, false)
 		self:EmitSound("Explo.ww2bomb")
+	end
+	
+	function ENT:DrawTranslucent()
+		self:DrawModel()
+
+		render.SetMaterial(self.GlowMat)
+		render.DrawSphere(self:GetPos() + Vector(0,0,100), 30, 16, 16)
 	end
 end
