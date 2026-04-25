@@ -82,196 +82,189 @@ if SERVER then
 end
 
 if CLIENT then 
-	ENT.mat_trail = Material "materials/trails/laser.vmt"
-	ENT.mat_glow = Material "particle/Particle_Glow_04"
+	jcms.radSphere_matGlow = Material "particle/Particle_Glow_04"
 	ENT.distanceToEyes = 500
+
 
 	function ENT:Initialize()
 		local range = self:GetCloudRange() + self.distanceToEyes * 2
 		self:SetRenderBounds( jcms.vectorOrigin, jcms.vectorOrigin, Vector(range/2, range/2, range/2) )
 	end
 
-	function ENT:DrawTranslucent()
-		self:ThinkEmbers()
-		self:DrawEmbers()
-		--self:DrawStaticOverlay()
-	end
+	-- // Embers {{{
+		jcms.radSphere_embers = {}
+		for i=1, 64 do
+			local ember = {}
+			ember.inited = false
+			ember.pos = Vector()
+			ember.oldpos = Vector()
+			ember.vel = Vector()
 
-	function ENT:ThinkEmbers()
-		if not self.embers then
-			self.embers = {}
+			ember.t = 0
+			ember.tout = 0
+			ember.scale = 0
+			ember.scale = 0
 
-			for i=1, 64 do
-				self.embers[i] = {}
-			end
+			jcms.radSphere_embers[i] = ember
 		end
 
-		local dt = FrameTime()
+		function jcms.radSphere_ThinkEmbers(radSpheres)
+			local dt = FrameTime()
+			if dt <= 0 then	return end
 
-		if dt <= 0 then
-			return
-		end
+			local ep = jcms.EyePos_lowAccuracy
 
-		local ep = EyePos()
-		local origin = self:GetPos()
-		local distToEyes = ep:Distance(origin)
-		local range = self:GetCloudRange()
+			-- // Prioritise closer spheres for spawns {{{
+				local eyeDists = {}
+				for i, sphere in ipairs(radSpheres) do 
+					eyeDists[sphere] = ep:Distance(sphere:GetPos())
+				end
 
-		local noNewEmbers = false
-		if distToEyes > range + self.distanceToEyes * 4 then
-			noNewEmbers = true
-		else
-			origin = ep - origin
-			origin:Normalize()
-			origin:Mul( math.min(distToEyes, range - self.distanceToEyes/2) )
-			origin:Add(self:GetPos())
-			range = self.distanceToEyes
-		end
+				table.sort( radSpheres, function(a, b) 
+					return eyeDists[a] < eyeDists[b]
+				end)
+			-- // }}}
 
-		for i, ember in ipairs(self.embers) do
-			if not ember.inited then
-				if not noNewEmbers then
-					ember.inited = true
-					ember.t = 0
-					ember.tout = 0.2 + math.random() * 2.8
-					ember.scale = 0.1 + math.random()
+			for i, radSphere in ipairs(radSpheres) do --Create new embers
+				local spherePos = radSphere:GetPos()
+				local range = radSphere:GetCloudRange()
+				local distToEyes = eyeDists[radSphere]
 
-					if ember.pos then
-						ember.pos.x = math.random()*2 - 1
-						ember.pos.y = math.random()*2 - 1
-						ember.pos.z = math.random()*2 - 1
-					else
-						ember.pos = VectorRand()
-					end
-					ember.pos:Normalize()
-					ember.pos:Mul( (math.random() ^ 0.5) * range )
-					ember.pos:Add(origin)
+				local origin = spherePos
 
-					if ember.vel then
+				--Stop creating new embers if we're >2000u from the sphere
+				local noNewEmbers = false
+				if distToEyes > range + radSphere.distanceToEyes * 4 then
+					noNewEmbers = true
+				else
+					--Dir from origin to eyepos
+					origin = ep - spherePos
+					origin:Normalize()
+
+					--Set origin to be at eyes if within range, 250u inside the sphere otherwise.
+					origin:Mul( math.min(distToEyes, range - radSphere.distanceToEyes/2) )
+					origin:Add(spherePos)
+					range = radSphere.distanceToEyes --Set range to be our eye dist offset (Why? This is needlessly confusing and functionally no different to making a separate local
+				end
+
+				--Initialise new embers if we're close enough
+				for i, ember in ipairs(jcms.radSphere_embers) do 
+					if not noNewEmbers and not ember.inited then 
+						--Time and scale
+						ember.inited = true
+						ember.t = 0
+						ember.tout = 0.2 + math.random() * 2.8
+						ember.scale = 0.1 + math.random()
+
+						--Random start pos
+						ember.pos:SetUnpacked(math.random()*2 - 1, math.random()*2 - 1, math.random()*2 - 1)
+						
+						ember.pos:Normalize()
+						ember.pos:Mul( (math.random() ^ 0.5) * range )
+						ember.pos:Add(origin)
+
+						--Random start velocity
 						local vel = math.random() * 200 + 32
-						ember.vel.x = math.random()*vel - vel/2
-						ember.vel.y = math.random()*vel - vel/2
-						ember.vel.z = math.random()*vel - vel/2
-					else
-						ember.vel = VectorRand(-128, 128)
+						ember.vel:SetUnpacked(math.random()*vel - vel/2, math.random()*vel - vel/2, math.random()*vel - vel/2)
+						
+						--Set up initial trail
+						ember.oldpos = ember.pos - ember.vel
 					end
-
-					ember.oldpos = ember.pos - ember.vel
 				end
 			end
 
-			if ember.t then
-				if ember.t > ember.tout then
+			for i, ember in ipairs(jcms.radSphere_embers) do
+				if not ember.inited then continue end
+				
+				if ember.t > ember.tout then	--Die
 					ember.inited = false
 				else
-					ember.oldpos:SetUnpacked( ember.pos:Unpack() )
+					ember.oldpos:Set( ember.pos )	--TODO: Just use Vector:Set if you're  copying (it takes a Vector, no need to unpack)
 
+					--Advance us by velocity
 					local vx, vy, vz = ember.vel:Unpack()
 					ember.vel:Mul(dt)
 					ember.pos:Add(ember.vel)
+					
+					--Set "oldPos" (presumably used for the trail) to be behind us 10x the distance we moved.
 					ember.vel:Mul(10 * ember.scale)
-					ember.oldpos:Sub(ember.vel)
+					ember.oldpos:Sub(ember.vel / (dt * 10))
+
+					--Set our new velocity to our old + random acceleration
 					ember.vel:SetUnpacked(vx + math.Rand(-64, 64)*dt, vy + math.Rand(-64, 64)*dt, vz + math.Rand(-64, 64)*dt)
 					ember.t = ember.t + dt
 				end
 			end
 		end
-	end
 
-	function ENT:DrawEmbers()
-		render.SetMaterial(self.mat_glow)
-		render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
-		for i, ember in ipairs(self.embers) do
-			if ember.inited then
+		function jcms.radSphere_DrawEmbers()
+			local col = Color(0,255,0,0) --Optimisation, re-use the col object
+
+			render.SetMaterial(jcms.radSphere_matGlow)
+			for i, ember in ipairs(jcms.radSphere_embers) do
+				if not ember.inited then continue end
+
+				--Progress
 				local f = ember.t / ember.tout
-				local parabolic = math.max(0,-4*(f*f)+4*f)
-				local col = Color(128*parabolic, 255, 100*parabolic, parabolic*100)
+				local parabolic = math.max(0,-4*(f*f)+4*f)	
+
+				-- // Trail col/draw {{{
+					--Surprisingly this is actually CHEAPER than using :SetUnpacked, because Color's :SetUnpacked is defined in lua and just does this but with extra branches for error checking
+					col.r = 128*parabolic
+					--col.g = 255
+					col.b = 100*parabolic
+					col.a = 100*parabolic
+				-- // }}}
+
 				local sc = ember.scale
 				render.DrawBeam(ember.pos, ember.oldpos, 8*sc*parabolic, 0.5, 1, col)
 
-				col.a = parabolic * 255
-				col.r = col.r + 24
-				col.b = col.b + 24
-				render.DrawSprite(ember.pos, 12*sc*parabolic, 8*sc*parabolic, col)
+				-- // Sprite col/draw {{{
+					--Surprisingly this is actually CHEAPER than using :SetUnpacked, because Color's :SetUnpacked is defined in lua and just does this but with extra branches for error checking
+					col.r = col.r + 24
+					--col.g = 255
+					col.b = col.b + 25
+					col.a = 255*parabolic
+
+					render.DrawSprite(ember.pos, 12*sc*parabolic, 8*sc*parabolic, col)
+				-- // }}}
 			end
 		end
 
-		cam.Start2D()
-			local frac = math.sqrt(1 - EyePos():Distance( self:GetPos() ) / self:GetCloudRange())
 
-			if frac > 0 then
-				surface.SetMaterial(jcms.mat_noise)
-				surface.SetDrawColor(128, 255, 128, frac * 256)
-				jcms.hud_DrawNoiseRect(0, 0, ScrW(), ScrH())
-			end
-		cam.End2D()
+		hook.Add("PostDrawTranslucentRenderables", "jcms_radSpheres", function()
+			render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
+				local radSpheres = ents.FindByClass("jcms_radSphere")
+				local ep = jcms.EyePos_lowAccuracy
 
-		render.OverrideBlend(false)
-	end
+				jcms.radSphere_ThinkEmbers(radSpheres) --TODO: Experiment with moving this out of draw / running it much less often.
+				jcms.radSphere_DrawEmbers()
+				
+				--Static Overlay
+				local frac = 0
+				for i, radSphere in ipairs(radSpheres) do
+					frac = frac + math.sqrt( math.max(1 - (ep:Distance( radSphere:GetPos() ) / radSphere:GetCloudRange()), 0))
+				end
 
-	--[[
-	--This has been sitting un-committed on my end for a few weeks. I'm still not sure whether it's a good idea, but I have to
-	--commit other stuff from this file, so I'm leaving it here commented.
-	--Its purpose was to make radiation zones more obvious. It doesn't look great, but does achieve that. 
-
-	function ENT:DrawStaticOverlay()
-		render.SetStencilEnable(true)
-		render.ClearStencil()
-		render.SetStencilTestMask(255)
-		render.SetStencilWriteMask(255)
-
-		render.SetStencilCompareFunction(STENCIL_ALWAYS)
-		render.SetStencilPassOperation(STENCIL_REPLACE)
-		render.SetStencilFailOperation(STENCIL_KEEP)
-		render.SetStencilZFailOperation(STENCIL_KEEP)
-		render.SetStencilReferenceValue(1)
-		
-		render.OverrideBlend(true, BLEND_ZERO, BLEND_ONE, BLENDFUNC_ADD)
-
-		local range = self:GetCloudRange()
-		if EyePos():DistToSqr(self:GetPos()) > range^2 then 
-			render.SetColorMaterial()
-			render.DrawSphere(self:GetPos(), self:GetCloudRange(), 22, 22, color_white)
-			
-			render.SetStencilReferenceValue(0)
-			render.SetStencilPassOperation(STENCIL_REPLACE)
-			render.DrawSphere(self:GetPos(), -self:GetCloudRange(), 22, 22, color_white)
-		else
-			render.ClearStencilBufferRectangle( 0,0, ScrW(), ScrH(), 1 )
-
-			render.SetStencilReferenceValue(0)
-			render.SetStencilPassOperation(STENCIL_REPLACE)
-
-			render.SetColorMaterial()
-			render.DrawSphere(self:GetPos(), -self:GetCloudRange(), 22, 22, color_white)
-		end
-		
-		render.OverrideBlend(false)
-		
-		render.SetStencilCompareFunction(STENCIL_EQUAL)
-		render.SetStencilReferenceValue(1)
-
-		render.OverrideBlend(true, BLEND_ONE, BLEND_ONE, BLENDFUNC_ADD)
-			cam.Start2D()
-				surface.SetMaterial(self.mat_noise)
-				surface.SetDrawColor(75, 150, 75, 32)
-				jcms.hud_DrawNoiseRect(0, 0, ScrW(), ScrH())
-			cam.End2D()
-		render.OverrideBlend(false)
-		
-		render.SetStencilEnable( false )
-		render.ClearStencil()
-	end
-	--]]
+				cam.Start2D()
+					if frac > 0 then
+						surface.SetMaterial(jcms.mat_noise)
+						surface.SetDrawColor(128, 255, 128, frac * 256)
+						jcms.hud_DrawNoiseRect(0, 0, ScrW(), ScrH())
+					end
+				cam.End2D()
+			render.OverrideBlend(false)
+		end)
+	-- // }}}
 
 	function ENT:Think()
 		if math.random() < 0.1 then
-			local me = LocalPlayer()
+			local me = jcms.locPly
 			if IsValid(me) and ( me:Alive() or IsValid(me:GetObserverTarget()) ) then
-				local distToEyes = self:GetPos():Distance( EyePos() )
+				local distToEyes = self:GetPos():DistToSqr(jcms.EyePos_lowAccuracy)
 				local range = self:GetCloudRange()
 
-				if distToEyes <= range then
+				if distToEyes <= range^2 then
 					me:EmitSound("player/geiger" .. math.random(1, 3) .. ".wav")
 				end
 			end
