@@ -1664,6 +1664,14 @@
 				else
 					jcms.announcer_SpeakChance(0.45, jcms.ANNOUNCER_SWARM)
 				end
+
+				local missionTimeThrottle = missionTime / 10
+				if swarmCost > missionTimeThrottle then
+					local str = string.format("Throttling swarm cost from %.2f to %.2f", swarmCost, missionTimeThrottle)
+					jcms.printf(str)
+					PrintMessage(HUD_PRINTCENTER, str)
+					swarmCost = missionTimeThrottle
+				end
 				
 				local queue = jcms.director_MakeQueue(d, swarmCost, d.swarmDanger)
 				jcms.director_SpawnSwarm(d, queue)
