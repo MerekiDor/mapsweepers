@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	"$basetexture" "models/jcms/zombiepolyp/polyp_eyes"
+	"$nofog"	1
+	"$translucent"	1
+}

@@ -1,0 +1,24 @@
+// envmaptint_fix
+"VertexLitGeneric"
+{
+	"$baseTexture" "models/jcms/zombiepolyp/polyp_base"	
+	"$bumpmap" "models/barnacle/barnacle_normal"	
+	"$halflambert" "1"
+	"$phong" "1"
+	"$phongboost" "3"
+	"$phongexponent" "10"
+	//"$phongexponenttexture" "models/barnacle/barnacle_phong"
+	//"$phongalbedotint" "1"										
+	"$phongfresnelranges"	"[.05 .5 1]"
+	"$rimlight" "1"
+	"$rimlightexponent" "2"
+	
+	//env map stuff
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[ .1 .1 .1 ]"
+	"$normalmapalphaenvmapmask" "1"		
+	"$envmapfresnel" "1"
+
+}   
+    
+    

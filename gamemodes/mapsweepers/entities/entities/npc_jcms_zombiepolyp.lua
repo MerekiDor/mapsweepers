@@ -44,6 +44,7 @@ end
 if SERVER then 
 	function ENT:Initialize()
 		self:SetModel("models/barnacle.mdl")
+		self:SetSubMaterial(0, "models/jcms/zombiepolyp/polyp_base")
 		self:SetAngles( Angle(0, 0, 180) )
 		
 		local areaMult, volMult, densityMult, avgSizeMult = jcms.mapgen_GetMapSizeMultiplier()
@@ -155,6 +156,8 @@ if SERVER then
 end
 
 if CLIENT then
+	ENT.GlowMat = Material("models/jcms/zombiepolyp/polyp_eyes") --TEMP
+
 	function ENT:Initialize()
 		self.jcms_polypEat = CreateSound(self, "ambient/creatures/leech_bites_loop1.wav")
 		self.jcms_polypEat:SetSoundLevel( 140 )
@@ -172,6 +175,12 @@ if CLIENT then
 		self.emitter4 = ParticleEmitter( self:WorldSpaceCenter(), false )
 		self.emitter5 = ParticleEmitter( self:WorldSpaceCenter(), false )
 		self.nextPart = 0
+
+		self.emitter:SetNoDraw( true ) 
+		self.emitter2:SetNoDraw( true ) 
+		self.emitter3:SetNoDraw( true ) 
+		self.emitter4:SetNoDraw( true ) 
+		self.emitter5:SetNoDraw( true ) 
 
 		self.pixVis = util.GetPixelVisibleHandle()
 
@@ -193,6 +202,7 @@ if CLIENT then
 			end
 		end)
 
+		--self:SetRenderBounds() --TODO:
 	end
 
 	function ENT:OnRemove()
@@ -225,25 +235,31 @@ if CLIENT then
 		
 		if not IsValid(selfTbl.emitter) then 
 			selfTbl.emitter = ParticleEmitter( selfCentre, false )
+			selfTbl.emitter:SetNoDraw( true ) 
 		end
 		if not IsValid(selfTbl.emitter2) then 
 			selfTbl.emitter2 = ParticleEmitter( selfCentre, false )
+			selfTbl.emitter2:SetNoDraw( true  ) 
 		end
 		if not IsValid(selfTbl.emitter3) then 
 			selfTbl.emitter3 = ParticleEmitter( selfCentre, false )
+			selfTbl.emitter3:SetNoDraw( true  ) 
 		end
 		if not IsValid(selfTbl.emitter4) then 
 			selfTbl.emitter4 = ParticleEmitter( selfCentre, false )
+			selfTbl.emitter4:SetNoDraw( true  ) 
 		end
 		if not IsValid(selfTbl.emitter5) then 
 			selfTbl.emitter5 = ParticleEmitter( selfCentre, false )
+			selfTbl.emitter5:SetNoDraw( true  ) 
 		end
 
 		--selfTbl.emitter:SetNoDraw( dist < (range * 1.5)^2 )
+		--[[
 		selfTbl.emitter2:SetNoDraw( dist > (range * 3.25)^2) 
 		selfTbl.emitter3:SetNoDraw( dist > (range * 2.5)^2 ) 
 		selfTbl.emitter4:SetNoDraw( dist > (range * 2.0)^2 ) 
-		selfTbl.emitter5:SetNoDraw( dist > (range * 1.75)^2 ) 
+		selfTbl.emitter5:SetNoDraw( dist > (range * 1.75)^2 ) --]]
 
 		if selfTbl.nextPart < CurTime() then 
 			selfTbl.nextPart = CurTime() + 0.5*1.5
@@ -405,4 +421,32 @@ if CLIENT then
 		self:DrawModel()
 	end
 
+	--TODO: Needs to be in a hook instead, other polyps still obstruct them.
+	function ENT:DrawTranslucent()
+		local selfTbl = self:GetTable()
+		local range = selfTbl:GetCloudRange()
+		local selfCentre = self:WorldSpaceCenter()
+		local range = selfTbl:GetCloudRange()
+
+		local dist = selfCentre:DistToSqr(jcms.EyePos_lowAccuracy)
+
+		self.emitter:Draw()
+		if not(dist > (range * 3.25)^2) then 
+			selfTbl.emitter2:Draw()
+		end
+		if not(dist > (range * 2.5)^2) then 
+			selfTbl.emitter3:Draw()
+		end
+		if not(dist > (range * 2.0)^2) then 
+			selfTbl.emitter4:Draw()
+		end
+		if not(dist > (range * 1.75)^2) then 
+			selfTbl.emitter5:Draw()
+		end
+
+		render.MaterialOverride(self.GlowMat)
+			self:DrawModel()
+		render.MaterialOverride()
+		--render.DrawSphere(self:GetPos() + Vector(0,0,100), 30, 16, 16)
+	end
 end
