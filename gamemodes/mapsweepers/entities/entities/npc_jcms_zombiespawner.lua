@@ -190,7 +190,7 @@ if SERVER then
 end
 
 if CLIENT then
-	ENT.GlowMat = Material("models/jcms/zombiespewer/body") --TEMP
+	jcms.zombieSpawnerEyeMat = Material("models/jcms/zombiespawner/eyes")
 
 	function ENT:Think()
 		-- Burst in bloody particles.
@@ -237,8 +237,14 @@ if CLIENT then
 	
 	function ENT:DrawTranslucent()
 		self:DrawModel()
-
-		render.SetMaterial(self.GlowMat)
-		render.DrawSphere(self:GetPos() + Vector(0,0,100), 30, 16, 16)
 	end
+
+	
+	hook.Add("PostDrawTranslucentRenderables", "jcms_ZombieSpawnerEyes", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
+		render.MaterialOverride(jcms.zombieSpawnerEyeMat)
+			for i, ent in ipairs(ents.FindByClass("npc_jcms_zombiespawner")) do 
+				ent:DrawModel()
+			end
+		render.MaterialOverride()
+	end)
 end

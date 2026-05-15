@@ -1,0 +1,7 @@
+"UnlitGeneric"
+{
+	"$basetexture" "models/jcms/zombiespawner/eyes"
+	"$nofog"	1
+	"$translucent"	1
+}
+

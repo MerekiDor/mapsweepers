@@ -37,7 +37,7 @@ function ENT:SetupDataTables()
 		local areaMult, volMult, densityMult, avgSizeMult = jcms.mapgen_GetMapSizeMultiplier()
 		local sizeMult = math.min(areaMult, volMult)
 		local densityMult = avgSizeMult / densityMult
-		self:SetCloudRange(1250 * sizeMult * densityMult)
+		self:SetCloudRange( 1150 * (sizeMult * densityMult) ^ 0.75 )
 	end
 end
 
@@ -68,8 +68,8 @@ if SERVER then
 			self:SetSequence("chew_humanoid")
 		end)
 
-		self:SetMaxHealth(200)
-		self:SetHealth(200)
+		self:SetMaxHealth(250)
+		self:SetHealth(250)
 
 		self.jcms_ignoreStraggling = true
 
@@ -87,13 +87,20 @@ if SERVER then
 	end
 
 	function ENT:OnTakeDamage(dmgInfo)
-		local dmg = dmgInfo:GetDamage()
-		
-		if dmg > 0 then
+		-- // Scaling {{{
 			if bit.band( dmgInfo:GetDamageType(), DMG_BLAST ) > 0 then
 				dmgInfo:ScaleDamage(2)
 			end
 
+			local inflictor = dmgInfo:GetInflictor()
+			if IsValid(inflictor) and jcms.util_IsStunstick(inflictor) then 
+				dmgInfo:ScaleDamage(3)
+			end
+		-- // }}}
+
+		--Health deduction & Animation
+		local dmg = dmgInfo:GetDamage()
+		if dmg > 0 then
 			self.jcms_flinchProgress = self.jcms_flinchProgress + dmg 
 			self:SetHealth(self:Health() - dmg)
 			
@@ -156,7 +163,7 @@ if SERVER then
 end
 
 if CLIENT then
-	ENT.GlowMat = Material("models/jcms/zombiepolyp/polyp_eyes") --TEMP
+	jcms.zombiePolypEyeMat = Material("models/jcms/zombiepolyp/polyp_eyes")
 
 	function ENT:Initialize()
 		self.jcms_polypEat = CreateSound(self, "ambient/creatures/leech_bites_loop1.wav")
@@ -175,12 +182,6 @@ if CLIENT then
 		self.emitter4 = ParticleEmitter( self:WorldSpaceCenter(), false )
 		self.emitter5 = ParticleEmitter( self:WorldSpaceCenter(), false )
 		self.nextPart = 0
-
-		self.emitter:SetNoDraw( true ) 
-		self.emitter2:SetNoDraw( true ) 
-		self.emitter3:SetNoDraw( true ) 
-		self.emitter4:SetNoDraw( true ) 
-		self.emitter5:SetNoDraw( true ) 
 
 		self.pixVis = util.GetPixelVisibleHandle()
 
@@ -201,8 +202,6 @@ if CLIENT then
 				jcms.fogStack_push(data)
 			end
 		end)
-
-		--self:SetRenderBounds() --TODO:
 	end
 
 	function ENT:OnRemove()
@@ -254,12 +253,10 @@ if CLIENT then
 			selfTbl.emitter5:SetNoDraw( true  ) 
 		end
 
-		--selfTbl.emitter:SetNoDraw( dist < (range * 1.5)^2 )
-		--[[
 		selfTbl.emitter2:SetNoDraw( dist > (range * 3.25)^2) 
 		selfTbl.emitter3:SetNoDraw( dist > (range * 2.5)^2 ) 
 		selfTbl.emitter4:SetNoDraw( dist > (range * 2.0)^2 ) 
-		selfTbl.emitter5:SetNoDraw( dist > (range * 1.75)^2 ) --]]
+		selfTbl.emitter5:SetNoDraw( dist > (range * 1.75)^2 )
 
 		if selfTbl.nextPart < CurTime() then 
 			selfTbl.nextPart = CurTime() + 0.5*1.5
@@ -421,32 +418,11 @@ if CLIENT then
 		self:DrawModel()
 	end
 
-	--TODO: Needs to be in a hook instead, other polyps still obstruct them.
-	function ENT:DrawTranslucent()
-		local selfTbl = self:GetTable()
-		local range = selfTbl:GetCloudRange()
-		local selfCentre = self:WorldSpaceCenter()
-		local range = selfTbl:GetCloudRange()
-
-		local dist = selfCentre:DistToSqr(jcms.EyePos_lowAccuracy)
-
-		self.emitter:Draw()
-		if not(dist > (range * 3.25)^2) then 
-			selfTbl.emitter2:Draw()
-		end
-		if not(dist > (range * 2.5)^2) then 
-			selfTbl.emitter3:Draw()
-		end
-		if not(dist > (range * 2.0)^2) then 
-			selfTbl.emitter4:Draw()
-		end
-		if not(dist > (range * 1.75)^2) then 
-			selfTbl.emitter5:Draw()
-		end
-
-		render.MaterialOverride(self.GlowMat)
-			self:DrawModel()
+	hook.Add("PostDrawTranslucentRenderables", "jcms_ZombiePolypEyes", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
+		render.MaterialOverride(jcms.zombiePolypEyeMat)
+			for i, ent in ipairs(ents.FindByClass("npc_jcms_zombiepolyp")) do 
+				ent:DrawModel()
+			end
 		render.MaterialOverride()
-		--render.DrawSphere(self:GetPos() + Vector(0,0,100), 30, 16, 16)
-	end
+	end)
 end

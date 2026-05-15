@@ -160,7 +160,6 @@ hook.Add("jcms_Spewer_UpdateRangeCap", "jcms_Spewer_UpdateRangeCap", function()
 end)
 
 if CLIENT then
-	ENT.GlowMat = Material("models/jcms/zombiespewer/body") --TEMP
 	function ENT:Initialize()
 		hook.Add("PreDrawSkyBox", tostring(self), function()
 			local data = {}
@@ -198,9 +197,6 @@ if CLIENT then
 
 	function ENT:DrawTranslucent()
 		self:DrawModel()
-
-		render.SetMaterial(self.GlowMat)
-		render.DrawSphere(self:GetPos() + Vector(0,0,100), 30, 16, 16)
 	end
 
 	function ENT:OnRemove()
@@ -233,4 +229,14 @@ if CLIENT then
 		util.ScreenShake(self:GetPos(), 4, 60, 2, 500, false)
 		self:EmitSound("Explo.ww2bomb")
 	end
+
+
+	--TODO: Needs to be adjusted when visual pass is done
+	hook.Add("PostDrawTranslucentRenderables", "jcms_ZombieSpewerEyes", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
+		render.MaterialOverride(jcms.zombieSpawnerEyeMat)
+			for i, ent in ipairs(ents.FindByClass("npc_jcms_zombiespewer")) do 
+				ent:DrawModel()
+			end
+		render.MaterialOverride()
+	end)
 end

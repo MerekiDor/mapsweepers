@@ -125,10 +125,18 @@ jcms.npc_commanders["zombie"] = {
 		local mTime = jcms.director_GetMissionTime()
 		if mTime < 7.5 then return end
 
-		local d = jcms.director
-		if d and #d.npcs < 40 then
-			d.swarmNext = (d.swarmNext or mTime) - 1 -- Speeding up hordes
-		end
+		-- // Horde Accel if we're low-population {{{
+			local d = jcms.director
+			if d and #d.npcs < 40 then
+				d.swarmNext = (d.swarmNext or mTime) - 1 -- Speeding up hordes
+			end
+			
+			local missionData = d.missionData
+			local missionTime = jcms.director_GetMissionTime()
+			if missionTime >= 60 and (not d.debug) and (not missionData.evacuating) then
+				d.swarmNext = math.min( d.swarmNext, missionTime + 10 + #d.npcs*3 )
+			end
+		-- // }}}
 
 		local cTime = CurTime()
 		if c.nextRowdy < cTime then --Zombies (almost) always know where you are.
@@ -478,7 +486,7 @@ jcms.npc_types.zombie_husk = {
     swarmWeight = 1,
 
 	class = "npc_zombie",
-	bounty = 13,
+	bounty = 14,
 
 	postSpawn = function(npc)
 		local hp = math.ceil(npc:GetMaxHealth()*1.5)
@@ -518,7 +526,7 @@ jcms.npc_types.zombie_fast = {
     swarmWeight = 0.6,
 
 	class = "npc_fastzombie",
-	bounty = 28,
+	bounty = 30,
 
 	postSpawn = function(npc)
 		local hp = math.ceil(npc:GetMaxHealth()*1.25)
