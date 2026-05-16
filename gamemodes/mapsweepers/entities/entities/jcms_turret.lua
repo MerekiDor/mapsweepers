@@ -60,15 +60,19 @@ if SERVER then
 	
 	function jcms.turret_IsTraceGoingThroughSmoke(tr)
 		local t = CurTime()
+
 		for i=#jcms.smokeScreens, 1, -1 do
 			local smokeScreen = jcms.smokeScreens[i]
 			if t > smokeScreen.expires then
 				table.remove(jcms.smokeScreens, i)
 			else
-				local a, b = util.IntersectRayWithSphere(tr.StartPos, tr.HitPos, smokeScreen.pos, smokeScreen.rad)
+				local a, b = util.IntersectRayWithSphere(tr.StartPos, tr.HitPos - tr.StartPos, smokeScreen.pos, smokeScreen.rad)
 				
-				if a and b then
-					return true
+				if a then
+					--The intersect function returns two fractions representing where along the ray the intersection took place (Start and end)
+					--These can be <0 (Meaning the sphere was BEHIND the ray / not in the way) or >1 (Meaning the sphere was AHEAD of the ray)
+					--In either case this means it isn't actually blocking our view of our target.
+					return a > 0 and a < 1
 				end
 			end
 		end

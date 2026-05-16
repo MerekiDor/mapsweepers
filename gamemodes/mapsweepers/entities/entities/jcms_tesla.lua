@@ -230,9 +230,10 @@ if SERVER then
 			filter = self
 		}
 		
+		--[[
 		if jcms.turret_IsTraceGoingThroughSmoke(tr) then
 			return false
-		end
+		end--]]
 		
 		return tr.Entity == target or not tr.Hit
 	end

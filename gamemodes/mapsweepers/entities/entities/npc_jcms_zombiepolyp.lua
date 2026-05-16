@@ -133,6 +133,10 @@ if SERVER then
 		if self:GetIsDying() or self.nextThink > CurTime() then return end 
 		self.nextThink = CurTime() + 1 --NextThink breaks animations for god knows what reason. This is a workaround.
 
+		if jcms.smokeScreens then
+			table.insert(jcms.smokeScreens, { pos = self:WorldSpaceCenter(), rad = self:GetCloudRange() * 0.5, expires = CurTime() + 1.5 }) 
+		end
+
 		local selfPos = self:WorldSpaceCenter()
 
 		local dmg = DamageInfo()

@@ -937,7 +937,7 @@ jcms.npc_types.zombie_spewer = {
 
 	danger = jcms.NPC_DANGER_BOSS,
 	cost = 1.25,
-	swarmWeight = 0.35,
+	swarmWeight = 0.45,
 
 	class = "npc_jcms_zombiespewer",
 	bounty = 350,
