@@ -54,6 +54,36 @@ if SERVER then
 		self:SetNWString("jcms_boss", "zombie_spawner")
 
 		self:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE)
+
+		--Upgrade
+		self.jcms_upgradeLevel = 0
+		--TODO: Might be worth considering making a better system for this (rather than just timers) if we want to expand/control it more nested timers will get a bit ridiculous eventually.
+		timer.Simple(60, function()
+			if not IsValid(self) then return end
+
+			self:SetModelScale(1.5, 30)
+			--TODO: SFX
+			timer.Simple(30, function()
+				if not IsValid(self) then return end
+				self.jcms_upgradeLevel = 1
+				self:SetHealth(self:Health() * 1.5)
+				self:SetMaxHealth(self:GetMaxHealth() * 1.5)
+
+				--TODO: SFX
+
+				timer.Simple(60, function()
+					if not IsValid(self) then return end
+					
+					self:SetModelScale(2, 30)
+					timer.Simple(30, function()
+						if not IsValid(self) then return end
+						self.jcms_upgradeLevel = 2
+						self:SetHealth(self:Health() * 1.5)
+						self:SetMaxHealth(self:GetMaxHealth() * 1.5)
+					end)
+				end)
+			end)
+		end)
 	end
 
 	function ENT:OnTakeDamage(dmgInfo)
@@ -135,9 +165,10 @@ if SERVER then
 				local filter = RecipientFilter()
 				filter:AddAllPlayers()
 
-				self:EmitSound("npc/fast_zombie/fz_alert_far1.wav", 140, 80, 0.75, CHAN_STATIC, 0, 25, filter)
-				self:EmitSound("npc/headcrab_poison/ph_rattle" .. tostring(math.random(1,3)) .. ".wav", 140, 80, 1, CHAN_STATIC, 0, 25, filter)
-				self:EmitSound("npc/zombie_poison/pz_pain1.wav", 140, 80, 1, CHAN_STATIC, 0, 25, filter) --lvl, pitch, vol
+				local pitch = 80 - self.jcms_upgradeLevel * 20
+				self:EmitSound("npc/fast_zombie/fz_alert_far1.wav", 140, pitch, 0.75, CHAN_STATIC, 0, 25, filter)
+				self:EmitSound("npc/headcrab_poison/ph_rattle" .. tostring(math.random(1,3)) .. ".wav", 140, pitch, 1, CHAN_STATIC, 0, 25, filter)
+				self:EmitSound("npc/zombie_poison/pz_pain1.wav", 140, pitch, 1, CHAN_STATIC, 0, 25, filter) --lvl, pitch, vol
 
 				self:SetSequence("spew")
 				self:SetCycle(0)
@@ -155,6 +186,7 @@ if SERVER then
 						local ball = ents.Create("jcms_charpleball")
 						constraint.NoCollide(ball, self, 0, 0)
 						ball:SetPos(self:GetBonePosition(self:LookupBone("spine")))
+						ball.jcms_upgradeLevel = self.jcms_upgradeLevel
 						ball:Spawn()
 						ball.Spawner = self
 

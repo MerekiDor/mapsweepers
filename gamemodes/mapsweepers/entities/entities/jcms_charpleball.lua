@@ -46,6 +46,10 @@ function ENT:Initialize()
 			phys:SetDragCoefficient(0)
 			phys:SetDamping(0, 0)
 		end
+
+		if (self.jcms_upgradeLevel or 0) >= 1 then
+			self:SetModelScale(1.5)
+		end
 	end
 
 	if CLIENT then
@@ -69,6 +73,7 @@ if SERVER then
 
 		for i=1, self.CharpleCount do
 			local charple = jcms.npc_Spawn("zombie_charple", self:WorldSpaceCenter() + VectorRand(-8, 8))
+			charple.jcms_upgradeLevel = self.jcms_upgradeLevel
 
 			local ang = math.random() * math.pi * 2
 			local cos, sin = math.cos(ang), math.sin(ang)
@@ -80,7 +85,9 @@ if SERVER then
 
 			local ed = EffectData()
 			ed:SetEntity(charple)
-			ed:SetScale(math.random() * 0.5 + 0.5)
+			--TODO: Fire's used to distinguish upgraded ones rn but it'd be better if it was just black smoke eminating from them.
+			ed:SetScale( (charple.jcms_upgradeLevel >=2 and 0) or math.random() * 0.5 + 0.5 )
+			ed:SetStart( jcms.vectorOrigin )
 			util.Effect("jcms_burningcharacter", ed)
 
 			table.insert(charples, charple)
@@ -109,6 +116,23 @@ if SERVER then
 				end
 			end
 		end)
+
+		if self.jcms_upgradeLevel > 0 then 
+			--TODO: Black smoke, not grey
+			--TODO: SFX
+			--self:EmitSound("weapons/flaregun/fire.wav", 90, 60)
+			local ed = EffectData()
+			ed:SetMagnitude(12)
+			ed:SetOrigin(self:WorldSpaceCenter())
+			ed:SetNormal(self:GetAngles():Up())
+			ed:SetRadius(150*self.jcms_upgradeLevel)
+			ed:SetFlags(3)
+			util.Effect("jcms_blast", ed)
+
+			if jcms.smokeScreens then
+				table.insert(jcms.smokeScreens, { pos = self:WorldSpaceCenter(), rad = 125*self.jcms_upgradeLevel, expires = CurTime() + 10 }) 
+			end
+		end
 
 		self:Remove()
 	end
