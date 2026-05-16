@@ -55,8 +55,8 @@ if SERVER then
 		self:SetHullSizeNormal()
 		self:SetSolid(SOLID_OBB)
 
-		self:SetMaxHealth(1250)
-		self:SetHealth(1250)
+		self:SetMaxHealth(1500)
+		self:SetHealth(1500)
 
 		self.jcms_flinchProgress = 0
 		self.jcms_ignoreStraggling = true

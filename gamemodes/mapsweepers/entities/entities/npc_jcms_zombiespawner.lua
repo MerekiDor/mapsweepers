@@ -37,8 +37,8 @@ if SERVER then
 		self:SetHullSizeNormal()
 		self:SetSolid(SOLID_OBB)
 
-		self:SetMaxHealth(750)
-		self:SetHealth(750)
+		self:SetMaxHealth(900)
+		self:SetHealth(900)
 		self.nextSpawn = CurTime() + 5
 		self.spawnedNPCs = {}
 
@@ -66,7 +66,7 @@ if SERVER then
 			timer.Simple(30, function()
 				if not IsValid(self) then return end
 				self.jcms_upgradeLevel = 1
-				self:SetHealth(self:Health() * 1.5)
+				self:SetHealth(self:Health() * 1.35)
 				self:SetMaxHealth(self:GetMaxHealth() * 1.5)
 
 				--TODO: SFX
@@ -78,7 +78,7 @@ if SERVER then
 					timer.Simple(30, function()
 						if not IsValid(self) then return end
 						self.jcms_upgradeLevel = 2
-						self:SetHealth(self:Health() * 1.5)
+						self:SetHealth(self:Health() * 1.35)
 						self:SetMaxHealth(self:GetMaxHealth() * 1.5)
 					end)
 				end)

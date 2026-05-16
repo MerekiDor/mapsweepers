@@ -68,8 +68,8 @@ if SERVER then
 			self:SetSequence("chew_humanoid")
 		end)
 
-		self:SetMaxHealth(250)
-		self:SetHealth(250)
+		self:SetMaxHealth(300)
+		self:SetHealth(300)
 
 		self.jcms_ignoreStraggling = true
 
@@ -88,13 +88,9 @@ if SERVER then
 
 	function ENT:OnTakeDamage(dmgInfo)
 		-- // Scaling {{{
-			if bit.band( dmgInfo:GetDamageType(), DMG_BLAST ) > 0 then
-				dmgInfo:ScaleDamage(2)
-			end
-
 			local inflictor = dmgInfo:GetInflictor()
 			if IsValid(inflictor) and jcms.util_IsStunstick(inflictor) then 
-				dmgInfo:ScaleDamage(3)
+				dmgInfo:ScaleDamage(4)
 			end
 		-- // }}}
 
