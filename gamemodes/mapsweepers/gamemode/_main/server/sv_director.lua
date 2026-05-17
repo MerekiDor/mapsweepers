@@ -1667,9 +1667,9 @@
 
 				local missionTimeThrottle = missionTime / 10
 				if swarmCost > missionTimeThrottle then
-					local str = string.format("Throttling swarm cost from %.2f to %.2f", swarmCost, missionTimeThrottle)
-					jcms.printf(str)
-					PrintMessage(HUD_PRINTCENTER, str)
+					-- local str = string.format("Throttling swarm cost from %.2f to %.2f", swarmCost, missionTimeThrottle)
+					-- jcms.printf(str)
+					-- PrintMessage(HUD_PRINTCENTER, str)
 					swarmCost = missionTimeThrottle
 				end
 				

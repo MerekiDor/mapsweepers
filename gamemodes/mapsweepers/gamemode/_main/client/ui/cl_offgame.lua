@@ -1897,41 +1897,16 @@ jcms.offgame = jcms.offgame or NULL
 			-- }}}
 		end
 
-		function jcms.offgame_BuildCodexTab(tab)
-			local lowres = jcms.util_IsLowRes()
-			local listPanel = tab:Add("DPanel")
-			listPanel:SetSize(lowres and 400 or 700, tab:GetTall() / 2.5 - 32)
-			listPanel:SetPos(32, tab:GetTall() - listPanel:GetTall() - 32)
-			listPanel.Paint = jcms.paint_Panel
-			listPanel.jText = "#jcms.codex"
-			local scrollArea = listPanel:Add("DScrollPanel")
-			scrollArea:SetPos(8, 32)
-			scrollArea:SetSize(listPanel:GetWide() - 16, listPanel:GetTall() - 32 - 8)
-
-			local textArea = tab:Add("DPanel")
-			textArea:SetPos(lowres and 24 or 64, 48)
-			textArea:SetWide(lowres and 500 or 700)
-			textArea:SetTall(listPanel:GetY() - textArea:GetY() - 24)
-			textArea.Paint = jcms.paint_Panel
-			textArea.jText = "#jcms.codex"
-			local scrollAreaText = textArea:Add("DScrollPanel")
-			scrollAreaText:SetPos(16, 48)
-			scrollAreaText:SetSize(textArea:GetWide() - 32, textArea:GetTall() - 48 - 8)
-
-			local mylevel = jcms.statistics_GetLevel()
-			local function cdxBtnFunc(btn)
-				textArea.jText = btn.cdx.name
-				surface.PlaySound("buttons/button1.wav")
-
-				local entry = btn.cdx
-				for i, child in ipairs(scrollAreaText:GetCanvas():GetChildren()) do
+		-- {{{
+			function jcms.offgame_CodexFormatter(parent, entry)
+				for i, child in ipairs( parent:GetCanvas():GetChildren() ) do
 					if child.isEntry then
 						child:Remove()
 					end
 				end
 
 				if entry.ooc then
-					local elem = scrollAreaText:Add("DLabel")
+					local elem = parent:Add("DLabel")
 					elem:SetFont("jcms_small_bolder")
 					elem:SetText("#jcms.codexooc")
 					elem:SetTextColor(jcms.color_bright_alt)
@@ -1977,20 +1952,20 @@ jcms.offgame = jcms.offgame or NULL
 
 						local elem
 						if part_type == "title" then
-							elem = scrollAreaText:Add("DLabel")
+							elem = parent:Add("DLabel")
 							elem:SetFont("jcms_hud_small")
 							elem:SetText(part_text)
 							elem:SetTextColor(jcms.color_bright)
 							elem:DockMargin(0, i==1 and 2 or 12, 0, 6)
 							elem:SetTall(32)
 						elseif part_type == "caption" then
-							elem = scrollAreaText:Add("DLabel")
+							elem = parent:Add("DLabel")
 							elem:SetFont("jcms_medium")
 							elem:SetText(part_text)
 							elem:SetTextColor(ColorAlpha(jcms.color_bright, 100))
 							elem:DockMargin(0, 2, 0, 4)
 						else
-							elem = scrollAreaText:Add("DTextEntry")
+							elem = parent:Add("DTextEntry")
 							elem:SetFont("jcms_small_bolder")
 							elem:SetTextColor(jcms.color_bright)
 							elem:SetMultiline(true)
@@ -2013,9 +1988,10 @@ jcms.offgame = jcms.offgame or NULL
 							elem:SetText(text)
 							elem:SetEditable(false)
 							elem:SetPaintBackground(false)
+
 							surface.SetFont("jcms_small_bolder")
 							local tw, th = surface.GetTextSize(text)
-							elem:SetTall(th * math.ceil( tw/(listPanel:GetWide()-128) ) + 8)
+							elem:SetTall(th * math.ceil( tw/(parent:GetWide()-128) ) + 8)
 						end
 
 						if elem then
@@ -2027,31 +2003,138 @@ jcms.offgame = jcms.offgame or NULL
 					end
 				end
 
-				if IsValid(scrollAreaText.VBar) then
-					scrollAreaText.VBar.Paint = BLANK_DRAW
-					scrollAreaText.VBar:SetHideButtons(true)
-					scrollAreaText.VBar.btnGrip.Paint = jcms.paint_ScrollGrip
+				if IsValid(parent.VBar) then
+					parent.VBar.Paint = BLANK_DRAW
+					parent.VBar:SetHideButtons(true)
+					parent.VBar.btnGrip.Paint = jcms.paint_ScrollGrip
 				end
 			end
 
-			for i, cdx in ipairs( jcms.codex ) do
-				local btn = scrollArea:Add("DButton")
-				btn:Dock(TOP)
-				btn:DockMargin(0, 0, 0, 4)
-				btn:SetTall(32)
-				btn:SetEnabled(mylevel >= cdx.level)
-				btn.index = i
-				btn.level = cdx.level
-				btn.cdx = cdx
-				btn.Paint = jcms.offgame_paint_CodexButton
-				btn.DoClick = cdxBtnFunc
+			function jcms.offgame_CodexGetCategories()
+				local logEntries = jcms.codex_GetUnlockedLogs()
+
+				return {
+					{ name = "#jcms.codex", desc = "#jcms.codex_desc", entries = jcms.codex },
+					{ name = "#jcms.codex_logs", desc = language.GetPhrase("jcms.codex_logs_desc"):format(#logEntries, #jcms.codex_logs), entries = logEntries },
+					{ name = "#jcms.codex_legacy", desc = "#jcms.codex_legacy_desc", entries = jcms.codex_legacy }
+				}
 			end
 
-			local tba = scrollArea:Add("DPanel")
-			tba:Dock(TOP)
-			tba:DockMargin(0, 0, 0, 4)
-			tba:SetTall(48)
-			tba.Paint = jcms.offgame_paint_TBAPanel
+			function jcms.offgame_CodexBuildEntriesList(parent, entriesList)
+				local function cdxBtnFunc(btn)
+					if IsValid(parent) and IsValid(parent.textArea) then
+						parent.textArea.jText = btn.cdx.name
+					end
+
+					surface.PlaySound("buttons/button1.wav")
+
+					local entry = btn.cdx
+					jcms.offgame_CodexFormatter(parent.scrollAreaText, entry)
+				end
+
+				for i, child in ipairs( parent:GetCanvas():GetChildren() ) do
+					if child.cdx then
+						child:Remove()
+					end
+				end
+
+				if type(entriesList) == "table" and #entriesList > 0 then
+					local mylevel = jcms.statistics_GetLevel()
+					for i, cdx in ipairs( entriesList ) do
+						local btn = parent:Add("DButton")
+						btn:Dock(TOP)
+						btn:DockMargin(0, 0, 0, 4)
+						btn:SetTall(32)
+						btn:SetEnabled(mylevel >= (cdx.level or 0))
+						btn.index = i
+						btn.level = cdx.level
+						btn.cdx = cdx
+						btn.Paint = jcms.offgame_paint_CodexButton
+						btn.DoClick = cdxBtnFunc
+					end
+				end
+
+				if IsValid(parent.VBar) then
+					parent.VBar.Paint = BLANK_DRAW
+					parent.VBar:SetHideButtons(true)
+					parent.VBar.btnGrip.Paint = jcms.paint_ScrollGrip
+				end
+			end
+		-- }}}
+
+		function jcms.offgame_BuildCodexTab(tab)
+			local lowres = jcms.util_IsLowRes()
+			local listPanel = tab:Add("DPanel")
+			listPanel:SetSize(lowres and 400 or 700, tab:GetTall() / 3 - 24)
+			listPanel:SetPos(32, tab:GetTall() - listPanel:GetTall() - 32)
+			listPanel.Paint = jcms.paint_Panel
+			listPanel.jText = "#jcms.codex_entrieslist"
+			local scrollAreaList = listPanel:Add("DScrollPanel")
+			scrollAreaList:SetPos(8, 32)
+			scrollAreaList:SetSize(listPanel:GetWide() - 16, listPanel:GetTall() - 32 - 8)
+			local textArea
+			local scrollAreaText
+
+			local categoryPanel = tab:Add("DPanel")
+			categoryPanel:SetPos(32, 48)
+			categoryPanel:SetWide(lowres and 500 or 700)
+			categoryPanel:SetTall(32)
+			categoryPanel:SetPaintBackground(false)
+			categoryPanel.buttons = {}
+
+			local function catBtnFunc(selectedbtn)
+				if not IsValid(categoryPanel) then return end
+				if not selectedbtn.category then return end
+
+				surface.PlaySound("buttons/combine_button1.wav")
+				textArea.jText = selectedbtn.category.name
+
+				for i, btn in ipairs(categoryPanel.buttons) do
+					if IsValid(btn) then
+						local selected = btn == selectedbtn
+						btn:SetTall(selected and 32 or 24)
+						btn.Paint = selected and jcms.paint_ButtonFilled or jcms.paint_Button
+					end
+				end
+
+				jcms.offgame_CodexBuildEntriesList(scrollAreaList, selectedbtn.category.entries)
+				jcms.offgame_CodexFormatter(scrollAreaText, {
+					name = selectedbtn.category.name,
+					text = selectedbtn.category.desc
+				})
+			end
+			
+			local categories = jcms.offgame_CodexGetCategories()
+			local catBtnWidth = categoryPanel:GetWide() / #categories
+			local catBtnPad = 4
+			for i, category in ipairs(categories) do
+				local catBtn = categoryPanel:Add("DButton")
+				catBtn:SetText(category.name)
+				catBtn:SetSize(catBtnWidth - catBtnPad, 24)
+				catBtn:SetPos((i-1)*catBtnWidth + math.Remap(i, 1, #categories, 0, catBtnPad), 0)
+				catBtn.jFont = "jcms_title"
+				catBtn.Paint = jcms.paint_Button
+				catBtn.DoClick = catBtnFunc
+				catBtn.category = category
+				table.insert(categoryPanel.buttons, catBtn)
+			end
+
+			textArea = tab:Add("DPanel")
+			textArea:SetPos(lowres and 24 or 64, categoryPanel:GetY() + categoryPanel:GetTall() + 12)
+			textArea:SetWide(lowres and 500 or 700)
+			textArea:SetTall(listPanel:GetY() - textArea:GetY() - 12)
+			textArea.Paint = jcms.paint_Panel
+			textArea.jText = "#jcms.codex"
+			scrollAreaList.textArea = textArea
+
+			scrollAreaText = textArea:Add("DScrollPanel")
+			scrollAreaText:SetPos(16, 48)
+			scrollAreaText:SetSize(textArea:GetWide() - 32, textArea:GetTall() - 48 - 8)
+			scrollAreaList.scrollAreaText = scrollAreaText
+
+			if categoryPanel.buttons[1] then
+				catBtnFunc( categoryPanel.buttons[1] )
+			end
 		end
 
 		function jcms.offgame_BuildBestiaryTab(tab)

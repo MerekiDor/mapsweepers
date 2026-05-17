@@ -2561,6 +2561,18 @@
 				surface.SetAlphaMultiplier(1)
 			end
 		end,
+
+		["jcms_datapad"] = function(ent, blend)
+			local str = "#jcms.datapad"
+			surface.SetAlphaMultiplier(blend)
+				draw.SimpleText(str, "jcms_hud_small", 0, 100, jcms.color_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+
+				render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
+					local off = 3
+					draw.SimpleText(str, "jcms_hud_small", 0, 100+off, jcms.color_bright, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+				render.OverrideBlend(false)
+			surface.SetAlphaMultiplier(1)
+		end
 	}
 	jcms.hud_infoTargetFuncs.jcms_turret_smrls = jcms.hud_infoTargetFuncs.jcms_turret
 

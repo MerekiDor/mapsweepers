@@ -1511,6 +1511,7 @@ jcms.MAPGEN_CONSTRUCT_DIAMETER = math.sqrt(82411875)
 		end
 
 		jcms.mapgen_PlacePrefabs(maxcount, naturalWeights, jcms.mapdata.validAreas)
+		pcall( jcms.mapgen_PlaceDataLogs ) -- Don't want to fail map gen because of an error here
 	end
 
 	function jcms.mapgen_PlaceFactionPrefabs(maxcount, faction )
@@ -1593,6 +1594,149 @@ jcms.MAPGEN_CONSTRUCT_DIAMETER = math.sqrt(82411875)
 		end
 		
 		jcms.printf("Encounters placed: %d", stamped)
+	end
+
+	jcms.mapgen_goodDataLogProps = {
+		["models/props_wasteland/controlroom_desk001a.mdl"] = true,
+		["models/props_wasteland/controlroom_desk001b.mdl"] = true,
+		["models/props_interiors/furniture_desk01a.mdl"] = true,
+		["models/props_combine/breendesk.mdl"] = true,
+		["models/props_forest/table_shed.mdl"] = true,
+		["models/props_c17/furnituretable002a.mdl"] = true,
+		["models/props_c17/furnituretable001a.mdl"] = true,
+		["models/props_wasteland/cafeteria_table001a.mdl"] = true,
+		["models/props/cs_italy/it_mkt_table2.mdl"] = true,
+		["models/props/cs_italy/it_mkt_table1.mdl"] = true,
+		["models/props/cs_office/table_coffee.mdl"] = true,
+		["models/props/cs_militia/table_kitchen.mdl"] = true,
+		["models/props/de_inferno/tablecoffee.mdl"] = true,
+		["models/props/de_tides/restaurant_table.mdl"] = true,
+		["models/props/de_inferno/tableantique.mdl"] = true,
+		["models/props/cs_militia/wood_table.mdl"] = true,
+		["models/props/cs_office/table_meeting.mdl"] = true,
+		["models/props_c17/hospital_surgerytable01.mdl"] = true,
+		["models/props/cs_militia/table_shed.mdl"] = true,
+		["models/props_c17/furnituretable003a.mdl"] = true,
+		["models/props_junk/cardboard_box001a.mdl"] = true,
+		["models/props_junk/cardboard_box002a.mdl"] = true,
+		["models/props/de_nuke/crate_extrasmall.mdl"] = true,
+		["models/props_junk/wood_crate002a.mdl"] = true,
+		["models/props_junk/wood_crate001a.mdl"] = true,
+		["models/props_junk/wood_crate001a_damaged.mdl"] = true,
+		["models/props/de_prodigy/prodcratesb.mdl"] = true,
+		["models/props/de_inferno/crate_fruit_break.mdl"] = true,
+		["models/props_wasteland/prison_shelf002a.mdl"] = true,
+		["models/props_wasteland/prison_shelf001a.mdl"] = true,
+		["models/props_wasteland/kitchen_shelf002a.mdl"] = true,
+		["models/props_wasteland/kitchen_shelf001a.mdl"] = true,
+		["models/props_interiors/furniture_shelf01a.mdl"] = true,
+		["models/props_c17/shelfunit01a.mdl"] = true,
+		["models/props/cs_militia/furniture_shelf01a.mdl"] = true,
+		["models/props_c17/hospital_shelf01.mdl"] = true,
+		["models/props_c17/furnitureshelf002a.mdl"] = true,
+		["models/props_c17/furnituredrawer001a.mdl"] = true,
+		["models/props/de_inferno/furnituredrawer001a.mdl"] = true,
+		["models/props_c17/furnituredrawer003a.mdl"] = true,
+		["models/props_interiors/furniture_cabinetdrawer01a.mdl"] = true,
+		["models/props_borealis/bluebarrel002.mdl"] = true,
+		["models/props/de_train/barrel.mdl"] = true,
+		["models/props_c17/oildrum001.mdl"] = true,
+		["models/props_c17/oildrum001_explosive.mdl"] = true,
+		["models/props_wasteland/laundry_cart002.mdl"] = true,
+		["models/props_wasteland/laundry_cart001.mdl"] = true,
+		["models/props_junk/metalbucket02a.mdl"] = true,
+		["models/props_junk/trashdumpster01a.mdl"] = true,
+		["models/props_c17/bench01a.mdl"] = true
+	}
+
+	function jcms.mapgen_PlaceDataLogs(count)
+		local spawnCount = tonumber(count) or 0
+		if not count then
+			if math.random() < 0.36 then
+				if math.random() < 0.1 then
+					spawnCount = math.random(2, 3)
+				else
+					spawnCount = 1
+				end
+			else
+				spawnCount = 0
+			end
+		end
+		
+		if spawnCount <= 0 then return end
+
+		local props = ents.FindByClass("prop_physics")
+		local validProps = {}
+		for i, prop in ipairs(props) do
+			if prop:Health() > 0 and jcms.mapgen_goodDataLogProps[ prop:GetModel() ] then
+				table.insert(validProps, prop)
+			end
+		end
+		table.Shuffle(validProps)
+
+		local validAreas = {}
+		local minVis, avgVis = jcms.mapdata.visUnrestricted.min, jcms.mapdata.visUnrestricted.avg
+		for i, area in ipairs( navmesh.GetAllNavAreas() ) do
+			if IsValid(area) and not (area:IsUnderwater() or area:IsDamaging()) then
+				if (#area:GetVisibleAreas() <= math.ceil( (minVis + avgVis)/2 )-100) or (jcms.mapdata.areaDepths[ area ] and jcms.mapdata.areaDepths[ area ] == 0) then
+					table.insert(validAreas, area)
+				end
+			end
+		end
+		table.Shuffle(validAreas)
+
+		for i=1, spawnCount do
+			local usePropMethod = #validProps > 0 and math.random() < 0.8
+			local propMethodWorked = false
+
+			if usePropMethod then
+				for i, prop in ipairs(validProps) do
+					local mins, maxs = prop:GetModelRenderBounds()
+					local pos = prop:GetPos()
+					pos.z = pos.z + maxs.z + math.Rand(8, 16)
+					pos.x = pos.x + math.Rand(mins.x, maxs.x) * math.random()
+					pos.y = pos.y + math.Rand(mins.y, maxs.y) * math.random()
+
+					if util.IsInWorld(pos) then
+						local pad = ents.Create("jcms_datapad")
+						pad:SetAngles( AngleRand() )
+						pad:SetPos( pos )
+						pad:Spawn()
+
+						local phys = pad:GetPhysicsObject()
+						if IsValid(phys) then
+							phys:Wake()
+							table.remove(validProps, i)
+							propMethodWorked = true
+							break
+						else
+							pad:Remove()
+						end
+					end
+				end
+			end
+
+			if not propMethodWorked then
+				local area = validAreas[1]
+				if area then
+					local randomSpot = jcms.mapgen_AreaPointAwayFromEdges(area, 24)
+					local pad = ents.Create("jcms_datapad")
+					pad:SetAngles( AngleRand() )
+					pad:SetPos( randomSpot )
+					pad:Spawn()
+
+					local phys = pad:GetPhysicsObject()
+					if IsValid(phys) then
+						phys:Wake()
+						table.remove(validAreas, 1)
+					else
+						pad:Remove()
+					end
+				else
+					break
+				end
+			end
+		end
 	end
 	
 	function jcms.mapgen_FromMission(mission)
