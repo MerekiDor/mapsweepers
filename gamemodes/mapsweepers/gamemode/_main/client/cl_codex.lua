@@ -30,14 +30,12 @@
 
 		{
 			level = 4,
-			ooc = true,
 			name = "#jcms.codex_ourmission_name",
 			text = "#jcms.codex_ourmission"
 		},
 		
 		{
 			level = 7,
-			ooc = true,
 			name = "#jcms.codex_factions_name",
 			pages = { 
 				"#jcms.codex_factions1", 
@@ -84,26 +82,18 @@
 
 		{
 			level = 25,
-			ooc = true,
 			name = "#jcms.codex_respawnsystem_name",
 			text = "#jcms.codex_respawnsystem"
 		},
 
 		{
 			level = 27,
-			ooc = true,
-			name = "#jcms.codex_thenarrative_name",
-			text = "#jcms.codex_thenarrative"
-		},
-
-		{
-			level = 34,
 			name = "#jcms.codex_jenergy_name",
 			text = "#jcms.codex_jenergy"
 		},
 
 		{
-			level = 40,
+			level = 35,
 			name = "#jcms.codex_theevent_name",
 			text = "#jcms.codex_theevent"
 		}
@@ -114,10 +104,34 @@
 	-- TODO save unlocked logs
 	jcms.codex_logs = {
 		{
-			unlock_id = "test",
-			name = " Test Unlock ",
-			text = " Text of the test unlockable log "
+			unlock_id = "fantlions",
+			name = "#jcms.codexlogs_fantlions_name",
+			text = "#jcms.codexlogs_fantlions"
 		},
+
+		{
+			unlock_id = "firstdayonthejob",
+			name = "#jcms.codexlogs_firstdayonthejob_name",
+			text = "#jcms.codexlogs_firstdayonthejob"
+		},
+
+		{
+			unlock_id = "shackincident",
+			name = "#jcms.codexlogs_shackincident_name",
+			text = "#jcms.codexlogs_shackincident"
+		},
+
+		{
+			unlock_id = "directiveupdated",
+			name = "#jcms.codexlogs_directiveupdated_name",
+			text = "#jcms.codexlogs_directiveupdated"
+		},
+
+		{
+			unlock_id = "snipingzombies",
+			name = "#jcms.codexlogs_snipingzombies_name",
+			text = "#jcms.codexlogs_snipingzombies"
+		}
 	}
 
 	-- outdated (pre-v1.2) entries

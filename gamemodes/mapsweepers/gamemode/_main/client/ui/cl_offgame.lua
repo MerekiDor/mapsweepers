@@ -1937,6 +1937,9 @@ jcms.offgame = jcms.offgame or NULL
 						if part_beginning == "-#" then
 							part_type = "caption"
 							part_text = part:sub(b_index, -1)
+						elseif part_beginning == "-?" then
+							part_type = "subtitle"
+							part_text = part:sub(b_index, -1)
 						elseif part_beginning == "#" then
 							part_type = "title"
 							part_text = part:sub(b_index, -1)
@@ -1966,13 +1969,21 @@ jcms.offgame = jcms.offgame or NULL
 							elem:DockMargin(0, 2, 0, 4)
 						else
 							elem = parent:Add("DTextEntry")
-							elem:SetFont("jcms_small_bolder")
-							elem:SetTextColor(jcms.color_bright)
+
+							if part_type == "subtitle" then
+								elem:SetFont("jcms_small")
+								elem:SetTextColor(ColorAlpha(jcms.color_bright, 100))
+							else
+								elem:SetFont("jcms_small_bolder")
+								elem:SetTextColor(jcms.color_bright)
+							end
+
 							elem:SetMultiline(true)
 							
 							local text
 							local margin = 4
 							local margin_left = 8
+							local margin_bottom = 64
 							if part_type == "point" then
 								text = " ●  " .. part_text
 								margin = 0
@@ -1982,9 +1993,14 @@ jcms.offgame = jcms.offgame or NULL
 								margin = 0
 								margin_left = 16
 							else
+								if part_type == "subtitle" then
+									margin_bottom = 4
+									margin = 0
+								end
+
 								text = "  " .. part_text
 							end
-							elem:DockMargin(margin_left, margin, 64, margin)
+							elem:DockMargin(margin_left, margin, margin_bottom, margin)
 							elem:SetText(text)
 							elem:SetEditable(false)
 							elem:SetPaintBackground(false)
