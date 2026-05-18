@@ -21,14 +21,32 @@
 --]]
 
 
+-- // Mission randomisation {{{
+	jcms.runprogress_factionHistoryWeights = {
+		0.01, --Almost never double-up factions
+		0.35,
+		0.65,
+		0.9,
+	}
+
+	jcms.runprogress_missionHistoryWeights = {
+		0.25,	--Getting VFP or payload twice should be unlikely, but not as big of a problem as same fac twice.
+		0.65,
+		0.85
+	}
+-- // }}}
+
 jcms.runprogress = jcms.runprogress or {
 	difficulty = 0.9,
 	winstreak = 0,
 	totalWins = 0,
 	playerStartingCash = {}, -- key is Steam ID 64, value is starting cash. 
 
-	lastMission = "",
-	lastFaction = ""
+	lastMission = "", --DEPRECATED
+	lastFaction = "", --DEPRECATED
+
+	previousMissions = {}, --up to 4 prior missions.
+	previousFactions = {} --ditto
 }
 
 function jcms.runprogress_CalculateDifficultyFromWinstreak(winstreak, totalWins)
@@ -118,10 +136,40 @@ function jcms.runprogress_GetLastMissionTypes()
 	return jcms.runprogress.lastMission, jcms.runprogress.lastFaction
 end
 
+function jcms.runprogress_GetMissionHistoryWeights()
+	local missionWeights = {}
+	local factionWeights = {}
+
+	local prevMissions = jcms.runprogress.previousMissions
+	for i, mis in ipairs(prevMissions) do
+		missionWeights[mis] = jcms.runprogress_missionHistoryWeights[#prevMissions - i + 1] --Our history tables are stored in reverse order (oldest first, newest last) so this iterates them in reverse.
+	end
+
+	local prevFactions = jcms.runprogress.previousFactions
+	for i, fac in ipairs(prevFactions) do
+		factionWeights[fac] = jcms.runprogress_factionHistoryWeights[#prevFactions - i + 1] --Ditto
+	end
+	
+	return missionWeights, factionWeights
+end
+
 function jcms.runprogress_SetLastMission()
 	local rp = jcms.runprogress
-	rp.lastMission = jcms.util_GetMissionType()
-	rp.lastFaction = jcms.util_GetMissionFaction()
+	local mis = jcms.util_GetMissionType()
+	local fac = jcms.util_GetMissionFaction()
+
+	rp.lastMission = mis
+	rp.lastFaction = fac
+
+	table.insert(rp.previousMissions, mis)
+	if #rp.previousMissions > #jcms.runprogress_missionHistoryWeights then 
+		table.remove(rp.previousMissions, 1)
+	end
+
+	table.insert(rp.previousFactions, fac)
+	if #rp.previousFactions > #jcms.runprogress_factionHistoryWeights then 
+		table.remove(rp.previousFactions, 1)
+	end
 end
 
 

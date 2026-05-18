@@ -50,7 +50,30 @@
 	-- Do NOT put underscores in your mission key names. They're strictly lowercase latin characters.
 	
 	jcms.missions = {}
+	function jcms.mission_GetWeightedTypes(pvpOnly, isBoss) --Gets weights for all missions based on previous missions/factions
+		local misHistoryWeights, facHistoryWeights = jcms.runprogress_GetMissionHistoryWeights()
+		
+		local finalMisWeights = {}
+		for mission in pairs(jcms.missions) do 
+			local missionData = jcms.missions[ mission ]
+			if (not pvpOnly or missionData.pvpAllowed ) and ((not not isBoss) == (not not missionData.bossMission)) then
+				--Combined weight based on mission weight & faction weight.
+				--"Any" will never be in this table, so it'll always be 1.
+				finalMisWeights[mission] = (misHistoryWeights[mission] or 1) * (facHistoryWeights[missionData.faction] or 1)
+			end
+		end
 
+		if table.Count(finalMisWeights) == 0 then --Fall-back if no valid missions (no boss missions)
+			local missionData = jcms.missions[ mission ]
+			if (not pvpOnly or missionData.pvpAllowed ) and not missionData.bossMission then
+				finalMisWeights[mission] = (misHistoryWeights[mission] or 1) * (facHistoryWeights[missionData.faction] or 1)
+			end
+		end
+
+		return finalMisWeights
+	end
+
+	--DEPRECATED
 	function jcms.mission_GetRandomType(except, pvpOnly, isBoss)
 		local keys = {}
 
@@ -248,21 +271,21 @@
 	end
 
 	function jcms.mission_Randomize()
-		local lastMis, lastFac = jcms.runprogress_GetLastMissionTypes()
-		local isBoss = jcms.runprogress.winstreak > 0 and jcms.runprogress.winstreak % 5 == 0 --Boss every 5 waves excluding 0
+		local missionWeights = jcms.mission_GetWeightedTypes(pvpOnly, isBoss)
 
-		local newType = jcms.mission_GetRandomType( lastMis, jcms.util_IsPVP(), isBoss )
+		local newType = jcms.util_ChooseByWeight(missionWeights)
 		local data = assert(jcms.missions[ newType ], "error randomizing mission type, picked an invalid one: '" .. tostring(newType) .. "'")
 
 		game.GetWorld():SetNWString("jcms_missiontype", newType)
-		if data.faction == "any" then
-			local otherFactions = {}
+		if data.faction == "any" then --Choose a random faction for universals
+			local misHistoryWeights, facHistoryWeights = jcms.runprogress_GetMissionHistoryWeights() --unnecessary duplicate work but this runs rarely so idc
 			
+			local finalFacWeights = {}
 			for i, faction in ipairs(jcms.factions_GetOrder()) do
-				otherFactions[ faction ] = (faction == lastFac) and 0.000001 or 1 
+				finalFacWeights[ faction ] = facHistoryWeights[faction] or 1 
 			end
 
-			local newFaction = jcms.util_ChooseByWeight(otherFactions)
+			local newFaction = jcms.util_ChooseByWeight(finalFacWeights)
 			game.GetWorld():SetNWString("jcms_missionfaction", newFaction)
 		else
 			game.GetWorld():SetNWString("jcms_missionfaction", data.faction)
