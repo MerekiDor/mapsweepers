@@ -871,6 +871,7 @@
 				surface.SetMaterial(jcms.mat_recycle)
 				surface.DrawTexturedRectRotated(64, 0, size, size, CurTime()*-180)
 				draw.SimpleText(count, "jcms_hud_small", 64, 0, jcms.color_bright_alt, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+				surface.SetAlphaMultiplier(1)
 			end
 		else
 			local offset = 4
@@ -1233,8 +1234,8 @@
 				surface.SetDrawColor(R*blend2, G*blend2, B*blend2)
 				wide = Lerp(1-blend_fov, wide, 4)
 				surface.DrawRect(-wide, -wide, wide*2, wide*2)
-
 			render.OverrideBlend( false )
+			surface.SetAlphaMultiplier(1)
 		end
 
 		if shouldBe3D then
