@@ -676,8 +676,8 @@ jcms.MAPGEN_CONSTRUCT_DIAMETER = math.sqrt(82411875)
 		return vectors
 	end
 
-	function jcms.mapgen_VectorGrid(areas, subdivisionSize, connectionDist)	
-		local chunks, chunksize, getChunkId, getChunkTable, getAllNearbyNodes = jcms.util_ChunkFunctions(512)
+	function jcms.mapgen_VectorGrid(areas, subdivisionSize, connectionDist, chunkSize)
+		local chunks, chunksize, getChunkId, getChunkTable, getAllNearbyNodes = jcms.util_ChunkFunctions(chunkSize or 512)
 		
 		subdivisionSize = math.max( 1, tonumber(subdivisionSize) or 128 )
 		connectionDist = math.max(1, tonumber(connectionDist) or subdivisionSize * 1.9)
