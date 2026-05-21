@@ -1408,7 +1408,7 @@ local nmt = FindMetaTable("NPC")
 			for ox=-1,1,2 do
 				for oy=-1,1,2 do
 					for oz=-1,1,2 do
-						table.Add(nodes, getChunkTable(x+ox*chunksize/2, y+oy*chunksize/2, z+oz*chunksize/2))
+						table.Add(nodes, getChunkTable(x+ox*chunksize*0.9, y+oy*chunksize/2, z+oz*chunksize/2))
 					end
 				end
 			end

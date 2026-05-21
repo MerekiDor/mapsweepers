@@ -75,114 +75,11 @@ if SERVER then
 
 		self:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 		self:SetCloudRange(1250 * sizeMult * densityMult)
-		
-		self:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 		self:SetBloodColor(BLOOD_COLOR_RED)
-		
+
 		self.jcms_dontScaleDmg = true
-		self.jcms_ignoreStraggling = true
-		--self.nextThink = CurTime() + 6.5 -- Don't immediately start damaging on spawn, give our cloud time to form.
 
-		-- TESTING - remove this in case I forgot
-		self.nextThink = CurTime() + 0.1
-	end
-
-	function ENT:DoCloudFill(range)
-		local chunkSize = math.ceil( math.Clamp(range*0.1, 64, 196) )
-
-		self.cloudChunks = {}
-		self.cloudChunkSize = chunkSize
-		self.cloudOriginPos = self:WorldSpaceCenter()
-		self.cloudMins = Vector(self.cloudOriginPos)
-		self.cloudMaxs = Vector(self.cloudOriginPos)
-		self.cloudVectors = {}
-
-		local areas = navmesh.Find(self.cloudOriginPos, range + chunkSize, chunkSize*2, chunkSize*2)
-		local connections, chunks = jcms.mapgen_VectorGrid(areas, chunkSize/2, nil, chunkSize)
-
-		for chunkId, vectors in pairs(chunks) do
-			if #vectors > 0 then
-				local split = string.Split(chunkId, " ")
-				local cx = tonumber(split[1]) 
-				local cy = tonumber(split[2])
-				local cz = tonumber(split[3])
-				
-				local minx, miny, minz = self.cloudMins:Unpack()
-				local maxx, maxy, maxz = self.cloudMaxs:Unpack()
-
-				self.cloudMins:SetUnpacked(
-					math.min(minx, cx * chunkSize),
-					math.min(miny, cy * chunkSize),
-					math.min(minz, cz * chunkSize)
-				)
-
-				self.cloudMaxs:SetUnpacked(
-					math.max(maxx, (cx + 1) * chunkSize),
-					math.max(maxy, (cy + 1) * chunkSize),
-					math.max(maxz, (cz + 1) * chunkSize)
-				)
-				
-				-- extend gas to nearby chunks
-				for ox=-1,1 do
-					for oy=-1,1 do
-						for oz=-1,1 do
-							local adjChunkId = string.format("%d %d %d", cx + ox, cy + oy, cz + oz)
-							if not self.cloudChunks[ adjChunkId ] then
-								table.insert(self.cloudVectors, Vector( (cx+0.5)*chunkSize, (cy+0.5)*chunkSize, (cz+0.5)*chunkSize))
-							end
-							self.cloudChunks[ adjChunkId ] = true
-						end
-					end
-				end
-			end
-		end
-	end
-
-	function ENT:GetTargetsInsideCloud()
-		-- TODO selfTbl optimisation
-		if self:ShouldUseOldGas() then
-			-- pre v1.2 logic
-			return ents.FindInSphere( self:WorldSpaceCenter(), self:GetCloudRange() )
-		end
-		
-		local targets = {}
-		if type(self.cloudChunks) ~= "table" or not self.cloudOriginPos then return targets end
-		
-		local chunkSize = self.cloudChunkSize
-		local mins, maxs = self.cloudMins, self.cloudMaxs
-		--for _, ent in ents.Iterator() do
-		for _, ent in player.Iterator() do
-			if IsValid(ent) then
-				local pos = ent:EyePos()
-				if pos:WithinAABox( mins, maxs ) then
-					local x, y, z = pos:Unpack()
-					local chunkId = string.format(
-						"%d %d %d", 
-						math.floor(x/chunkSize), 
-						math.floor(y/chunkSize), 
-						math.floor(z/chunkSize)
-					)
-					
-					if self.cloudChunks[ chunkId ] then
-						table.insert(targets, ent)
-					end
-				end
-			end
-		end
-
-		-- Show the chunks
-		-- for ch in pairs(self.cloudChunks) do
-		-- 	local split = string.Split(ch, " ")
-		-- 	local x, y, z = tonumber(split[1])*chunkSize, tonumber(split[2])*chunkSize, tonumber(split[3])*chunkSize
-		-- 	local v = Vector(x, y, z)
-		-- 	debugoverlay.SweptBox(v, v, Vector(0, 0, 0), Vector(chunkSize, chunkSize, chunkSize), angle_zero, 0.5, Color(255, 128,0))
-		-- end
-
-		return targets
-	end
-	
-	function ENT:ShouldUseOldGas()
-		return false
+		self.nextThink = CurTime() + 6.5 -- Don't immediately start damaging on spawn, give our cloud time to form.
 	end
 
 	function ENT:UpdateTransmitState()
@@ -238,12 +135,6 @@ if SERVER then
 
 		local selfPos = self:WorldSpaceCenter()
 
-		if (not self.cloudOriginPos) or (selfPos:DistToSqr( self.cloudOriginPos ) >= 256) then
-			-- We generate clouds around us in case we moved.
-			-- We don't call this in Initialize because we don't have a pos there yet.
-			self:DoCloudFill( self:GetCloudRange() )
-		end
-		
 		local dmg = DamageInfo()
 		dmg:SetAttacker(self)
 		dmg:SetInflictor(self)
@@ -251,7 +142,7 @@ if SERVER then
 		dmg:SetDamageType( bit.bor(DMG_NERVEGAS) )
 
 		local cloudRange = self:GetCloudRange() 
-		for i, ent in ipairs( self:GetTargetsInsideCloud() ) do 
+		for i, ent in ipairs(ents.FindInSphere(selfPos , cloudRange)) do 
 			if self:Disposition(ent) == D_HT and not(ent:GetClass() == "jcms_bullseye") then
 				local entPos = ent:GetPos()
 				local dist = selfPos:Distance(entPos)
@@ -268,28 +159,6 @@ if SERVER then
 				ent:TakeDamageInfo(dmg)
 			end
 		end
-
-		--[[ --no
-		self.emitter = ParticleEmitter(selfPos)
-		if self.emitter then
-			for i, cv in ipairs(self.cloudVectors) do
-				local p = self.emitter:Add("effects/blood", self.pos)
-				if p then
-					p:SetPos(cv)
-					p:SetVelocity(VectorRand(-64, 64))
-					p:SetRoll(math.random()*360)
-					p:SetRollDelta(math.random()*2)
-
-					p:SetStartSize(32)
-					p:SetEndSize(64)
-					p:SetDieTime(0.5)
-					p:SetColor(32, 12, 12)
-				end
-			end
-
-			self.emitter:Finish()
-		end
-		--]]
 	end
 end
 
@@ -303,7 +172,36 @@ if CLIENT then
 		self.jcms_polypStorm = CreateSound(self, "ambient/wind/wind1.wav")
 		self.jcms_polypStorm:SetSoundLevel( 140 )
 
+		self.nextEffect = CurTime()
 		self.nextGurgle = CurTime()
+
+		--Split into 5 separate emitters for LOD
+		self.emitter = ParticleEmitter( self:WorldSpaceCenter(), false )
+		self.emitter2 = ParticleEmitter( self:WorldSpaceCenter(), false )
+		self.emitter3 = ParticleEmitter( self:WorldSpaceCenter(), false )
+		self.emitter4 = ParticleEmitter( self:WorldSpaceCenter(), false )
+		self.emitter5 = ParticleEmitter( self:WorldSpaceCenter(), false )
+		self.nextPart = 0
+
+		self.pixVis = util.GetPixelVisibleHandle()
+
+		hook.Add("PreDrawSkyBox", tostring(self), function()
+			local selfCentre = self:WorldSpaceCenter()
+			
+			local range = self:GetCloudRange()
+			local dist = selfCentre:Distance(EyePos())
+
+			if dist < range then
+				local data = {}
+				data.fogCol = Color(100, 0, 0)
+				data.fogMaxDensity = Lerp((dist/range)^2, 1, 0)
+				data.fogMode = MATERIAL_FOG_LINEAR
+				data.fogStart = Lerp(dist/range, -1500, 1000)
+				data.fogEnd = Lerp(dist/range, 500, 5000)
+				
+				jcms.fogStack_push(data)
+			end
+		end)
 	end
 
 	function ENT:OnRemove()
@@ -316,6 +214,13 @@ if CLIENT then
 		ed:SetMagnitude(0.3)
 		ed:SetFlags(0)
 		util.Effect("jcms_bigblast", ed)
+
+		hook.Remove("PreDrawSkyBox", tostring(self))
+		self.emitter:Finish()
+		self.emitter2:Finish()
+		self.emitter3:Finish()
+		self.emitter4:Finish()
+		self.emitter5:Finish()
 	end
 
 	function ENT:Think()
@@ -326,17 +231,140 @@ if CLIENT then
 		local range = selfTbl:GetCloudRange()
 
 		local dist = selfCentre:DistToSqr(eyePos)
+		
+		if not IsValid(selfTbl.emitter) then 
+			selfTbl.emitter = ParticleEmitter( selfCentre, false )
+			selfTbl.emitter:SetNoDraw( true ) 
+		end
+		if not IsValid(selfTbl.emitter2) then 
+			selfTbl.emitter2 = ParticleEmitter( selfCentre, false )
+			selfTbl.emitter2:SetNoDraw( true  ) 
+		end
+		if not IsValid(selfTbl.emitter3) then 
+			selfTbl.emitter3 = ParticleEmitter( selfCentre, false )
+			selfTbl.emitter3:SetNoDraw( true  ) 
+		end
+		if not IsValid(selfTbl.emitter4) then 
+			selfTbl.emitter4 = ParticleEmitter( selfCentre, false )
+			selfTbl.emitter4:SetNoDraw( true  ) 
+		end
+		if not IsValid(selfTbl.emitter5) then 
+			selfTbl.emitter5 = ParticleEmitter( selfCentre, false )
+			selfTbl.emitter5:SetNoDraw( true  ) 
+		end
 
-		-- // Innards pulsing {{{
-			-- because they're otherwise static in the eating anim.
-			if jcms.performanceEstimate > 25 then 
-				local scale = 0.75 + math.sin(CurTime() * 2) / 4 
-				local vScale = Vector(scale, scale, scale)
-				for i=10, 12, 1 do 
-					self:ManipulateBoneScale( i, vScale )
-				end
+		selfTbl.emitter2:SetNoDraw( dist > (range * 3.25)^2) 
+		selfTbl.emitter3:SetNoDraw( dist > (range * 2.5)^2 ) 
+		selfTbl.emitter4:SetNoDraw( dist > (range * 2.0)^2 ) 
+		selfTbl.emitter5:SetNoDraw( dist > (range * 1.75)^2 )
+
+		if selfTbl.nextPart < CurTime() then 
+			selfTbl.nextPart = CurTime() + 0.5*1.5
+
+			local function sharedPartStats(part)
+				part:SetStartAlpha(165)
+				part:SetEndAlpha(0)
+
+				part:SetColor( 105 + math.random(0,10), 35, 0 )
 			end
-		-- // }}}
+
+			--todo: lua cost is actually starting to become significant so maybe I should reconsider this \/ -j
+			--NOTE: we're using an inefficient method of getting spherical points,
+			--This isn't super important though, as the lua impact of this code is low.
+			--Polyps do cause lag due to the quantity of particles they produce, though. Which is a separate issue.
+
+			-- // Group1 / far {{{
+				local part = selfTbl.emitter:Add( "particle/particle_noisesphere", selfPos + VectorRand(-range * 0.35, range * 0.35) )
+				part:SetStartSize(0)
+				part:SetEndSize(range*3)
+				part:SetDieTime( 10 * 1.5 )
+
+				sharedPartStats(part)
+
+				for i=1, 1 do -- uses LOD
+					local rPos = selfPos + VectorRand(-range * 0.6, range * 0.6)
+
+					if rPos:DistToSqr(selfPos) < range^2 then 
+						local part = selfTbl.emitter2:Add( "particle/particle_noisesphere", rPos )
+						part:SetStartSize(0)
+						part:SetEndSize(range * 1 * 1.5)
+						part:SetDieTime( 10*1.5 )
+			
+						sharedPartStats(part)
+					end
+				end
+
+				for i=1, 2 do -- uses LOD
+					local rPos = selfPos + VectorRand(-range * 0.6, range * 0.6)
+
+					if rPos:DistToSqr(selfPos) < range^2 then 
+						local part = selfTbl.emitter3:Add( "particle/particle_noisesphere", rPos )
+						part:SetStartSize(0)
+						part:SetEndSize(range * 1 * 1.25)
+						part:SetDieTime( 10*1.5 )
+			
+						sharedPartStats(part)
+					end
+				end
+
+			-- // }}}
+
+			-- // Group2 / close {{{
+				local toEyes = (selfPos - eyePos):GetNormalized()
+				--todo: Bias us towards the outer edges. We don't need stuff in the centre.
+
+				for i=1, 8 do --uses LOD
+					local rVec = VectorRand(-range, range)
+					--local rAng = rVec:Angle()
+					local rPos = selfPos + rVec
+
+					rVec:Normalize()
+					local dot = rVec:Dot(-toEyes)
+					local angDiff = math.acos(dot)
+
+					if rPos:DistToSqr(selfPos) < range^2 and angDiff < math.pi/2 then 
+						local part = selfTbl.emitter4:Add( "particle/particle_noisesphere", rPos )
+						part:SetStartSize(0)
+						part:SetEndSize(range * 0.6 * 1.75)
+						part:SetDieTime( 5*1.5 )
+			
+						sharedPartStats(part)
+
+						part:SetStartAlpha(200)
+					end
+				end
+
+				for i=1, 18 do --uses LOD
+					local rVec = VectorRand(-range, range)
+					--local rAng = rVec:Angle()
+					local rPos = selfPos + rVec
+
+					rVec:Normalize()
+					local dot = rVec:Dot(-toEyes)
+					local angDiff = math.acos(dot)
+
+					if rPos:DistToSqr(selfPos) < range^2 and angDiff < math.pi/2 then
+						local part = selfTbl.emitter5:Add( "particle/particle_noisesphere", rPos )
+						part:SetStartSize(0)
+						part:SetEndSize(range * 0.6 * 1.9)
+						part:SetDieTime( 3.5*1.5 )
+			
+						sharedPartStats(part)
+
+						part:SetStartAlpha(255)
+					end
+				end
+			-- // }}}
+		end
+
+		--Pulse our innards, because they're otherwise static in the eating anim.
+		if jcms.performanceEstimate > 25 then 
+			local scale = 0.75 + math.sin(CurTime() * 2) / 4 
+			local vScale = Vector(scale, scale, scale)
+			for i=10, 12, 1 do 
+				self:ManipulateBoneScale( i, vScale )
+			end
+		end
 
 		-- // Audio {{{
 			if CurTime() > selfTbl.nextGurgle then 
@@ -355,6 +383,7 @@ if CLIENT then
 				end
 
 				local distFrac = dist / range
+
 
 				local eatVol = Lerp(distFrac - 0.25, 1, 0)
 				local eatPitch = Lerp(distFrac, 60, 40)
