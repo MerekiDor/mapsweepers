@@ -45,18 +45,17 @@ end
 
 if SERVER then 
 	function ENT:Initialize()
-		self:SetModel("models/props_debris/concrete_spawnplug001a.mdl")
-		self:SetMaterial("models/barnacle/roots")
-		self:SetModelScale(1.5)
-		--TODO: Match floor angle
+		self:SetModel("models/props_wasteland/antlionhill.mdl")
+		--self:SetMaterial("models/barnacle/roots")
+		self:SetModelScale(0.5)
+
 		--TODO: Slightly depress so we're not elevated above the ground
+		
+		self:PhysicsInitBox( Vector(-50,-50,0),Vector(50,50,180) )
+		self:SetMoveType(MOVETYPE_NONE)
 
-		self:SetHullType(HULL_LARGE)
-		self:SetHullSizeNormal()
-		self:SetSolid(SOLID_OBB)
-
-		self:SetMaxHealth(1500)
-		self:SetHealth(1500)
+		self:SetMaxHealth(1250)
+		self:SetHealth(1250)
 
 		self.jcms_flinchProgress = 0
 		self.jcms_ignoreStraggling = true

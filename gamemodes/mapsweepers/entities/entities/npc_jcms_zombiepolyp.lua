@@ -269,6 +269,7 @@ if SERVER then
 			end
 		end
 
+		--[[ --no
 		self.emitter = ParticleEmitter(selfPos)
 		if self.emitter then
 			for i, cv in ipairs(self.cloudVectors) do
@@ -288,6 +289,7 @@ if SERVER then
 
 			self.emitter:Finish()
 		end
+		--]]
 	end
 end
 

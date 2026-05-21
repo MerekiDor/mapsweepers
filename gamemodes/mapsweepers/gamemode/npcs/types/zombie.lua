@@ -119,22 +119,38 @@
 jcms.npc_commanders["zombie"] = {
 	start = function(c)
 		c.nextRowdy = CurTime() + 10
+
+		c.hordeScore = 0
+		c.nextHorde = CurTime()
 	end,
 
 	think = function(c)
 		local mTime = jcms.director_GetMissionTime()
 		if mTime < 7.5 then return end
+		local d = jcms.director
 
-		-- // Horde Accel if we're low-population {{{
-			local d = jcms.director
-			if d and #d.npcs < 40 then
-				d.swarmNext = (d.swarmNext or mTime) - 1 -- Speeding up hordes
+		-- // Horde Accel {{{
+			--""Resource"" used to accelerate hordes, depeletes as timer is sped up, and is replenished w/ a delay after being fully depleted.
+			if c.nextHorde < CurTime() then 
+				c.hordeScore = 200
 			end
-			
-			local missionData = d.missionData
-			local missionTime = jcms.director_GetMissionTime()
-			if missionTime >= 60 and (not d.debug) and (not missionData.evacuating) then
-				d.swarmNext = math.min( d.swarmNext, missionTime + 10 + #d.npcs*3 )
+
+			if c.hordeScore > 0 then
+				if d and #d.npcs < 40 then
+					d.swarmNext = (d.swarmNext or mTime) - 1 -- Speeding up hordes
+					c.hordeScore = c.hordeScore - 1
+				end
+				
+				local missionData = d.missionData
+				local missionTime = jcms.director_GetMissionTime()
+				if missionTime >= 60 and (not d.debug) and (not missionData.evacuating) then
+					local oldSwarmNext = d.swarmNext
+					d.swarmNext = math.min( d.swarmNext, missionTime + 10 + #d.npcs*3 )
+
+					c.hordScore = c.hordeScore - (oldSwarmNext - d.swarmNext)
+				end
+
+				c.nextHorde = CurTime() + 150 -- New horde starts 2,5 minutes (150s) after last horde accel is exhausted
 			end
 		-- // }}}
 
@@ -477,6 +493,27 @@ jcms.npc_types.zombie_polyp = {
 	end
 }
 
+jcms.npc_types.zombie_creep = {
+	faction = "zombie",
+
+	danger = jcms.NPC_DANGER_STRONG,
+    cost = 0.15,
+    swarmWeight = 0.3,
+	swarmLimit = 4,
+
+	class = "npc_jcms_zombiecreep",
+	bounty = 10,
+
+	anonymous = true, --Don't contribute to the softcap / director.
+	isStatic = true,
+	
+	check = function(director)
+		--More of a precaution against duplicates than anything else
+		return jcms.npc_capCheck("npc_jcms_zombiecreep", 10)
+	end
+}
+
+
 jcms.npc_types.zombie_husk = {
 	portalSpawnWeight = 2,
 	faction = "zombie",
@@ -486,7 +523,7 @@ jcms.npc_types.zombie_husk = {
     swarmWeight = 1,
 
 	class = "npc_zombie",
-	bounty = 14,
+	bounty = 15,
 
 	postSpawn = function(npc)
 		local hp = math.ceil(npc:GetMaxHealth()*1.5)
@@ -545,7 +582,7 @@ jcms.npc_types.zombie_crawler = {
     swarmWeight = 0.35,
 
 	class = "npc_fastzombie_torso",
-	bounty = 15,
+	bounty = 18,
 
 	postSpawn = function(npc)
 		local hp = math.ceil(npc:GetMaxHealth()*1.5)
@@ -574,7 +611,7 @@ jcms.npc_types.zombie_poison = {
 	bounty = 35,
 
 	postSpawn = function(npc)
-		local hp = math.ceil(npc:GetMaxHealth()*1.5)
+		local hp = math.ceil(npc:GetMaxHealth()*1.4)
 		npc:SetMaxHealth(hp)
 		npc:SetHealth(hp)
 
@@ -780,10 +817,10 @@ jcms.npc_types.zombie_combine = {
     swarmWeight = 0.5,
 
 	class = "npc_zombine",
-	bounty = 40,
+	bounty = 50,
 
 	postSpawn = function(npc)
-		local hp = math.ceil(npc:GetMaxHealth()*1.5)
+		local hp = math.ceil(npc:GetMaxHealth()*1.4)
 		npc:SetMaxHealth(hp)
 		npc:SetHealth(hp)
 	end,
@@ -942,6 +979,7 @@ jcms.npc_types.zombie_spewer = {
 	class = "npc_jcms_zombiespewer",
 	bounty = 350,
 	
+	anonymous = true, --Don't contribute to the softcap / director.
 	isStatic = true, 
 
 	check = function(director)

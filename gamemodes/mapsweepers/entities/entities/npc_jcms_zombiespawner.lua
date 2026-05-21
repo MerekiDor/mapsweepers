@@ -33,9 +33,8 @@ if SERVER then
 	function ENT:Initialize()
 		self:SetModel("models/jcms/zombiespawner.mdl")
 
-		self:SetHullType(HULL_LARGE)
-		self:SetHullSizeNormal()
-		self:SetSolid(SOLID_OBB)
+		self:PhysicsInitBox( Vector(-50,-50,0),Vector(50,50,180) )
+		self:SetMoveType(MOVETYPE_NONE)
 
 		self:SetMaxHealth(900)
 		self:SetHealth(900)

@@ -140,7 +140,7 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 		npcTbl.jcms_fromPortal = fromPortal
 		
 		npc:SetAngles( Angle(0, math.random() * 360, 0) )
-		npc:SetPos(pos + v35)
+		npc:SetPos(pos + (enemyData.isStatic and jcms.vectorOrigin or v35))
 
 		if enemyData.preSpawn then 
 			enemyData.preSpawn(npc, pos, enemyData) 

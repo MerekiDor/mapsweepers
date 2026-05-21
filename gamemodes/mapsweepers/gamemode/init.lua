@@ -2043,7 +2043,7 @@ end
 	
 	concommand.Add("jcms_debug_spawnnpc", function(ply, cmd, args)
 		if ply:IsAdmin() then
-			jcms.npc_Spawn(args[1], ply:GetEyeTrace().HitPos + Vector(0, 0, 256))
+			jcms.npc_Spawn(args[1], ply:GetEyeTrace().HitPos + Vector(0, 0, args[2] or 256))
 		else
 			print(ply:Nick() .. ", this command is admin only")
 		end
