@@ -32,29 +32,59 @@ ENT.RenderGroup = RENDERGROUP_BOTH
 -- // Cell stuff {{{
 	jcms.zombieCreepCells = jcms.zombieCreepCells or {}
 
-	local cellWidth = 512
-	local cellHeight = 256
+	-- // Cell Grid Definitions
+		local cellWidth = 512
+		local cellHeight = 256
 
-	local rowLength = math.ceil(32768 / cellWidth) --How many indices are there for each complete line of x/y values? 
-	local layerLength = rowLength^2
-	function jcms.zombieCreep_GetCell( pos )
-		local xIndex = math.floor((pos.x + 16384) / cellWidth, 0)
-		local yIndex = math.floor((pos.y + 16384) / cellWidth, 0)
-		local zIndex = math.floor((pos.z + 16384) / cellHeight, 0)
+		local rowLength = math.ceil(32768 / cellWidth) --How many indices are there for each complete line of x/y values? 
+		local layerLength = rowLength^2 --How many for a single z layer?
+		local totalLength = layerLength * math.ceil(32768 / cellHeight) --Max index of the table
+	-- // }}}
+	
+	--Optimisation - tracking the start/end so we don't have to check a ton of empty spots each rebuild.
+	jcms.zombieCreepMinCell = jcms.zombieCreepMinCell or totalLength
+	jcms.zombieCreepMaxCell = jcms.zombieCreepMaxCell or 1
 
-		return xIndex + (rowLength * yIndex) + (layerLength * zIndex)
-	end
+	-- // Getters {{{
+		function jcms.zombieCreep_GetCell( pos )
+			local xIndex = math.floor((pos.x + 16384) / cellWidth, 0)
+			local yIndex = math.floor((pos.y + 16384) / cellWidth, 0)
+			local zIndex = math.floor((pos.z + 16384) / cellHeight, 0)
 
-	function jcms.zombieCreep_GetCellPos( cell )
-		local zRemainder = cell % layerLength
-		local yRemainder = zRemainder % rowLength
+			return xIndex + (rowLength * yIndex) + (layerLength * zIndex)
+		end
 
-		local xIndex = yRemainder
-		local yIndex = (zRemainder - yRemainder) / rowLength
-		local zIndex = (cell - zRemainder) / layerLength
+		function jcms.zombieCreep_GetCellPos( cell )
+			local zRemainder = cell % layerLength
+			local yRemainder = zRemainder % rowLength
 
-		return Vector((xIndex * cellWidth) - 16384, (yIndex * cellWidth)  - 16384, (zIndex * cellHeight) - 16384)
-	end
+			local xIndex = yRemainder
+			local yIndex = (zRemainder - yRemainder) / rowLength
+			local zIndex = (cell - zRemainder) / layerLength
+
+			return Vector((xIndex * cellWidth) - 16384, (yIndex * cellWidth)  - 16384, (zIndex * cellHeight) - 16384)
+		end
+	-- // }}}
+
+	-- // Setters {{{
+		function jcms.zombieCreep_OccupyCell( cell )
+			--Update min/max cells
+			if cell > jcms.zombieCreepMaxCell then
+				jcms.zombieCreepMaxCell = cell
+			end
+			if cell < jcms.zombieCreepMinCell then 
+				jcms.zombieCreepMinCell = cell
+			end
+
+			--Mark us
+			jcms.zombieCreepCells[cell] = true
+		end
+
+		function jcms.zombieCrep_ClearCell( cell )
+			--I was going to recalc max/min here, but that's probably not necessary. If it *is* it should probably be done in the rebuild anyway since it'll be expensive.
+			jcms.zombieCreepCells[cell] = nil
+		end
+	-- // }}}
 
 	if SERVER then --TODO: Shared for prediction
 		hook.Add("SetupMove", "jcms_ZombieCreep_Snare", function(ply, mv, cmd)
@@ -90,7 +120,7 @@ if SERVER then
 		self.jcms_ignoreStraggling = true
 	
 		self.jcms_zombieCreep_cell = jcms.zombieCreep_GetCell( self:GetPos() )
-		jcms.zombieCreepCells[self.jcms_zombieCreep_cell] = true
+		jcms.zombieCreep_OccupyCell(self.jcms_zombieCreep_cell)
 
 		-- // Expansion Cell detection {{{
 			local ourArea = navmesh.GetNearestNavArea(self:GetPos())
@@ -133,7 +163,7 @@ if SERVER then
 	end
 
 	function ENT:OnRemove()
-		jcms.zombieCreepCells[self.jcms_zombieCreep_cell] = nil
+		jcms.zombieCrep_ClearCell(self.jcms_zombieCreep_cell)
 	end
 	
 	function ENT:OnTakeDamage(dmgInfo)
@@ -156,23 +186,110 @@ end
 
 
 if CLIENT then 
+	jcms.zombieCreepBoxes = jcms.zombieCreepBoxes or {}
+
 	function ENT:Initialize()
-		local cell = jcms.zombieCreep_GetCell( self:GetPos() )
-		self.boxPos = jcms.zombieCreep_GetCellPos(cell)
-		self.boxMins = Vector(0,0,0)
-		self.boxMaxs = Vector(cellWidth, cellWidth, cellHeight)
+		self.jcms_zombieCreep_cell = jcms.zombieCreep_GetCell( self:GetPos() )
+		jcms.zombieCreep_OccupyCell(self.jcms_zombieCreep_cell)
 
-		self:SetRenderBoundsWS(self.boxPos, self.boxPos + self.boxMaxs)
+		hook.Call("jcms_ZombieCreep_RebuildMesh")
 	end
 
-	function ENT:DrawTranslucent()
-		--TODO: PLACEHOLDER, HERE FOR PROTOTYPING
-
-		render.SetColorMaterial()
-		render.DrawBox(self.boxPos, angle_zero, self.boxMins, self.boxMaxs, Color(255, 0, 0, 25))
-		render.DrawBox(self.boxPos, angle_zero, self.boxMaxs, self.boxMins, Color(255, 0, 0, 25))
-
-		--jcms.render_JammerSphere( self:GetPos(), 750 )
-		--render.DrawSphere( self:GetPos(), number radius, number longitudeSteps, number latitudeSteps, Color color = Color( 255, 255, 255 ) )
+	function ENT:OnRemove()
+		jcms.zombieCrep_ClearCell(self.jcms_zombieCreep_cell)
+		hook.Call("jcms_ZombieCreep_RebuildMesh")
 	end
+
+	function ENT:Draw()
+		local dist = jcms.EyePos_lowAccuracy:DistToSqr(self:WorldSpaceCenter())
+		if dist < 2000^2 then 
+			self:DrawModel()
+		end
+	end
+
+	--Calculate a list of boxes for zombiecreep using greedy meshing
+	hook.Add("jcms_ZombieCreep_RebuildMesh", "jcms_ZombieCreep_RebuildMesh", function()
+		jcms.zombieCreepBoxes = {} --Clear, we're about to rebuild.
+
+		local i = jcms.zombieCreepMinCell
+		local meshedCells = {}
+
+		local debugSafety = 999999
+
+		while i <= jcms.zombieCreepMaxCell and debugSafety > 0 do
+			debugSafety = debugSafety - 1
+
+			if jcms.zombieCreepCells[i] and not meshedCells[i] then --Hit something
+				local chunkStart = i --Cell our box starts at
+				local chunkEnd
+
+				-- X Expansion {{{
+					--Get the end of the current row
+					local curRowEnd = (chunkStart - (chunkStart % rowLength)) + rowLength --Floor to start of current row, then add row length. Flooring done wackily because Glua removes //
+
+					--NOTE: "x" and "y" are still just indices, not coordinates. I'm using them to indicate direction of travel.
+					local xEnd = chunkStart
+					for x=i+1, curRowEnd do --Expand until hitting empty, end of row, or another mesh.
+						if not jcms.zombieCreepCells[x] or meshedCells[x] then
+							break
+						end
+
+						meshedCells[x] = true
+						xEnd = x
+					end
+
+					local xSpan = xEnd - chunkStart
+				-- // }}}
+
+				-- Y Expansion {{{
+					local curLayerEnd = (chunkStart - (chunkStart % layerLength)) + layerLength
+
+					--NOTE: "x" and "y" are still just indices, not coordinates. I'm using them to indicate direction of travel.
+					local yEnd = xEnd
+					for y=i+rowLength, curLayerEnd, rowLength do --Iterate by y, starting on the next row.
+						local hit = false
+						for x=y, y+xSpan do --Iterate to the edge of the x selection
+							if not jcms.zombieCreepCells[x] or meshedCells[x] then
+								hit = true
+								break
+							end
+						end
+						
+						if hit then break end
+
+						for x=y, y+xSpan do --Go back through and mark all of them as meshed
+							meshedCells[x] = true
+						end
+						yEnd = y+xSpan --This row's clear
+					end
+				
+					chunkEnd = yEnd
+				-- // }}}
+
+				--We're not going to bother with z, as creep mostly expands horizontally, and vertical meshes will in 99% of cases be small, so expanding up might even make us less efficient.
+								
+				table.insert(jcms.zombieCreepBoxes, {chunkStart, chunkEnd})
+
+				--We still have to check after our mesh's last x, but we can skip a few cells we've already looked at.
+				i = xEnd + 1
+			else
+				i = i + 1
+			end
+		end
+	end)
+
+	hook.Add("PostDrawTranslucentRenderables", "jcms_ZombieCreep_Render", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
+		if bDrawingDepth or bDrawingSkybox or isDraw3DSkyBox then return end
+
+		
+		for i, box in ipairs(jcms.zombieCreepBoxes) do 
+			--TODO: Precalculate this
+			local mins = jcms.zombieCreep_GetCellPos(box[1])
+			local maxs = jcms.zombieCreep_GetCellPos(box[2]) + Vector(cellWidth, cellWidth, cellHeight)
+
+			render.SetColorMaterial()
+			render.DrawBox(jcms.vectorOrigin, angle_zero, mins, maxs, Color(255, 0, 0, 25))
+			render.DrawBox(jcms.vectorOrigin, angle_zero, maxs, mins, Color(255, 0, 0, 25))
+		end
+	end)
 end
