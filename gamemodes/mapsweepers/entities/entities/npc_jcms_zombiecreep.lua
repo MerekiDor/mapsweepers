@@ -150,16 +150,21 @@ if SERVER then
 	end
 
 	function ENT:Think()
-		if table.Count(self.expansionPoints) > 0 and self.nextExpansion < CurTime() then
+		local selfTbl = self:GetTable()
+		local cTime = CurTime()
+
+		if selfTbl.nextExpansion < cTime and table.Count(selfTbl.expansionPoints) > 0 then
 			--Spawn another creeper at the first available cell.
-			for cell, pos in pairs(self.expansionPoints) do 
+			for cell, pos in pairs(selfTbl.expansionPoints) do 
 				if not jcms.zombieCreepCells[cell] then
 					jcms.npc_Spawn("zombie_creep", pos)
 					break
 				end
 			end
-			self.nextExpansion = CurTime() + 15 * math.sqrt(#ents.FindByClass("npc_jcms_zombiecreep"))
+			selfTbl.nextExpansion = cTime + 15 * math.sqrt(#ents.FindByClass("npc_jcms_zombiecreep"))
 		end
+
+		self:NextThink(cTime + 1) --Slower update rate, default of 10 times per second is extreme for what we're doing.
 	end
 
 	function ENT:OnRemove()
