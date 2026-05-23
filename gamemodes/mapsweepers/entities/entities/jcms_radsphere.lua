@@ -89,6 +89,18 @@ if CLIENT then
 	function ENT:Initialize()
 		local range = self:GetCloudRange() + self.distanceToEyes * 2
 		self:SetRenderBounds( jcms.vectorOrigin, jcms.vectorOrigin, Vector(range/2, range/2, range/2) )
+		self:SetNoDraw(true)
+		self:DrawShadow(false)
+
+		--Radspheres exist, set up the render hook
+		hook.Add("PostDrawTranslucentRenderables", "jcms_radSpheres", jcms.radSphere_Draw)
+	end
+
+	function ENT:OnRemove()
+		if #ents.FindByClass("jcms_radSphere") <= 1 then
+			--We're the last one, remove the hook to save perf.
+			hook.Remove("PostDrawTranslucentRenderables", "jcms_radSpheres")
+		end
 	end
 
 	-- // Embers {{{
@@ -230,9 +242,9 @@ if CLIENT then
 				-- // }}}
 			end
 		end
-
-
-		hook.Add("PostDrawTranslucentRenderables", "jcms_radSpheres", function()
+		
+		--MAIN RENDER HOOK FOR PostDrawTranslucent. Adding/removing this hook is managed by the entity's Init/OnRemove so that it isn't wasting perf when none are present.
+		function jcms.radSphere_Draw()
 			render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
 				local radSpheres = ents.FindByClass("jcms_radSphere")
 				local ep = jcms.EyePos_lowAccuracy
@@ -246,15 +258,15 @@ if CLIENT then
 					frac = frac + math.sqrt( math.max(1 - (ep:Distance( radSphere:GetPos() ) / radSphere:GetCloudRange()), 0))
 				end
 
-				cam.Start2D()
-					if frac > 0 then
+				if frac > 0 then
+					cam.Start2D()
 						surface.SetMaterial(jcms.mat_noise)
 						surface.SetDrawColor(128, 255, 128, frac * 256)
 						jcms.hud_DrawNoiseRect(0, 0, ScrW(), ScrH())
-					end
-				cam.End2D()
+					cam.End2D()
+				end
 			render.OverrideBlend(false)
-		end)
+		end
 	-- // }}}
 
 	function ENT:Think()

@@ -192,6 +192,7 @@ end
 
 if CLIENT then 
 	jcms.zombieCreepBoxes = jcms.zombieCreepBoxes or {}
+	local vecCellSize = Vector(cellWidth, cellWidth, cellHeight)
 
 	function ENT:Initialize()
 		self.jcms_zombieCreep_cell = jcms.zombieCreep_GetCell( self:GetPos() )
@@ -273,8 +274,10 @@ if CLIENT then
 
 				--We're not going to bother with z, as creep mostly expands horizontally, and vertical meshes will in 99% of cases be small, so expanding up might even make us less efficient.
 								
-				table.insert(jcms.zombieCreepBoxes, {chunkStart, chunkEnd})
+				--table.insert(jcms.zombieCreepBoxes, {chunkStart, chunkEnd})
 
+				--Calculate our mins / maxes for the box
+				table.insert(jcms.zombieCreepBoxes, {jcms.zombieCreep_GetCellPos(chunkStart), jcms.zombieCreep_GetCellPos(chunkEnd) + vecCellSize})
 				--We still have to check after our mesh's last x, but we can skip a few cells we've already looked at.
 				i = xEnd + 1
 			else
@@ -283,18 +286,18 @@ if CLIENT then
 		end
 	end)
 
+
+	local zCreepBoxCol = Color(255, 0, 0, 25)
 	hook.Add("PostDrawTranslucentRenderables", "jcms_ZombieCreep_Render", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
 		if bDrawingDepth or bDrawingSkybox or isDraw3DSkyBox then return end
 
-		
+		render.SetColorMaterial()
 		for i, box in ipairs(jcms.zombieCreepBoxes) do 
-			--TODO: Precalculate this
-			local mins = jcms.zombieCreep_GetCellPos(box[1])
-			local maxs = jcms.zombieCreep_GetCellPos(box[2]) + Vector(cellWidth, cellWidth, cellHeight)
+			local mins = box[1]
+			local maxs = box[2]
 
-			render.SetColorMaterial()
-			render.DrawBox(jcms.vectorOrigin, angle_zero, mins, maxs, Color(255, 0, 0, 25))
-			render.DrawBox(jcms.vectorOrigin, angle_zero, maxs, mins, Color(255, 0, 0, 25))
+			render.DrawBox(jcms.vectorOrigin, angle_zero, mins, maxs, zCreepBoxCol)
+			render.DrawBox(jcms.vectorOrigin, angle_zero, maxs, mins, zCreepBoxCol)
 		end
 	end)
 end
