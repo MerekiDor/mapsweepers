@@ -419,6 +419,8 @@ if CLIENT then
 	end
 
 	hook.Add("PostDrawTranslucentRenderables", "jcms_ZombiePolypEyes", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
+		if bDrawingDepth or bDrawingSkybox or isDraw3DSkybox then return end
+		
 		render.MaterialOverride(jcms.zombiePolypEyeMat)
 			for i, ent in ipairs(ents.FindByClass("npc_jcms_zombiepolyp")) do 
 				ent:DrawModel()

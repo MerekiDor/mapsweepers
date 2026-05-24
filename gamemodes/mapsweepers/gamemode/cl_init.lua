@@ -537,12 +537,10 @@ end)
 			local isDecayShield = swpShield > maxShield
 			local alpha = (isDecayShield and 1) or math.Clamp(swpShield/maxShield, 0, 1)
 
-			
+			--Draw the model
 			render.SetColorModulation((r/200) * alpha, (g/200) * alpha, (b/200) * alpha)
 			render.MaterialOverride(isDecayShield and jcms.render_matShield_Decay or jcms.render_matShield)
-			cam.Start3D()
 				emt.DrawModel(ent)
-			cam.End3D()
 			render.MaterialOverride()
 			render.SetColorModulation(1, 1, 1)
 		end
