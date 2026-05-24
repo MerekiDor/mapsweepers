@@ -22,6 +22,37 @@
 -- The following code adds compatibility with various 3rd-party addons (with Steam Workshop links attached) to Map Sweepers.
 hook.Add("InitPostEntity", "jcms_addonCompatibility", function()
 	
+	-- // DOOM Dynamic Music System {{{
+		-- https://steamcommunity.com/sharedfiles/filedetails/?id=3371358666
+		if MUSIC_SYSTEM then
+			jcms.cvar_doomdms_randomize = CreateClientConVar("doom_music_mapsweepers_randomize_song", "1", true, false, "If set to 1, the track will automatically get randomized at the start of each mission")
+
+			local function chooseRandomSong()
+				if not jcms.cvar_doomdms_randomize:GetBool() then
+					return
+				end
+
+				local me = LocalPlayer()
+				if IsValid(me) and type(me.DOOM_PackTable) == "table" then
+					local newSongName
+
+					local chosen = me.DOOM_PackTable[ math.random(1, #me.DOOM_PackTable) ]
+					if type(chosen) == "table" and type(chosen[1]) == "string" then
+						newSongName = chosen[1]
+					end					
+
+					if newSongName then
+						jcms.printf("DOOM Dynamic Music System: changed song to '%s'", newSongName)
+						RunConsoleCommand("doom_music_name", newSongName)
+					end
+				end
+			end
+
+			hook.Add("PostCleanupMap", "jcms_DOOMDMSChooseRandomSong", chooseRandomSong)
+			chooseRandomSong()
+		end
+	-- // }}}
+
 	-- ARC9 {{{
 		-- https://steamcommunity.com/sharedfiles/filedetails/?id=2910505837
 		-- Gets rid of that invasive & unnecessary HUD. Also put in a timer just to be sure.
