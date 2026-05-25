@@ -461,6 +461,11 @@ local nmt = FindMetaTable("NPC")
 			stats.name = tostring(gunData.PrintName or class)
 			stats.baseclass = tostring(gunData.Base) or "weapon_base"
 			stats.category = tostring(gunData.Category or "_")
+
+			if type(gunData.SubCategory) == "string" then
+				stats.category = stats.category .. " - " .. gunData.SubCategory
+			end
+
 			stats.costOverride = gunData.JCMS_COSTOVERRIDE
 			local radAccuracy = true
 
