@@ -55,15 +55,16 @@
 			end
 
 			if shouldTP then
-				if isFar and isVisible then --Visual justification for far-away teleports.
-					local ed = EffectData()
-					ed:SetFlags(1)
-					ed:SetEntity(npc)
-					ed:SetOrigin(npcNextPos)
-					util.Effect("jcms_chargebeam", ed)
-				end
 				npc:SetPos(npcNextPos + Vector(0,0,15))
 				npc:AdvancePath()
+				
+				if isFar and isVisible then --Visual justification for far-away teleports.
+					local ed = EffectData()
+					ed:SetFlags(3)
+					ed:SetEntity(npc)
+					ed:SetOrigin(npcPos)
+					util.Effect("jcms_chargebeam", ed)
+				end
 			end
 		end
 

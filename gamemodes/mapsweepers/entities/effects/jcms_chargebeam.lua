@@ -225,9 +225,13 @@ function EFFECT:Render()
 			local tf2 = math.Clamp( (selfTbl.t-0.23)*5 / selfTbl.tout, 0, 1)
 			local timeParabolic2 = math.max(0,-4*(tf2*tf2)+4*tf2)
 
-			selfTbl.color.r = 255*(1-tf1^2)
+			--[[selfTbl.color.r = 255*(1-tf1^2)
 			selfTbl.color.g = 30 *(1-tf2)
-			selfTbl.color.b = 255 - 55*tf2
+			selfTbl.color.b = 255 - 55*tf2--]]
+			
+			selfTbl.color.r = Lerp(timeParabolic1, 255, 230)
+			selfTbl.color.g = Lerp(tf1, 64, 14)
+			selfTbl.color.b = Lerp(tf1, 100, 14)
 			selfTbl.color.a = 255*(1-tf2^2)
 
 			render.SetMaterial(selfTbl.mat_soul)
