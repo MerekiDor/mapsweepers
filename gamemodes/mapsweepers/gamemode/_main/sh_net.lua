@@ -29,6 +29,7 @@ local bits_ply, bits_ent, bits_wld = 2, 2, 4
 		local PLY_DOUBLEJUMP = 2
 		
 		local ENT_AMMORECYCLE = 0
+		local ENT_MARKSHIELDED = 1
 
 		local WLD_OBJECTIVES_AND_DAMAGE = 0
 		local WLD_ORDERS = 1
@@ -937,6 +938,30 @@ if SERVER then
 			net.WriteUInt(ENT_AMMORECYCLE, bits_ent)
 		net.Send(to)
 	end
+	
+	function jcms.net_SendSweeperShieldMark(ent, max, colInt)
+		net.Start("jcms_msg")
+			net.WriteBool(false)
+			net.WriteEntity(ent)
+			net.WriteUInt(ENT_MARKSHIELDED, bits_ent)
+
+			net.WriteBool(true) --Is Sweeper Shield
+
+			--Reliable networking for cached values
+			net.WriteUInt(max, 8)
+			net.WriteUInt(colInt, 16)
+		net.SendPVS(ent:GetPos()) --Non-PVS shields handled by the shield system itself.
+	end
+	
+	function jcms.net_SendBubbleShieldMark(ent)
+		net.Start("jcms_msg")
+			net.WriteBool(false)
+			net.WriteEntity(ent)
+			net.WriteUInt(ENT_MARKSHIELDED, bits_ent)
+
+			net.WriteBool(false) --Is Bubble Shield
+		net.SendPVS(ent:GetPos()) --Non-PVS shields handled by the shield system itself.
+	end
 end
 
 if CLIENT then
@@ -993,6 +1018,20 @@ if CLIENT then
 
 			if curWeapon == ent then
 				jcms.hud_DoAmmoConservationEffect()
+			end
+		end,
+		
+		[ ENT_MARKSHIELDED ] = function(ent)
+			if IsValid(ent) then 
+				if net.ReadBool() then		--SWEEPER SHIELDS
+					--NWInts aren't sent by this point usually so manually grab them instead.
+					local max = net.ReadUInt(8) --Probably never gonna need >60k max shield
+					local colInt = net.ReadUInt(16)
+
+					jcms.sweeperShield_MarkShielded(ent, max, colInt)
+				else						--BUBBLE SHIELDS
+					jcms.bubbleShield_MarkShielded(ent)
+				end
 			end
 		end
 	}
@@ -1503,7 +1542,7 @@ if CLIENT then
 			ply_messages[ msgid ](ply)
 		else
 			local ent = net.ReadEntity()
-			if (not IsValid(ent) and ent ~= game.GetWorld()) then jcms.printf("invalid entity in a net message") end
+			if (not IsValid(ent) and ent ~= game.GetWorld()) then jcms.printf("invalid entity in a net message") end --TODO: This triggers under normal/correct operation (bulletshields), should probably be removed to prevent console spam?
 
 			if ent:IsWorld() then
 				local msgid = net.ReadUInt(bits_wld)

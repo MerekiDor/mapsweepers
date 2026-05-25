@@ -469,6 +469,7 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 
 	function jcms.npc_AddBulletShield(npc, count)
 		npc:SetNWInt("jcms_shield", math.min(npc:GetNWInt("jcms_shield", 0) + (tonumber(count) or 1), 5) ) -- capped at 5 because this can get ridiculously high.
+		jcms.net_SendBubbleShieldMark(npc)
 	end
 
 	function jcms.npc_GetRowdy(npc, memoryPos)
@@ -522,6 +523,7 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 		local newShield = math.max(shield, npc:GetNWInt("jcms_sweeperShield", -1))
 		npc:SetNWInt("jcms_sweeperShield", newShield)
 
+		jcms.net_SendSweeperShieldMark(npc, maxShield, colInt)
 		--npc:EmitSound("npc/scanner/combat_scan_loop2.wav", 75, 150)
 
 		local timerIdentifier = "jcms_ShieldDecay" .. npc:EntIndex()
@@ -553,6 +555,7 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 		npc:SetNWInt("jcms_sweeperShield", max)
 		npc:SetNWInt("jcms_sweeperShield_max", max)
 		npc:SetNWInt("jcms_sweeperShield_colour", colInt)
+		jcms.net_SendSweeperShieldMark(npc, max, colInt)
 
 		local timerIdentifier = "jcms_ShieldRegen" .. npc:EntIndex()
 		timer.Create(timerIdentifier, 1 / regen, 0, function()
