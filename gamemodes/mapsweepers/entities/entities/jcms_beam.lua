@@ -130,14 +130,13 @@ if CLIENT then
 		local fraction = math.Clamp(selfTbl:GetBeamTime() / selfTbl:GetBeamLifeTime(), 0, 1)
 		if fraction >= 1 then return end
 		
-		local eyePos = EyePos()
-		local distToEyes = eyePos:DistToSqr(self:WorldSpaceCenter())
+		local distToEyes = jcms.EyePos_lowAccuracy:DistToSqr(self:WorldSpaceCenter())
 
 		render.SetMaterial(selfTbl.MatBeam)
 		render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
 		
 		local tr = selfTbl.tr or self:GetBeamTrace()
-		local distEndToEyes = eyePos:DistToSqr(tr.HitPos)
+		local distEndToEyes = jcms.EyePos_lowAccuracy:DistToSqr(tr.HitPos)
 		local scroll = math.random()
 		local startPos = selfTbl.StartPosOverride or tr.StartPos
 		local lenfactor = tr.HitPos:Distance(startPos)/64
@@ -145,10 +144,8 @@ if CLIENT then
 
 		local beamColor = selfTbl.BeamColor
 		local innerBeamColor = selfTbl.BeamColorInner
-		innerBeamColor.r = Lerp(wm, beamColor.r, 255)
-		innerBeamColor.g = Lerp(wm, beamColor.g, 255)
-		innerBeamColor.b = Lerp(wm, beamColor.b, 255)
-		innerBeamColor.a = wm*wm*255
+		local bcR, bcG, bcB = beamColor:Unpack()
+		innerBeamColor:SetUnpacked(Lerp(wm, bcR, 255), Lerp(wm, bcG, 255), Lerp(wm, bcB, 255), wm*wm*255)
 
 		render.DrawBeam(startPos, tr.HitPos, math.Rand(10, 12)*wm, scroll*lenfactor, (scroll+1)*lenfactor, beamColor)
 		if distToEyes < 1500^2 and distEndToEyes < 1500^2 then 

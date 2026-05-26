@@ -246,32 +246,46 @@ if CLIENT then
 	ENT.EyeAngleTargetYaw = { 0, 0, 0, 0}
 
 	function ENT:Think()
+		local dt = 0.2 --Run 5 times per second (not every frame)
+
 		local selfTbl = self:GetTable()
 		local glarePos = selfTbl:GetGlarePos()
 		local selfPos = self:WorldSpaceCenter()
 
+		--Only look at target if lookat target isn't selfpos
 		local lookAtTarget = selfPos:DistToSqr(glarePos) > 32*32
 		local eyeang = self:EyeAngles()
 
 		if lookAtTarget then
 			eyeang = glarePos - selfPos
 			eyeang:Normalize()
-			eyeang = eyeang:Angle() - self:GetAngles()
+			eyeang = eyeang:Angle()
+			eyeang:Sub(self:GetAngles())
 		end
 
+		local eyeP, eyeY, eyeR = eyeang:Unpack()
+		local lookAtChance = (lookAtTarget and 0.5 or 0.02)
 		for i = 1, 4 do
-			if math.random() < (lookAtTarget and 0.5 or 0.02) then
-				selfTbl.EyeAngleTargetPitch[i] = lookAtTarget and eyeang.p or math.Rand(-32, 32)
-				selfTbl.EyeAngleTargetYaw[i] = lookAtTarget and eyeang.y or math.Rand(-48, 48)
+			if math.random() < lookAtChance then
+				selfTbl.EyeAngleTargetPitch[i] = lookAtTarget and eyeP or math.Rand(-32, 32)
+				selfTbl.EyeAngleTargetYaw[i] = lookAtTarget and eyeY or math.Rand(-48, 48)
 			end
 		end
 
-		local appr = FrameTime() * 720
+		local appr = dt * 720
 		for i = 1, 4 do
 			selfTbl.EyeAnglePitch[i] = math.ApproachAngle(selfTbl.EyeAnglePitch[i], selfTbl.EyeAngleTargetPitch[i], appr)
 			selfTbl.EyeAngleYaw[i] = math.ApproachAngle(selfTbl.EyeAngleYaw[i], selfTbl.EyeAngleTargetYaw[i], appr)
 		end
+		
+		self:SetNextClientThink( CurTime() + dt )
+		return true
 	end
+
+	--Optimisation
+	local eyeMat = Matrix()
+	local pupilMat = Matrix()
+	local eyeAng = Angle()
 
 	local eyeCol = Color(255,230,0)
 	local eyeGlowCol = Color(255, 200, 0)
@@ -282,69 +296,60 @@ if CLIENT then
 	function ENT:DrawEyes(eyeGlowMat)
 		local selfTbl = self:GetTable()
 		local selfCentre = self:WorldSpaceCenter()
-		local distToPlayer = EyePos():DistToSqr(selfCentre)
+		local distToPlayer = jcms.EyePos_lowAccuracy:DistToSqr(selfCentre)
 		if distToPlayer > 3000^2 then return end --LOD, don't draw at all
 
+		--Optimisation
 		local a = self:GetAngles()
-		local pos = selfCentre + a:Forward()*14
+		local fw = a:Forward()
+		local right = a:Right()
+		local up = a:Up()
+		local ap, ay, ar = a:Unpack()
 
-		local headId = self:LookupBone("Antlion.Head_Bone")
-		if headId and headId > 0 then
-			local mat = self:GetBoneMatrix(headId)
-			local pos, a
-			if mat then
-				pos, a = mat:GetTranslation(), mat:GetAngles()
-			else
-				pos, a = self:GetBonePosition(headId)
-			end
-			a:RotateAroundAxis(a:Forward(), 90)
-			a:RotateAroundAxis(a:Right(), 180)
-		end
+		local pos = selfCentre + fw*14
 
 		local eyeid = 0
 		for smul=-1,1,2 do
 			for eye=1,2 do
 				eyeid = eyeid + 1
 				
-				local eyepos = pos + a:Right()*smul*(eye==1 and 9 or 16) + a:Up()*(eye==1 and 4 or 7) + a:Forward()*(eye==1 and 0 or -4)
+				--Eye position
+				local eyepos = pos + right*(smul*(eye==1 and 9 or 16)) + up*(eye==1 and 4 or 7) + fw*(eye==1 and 0 or -4)
 				eyepos:Add(VectorRand(-0.1, 0.1))
 
 				if distToPlayer < 1000^2 then --LOD, don't draw glow if far
 					render.SetMaterial(eyeGlowMat or selfTbl.MatGlow)
 					render.DrawSprite(eyepos, math.Rand(32, 48), math.Rand(24, 32), eyeGlowCol )
 				end
+
 				render.OverrideDepthEnable(true, true)
-				local mat = Matrix()
-				mat:Translate(eyepos)
+					eyeMat:Identity()
+					eyeMat:Translate(eyepos)
+					eyeAng:SetUnpacked(ap + selfTbl.EyeAnglePitch[eyeid], ay + selfTbl.EyeAngleYaw[eyeid], ar)
+					eyeMat:Rotate(eyeAng)
 
-				if selfTbl.EyeAnglePitch and selfTbl.EyeAngleYaw then
-					mat:Rotate(Angle(a.p + selfTbl.EyeAnglePitch[eyeid], a.y + selfTbl.EyeAngleYaw[eyeid], a.r))
-				else
-					mat:Rotate(a)
-				end
+					cam.PushModelMatrix(eyeMat)
+						if eye == 2 then
+							local beam = smul==-1 and selfTbl:GetBeam1() or selfTbl:GetBeam2()
 
-				cam.PushModelMatrix(mat)
-					if eye == 2 and selfTbl.GetBeam1 and selfTbl.GetBeam2 then --why do we check these functions exist here? -j
-						local beam = smul==-1 and selfTbl:GetBeam1() or selfTbl:GetBeam2()
-
-						if IsValid(beam) then
-							beam.StartPosOverride = eyepos
+							if IsValid(beam) then
+								beam.StartPosOverride = eyepos
+							end
 						end
-					end
-					
-					render.SetColorMaterial()
-					render.DrawSphere(vector_origin, 4, 9, 9, eyeCol)
-					
-					if distToPlayer < 1500^2 then
-						local mat_pupil = Matrix()
-						mat_pupil:Translate(eyePupilOffset)
-						mat_pupil:Scale(eyePupilScale)
+						
+						render.SetColorMaterial()
+						render.DrawSphere(vector_origin, 4, 9, 9, eyeCol)
+						
+						if distToPlayer < 1500^2 then
+							pupilMat:Identity()
+							pupilMat:Translate(eyePupilOffset)
+							pupilMat:Scale(eyePupilScale)
 
-						cam.PushModelMatrix(mat_pupil, true)
-							render.DrawSphere(vector_origin, 4, 13, 13, eyePupilCol)
-						cam.PopModelMatrix()
-					end
-				cam.PopModelMatrix()
+							cam.PushModelMatrix(pupilMat, true)
+								render.DrawSphere(vector_origin, 4, 13, 13, eyePupilCol)
+							cam.PopModelMatrix()
+						end
+					cam.PopModelMatrix()
 				render.OverrideDepthEnable(false)
 			end
 		end

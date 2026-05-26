@@ -124,7 +124,9 @@ if SERVER then
 
 		-- // Expansion Cell detection {{{
 			local ourArea = navmesh.GetNearestNavArea(self:GetPos())
+			if not IsValid(ourArea) then self:Remove() end --We're somewhere invalid, panic. 
 			local selfZone = jcms.mapgen_ZoneDict()[ourArea]
+			if not IsValid(selfZone) then self:Remove() end --We're somewhere invalid, panic. 
 
 			local nearbyAreas = jcms.director_GetAreasAwayFrom(jcms.mapgen_ZoneList()[selfZone], {self:GetPos()}, 0, cellWidth * 1.5)
 			local adjacentCellDict = {}
