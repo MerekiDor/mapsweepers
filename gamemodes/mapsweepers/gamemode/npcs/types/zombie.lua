@@ -57,7 +57,7 @@
 			if shouldTP then
 				npc:SetPos(npcNextPos + Vector(0,0,15))
 				npc:AdvancePath()
-				
+
 				if isFar and isVisible then --Visual justification for far-away teleports.
 					local ed = EffectData()
 					ed:SetFlags(3)
@@ -163,6 +163,16 @@ jcms.npc_commanders["zombie"] = {
 				end
 			end
 			c.nextRowdy = cTime + 10
+		end
+
+		--Improve reaction times for visible enemies (hordes will just go to the last known pos otherwise, even when the player's right next to them).
+		for i, npc in ipairs(d.npcs) do 
+			if npc.jcms_faction == "zombie" and npc.GetEnemy then
+				local enemy = npc:GetEnemy()
+				if IsValid(enemy) and npc:Visible(enemy) then 
+					npc:ClearEnemyMemory() --Clear our old memory so that we can update properly / follow our target
+				end
+			end
 		end
 	end,
 
@@ -552,7 +562,9 @@ jcms.npc_types.zombie_husk = {
 		end
 	end,
 
-	think = jcms.npc_SlowZombieThink
+	think = function(npc) 
+		jcms.npc_SlowZombieThink(npc)
+	end
 }
 
 jcms.npc_types.zombie_fast = {

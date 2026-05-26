@@ -118,9 +118,10 @@ function EFFECT:GenPoints()
 			local f = math.TimeFraction(1, n, i)
 			local parabolic = math.max(0,-4*(f*f)+4*f)*delta
 			
-			local rx = math.sin(tSeed + i/n)
-			local ry = math.sin(tSeed + i/n + 62)
-			local rz = math.sin(tSeed + i/n + 523) --so true merekidor - j
+			local progress = tSeed + i/n
+			local rx = math.sin(progress)
+			local ry = math.sin(progress + 62)
+			local rz = math.sin(progress + 523) --so true merekidor - j
 			
 			local nvx, nvy, nvz = nv:Unpack()
 			nv:SetUnpacked(nvx + rx*parabolic, nvy + ry*parabolic, nvz + rz*parabolic)
@@ -131,33 +132,36 @@ end
 function EFFECT:GenSprites()
 	local selfTbl = self:GetTable()
 	if not selfTbl.sprites then
-		if not IsValid(self.ent) then
+		if not IsValid(selfTbl.ent) then
 			return
 		end
 		selfTbl.sprites = {}
 
-		for i=1, self.nsprites + math.random(0, 1) do
+		for i=1, selfTbl.nsprites + math.random(0, 1) do
 			local nv = selfTbl.ent:WorldSpaceCenter()
-			nv.x = math.Rand(-32, 32) + nv.x
-			nv.y = math.Rand(-32, 32) + nv.y
-			nv.z = math.Rand(-32, 32) + nv.z
+			local ox, oy, oz = nv:Unpack() --old x/y/z
+			nv:SetUnpacked(math.Rand(-32, 32) + ox, math.Rand(-32, 32) + oy, math.Rand(-32, 32) + oz) 
+
 			table.insert(selfTbl.sprites, nv)
 		end
 	else
 		local n = #selfTbl.sprites
 		local delta = FrameTime()*20
-		local validEnt = IsValid(self.ent) and self.ent
+		local validEnt = IsValid(selfTbl.ent) and selfTbl.ent
+		local tSeed = selfTbl.t + selfTbl.seed
+
 		for i, nv in ipairs(selfTbl.sprites) do
 			local f = math.TimeFraction(1, n, i)
 			local parabolic = 1 + math.max(0,-4*(f*f)+4*f)/3
 			
-			local rx = math.sin(selfTbl.t + selfTbl.seed + i/n)
-			local ry = math.sin(selfTbl.t + selfTbl.seed + i/n + 62)
-			local rz = math.sin(selfTbl.t + selfTbl.seed + i/n + 523)
+			local progress = tSeed + i/n
+			local rx = math.sin(progress)
+			local ry = math.sin(progress + 62)
+			local rz = math.sin(progress + 523)
 			
-			nv.x = nv.x + rx*parabolic*delta
-			nv.y = nv.y + ry*parabolic*delta
-			nv.z = nv.z + rz*parabolic*delta
+			local pbDelta = parabolic*delta
+			local ox, oy, oz = nv:Unpack()
+			nv:SetUnpacked(ox + rx*pbDelta, oy + ry*pbDelta, oz + rz*pbDelta)
 
 			if validEnt then
 				local towards = validEnt:WorldSpaceCenter() - nv
@@ -229,10 +233,11 @@ function EFFECT:Render()
 			selfTbl.color.g = 30 *(1-tf2)
 			selfTbl.color.b = 255 - 55*tf2--]]
 			
-			selfTbl.color.r = Lerp(timeParabolic1, 255, 230)
-			selfTbl.color.g = Lerp(tf1, 64, 14)
-			selfTbl.color.b = Lerp(tf1, 100, 14)
-			selfTbl.color.a = 255*(1-tf2^2)
+			local r = Lerp(timeParabolic1, 255, 230)
+			local g = Lerp(tf1, 64, 14)
+			local b = Lerp(tf1, 100, 14)
+			local a = 255*(1-tf2^2)
+			selfTbl.color:SetUnpacked(r,g,b,a)
 
 			render.SetMaterial(selfTbl.mat_soul)
 			render.DrawSprite(selfTbl.origin, 100 * timeParabolic1^2, 150 * timeParabolic1, selfTbl.color)

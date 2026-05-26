@@ -1159,7 +1159,7 @@ end)
 
 				local fr, fg, fb = fogData.fogCol:Unpack()
 				r, g, b = r + (fr / 255) * frac, g + (fg / 255) * frac, b + (fb / 255) * frac 
-				fogMaxDensity = fogMaxDensity + fogData.fogMaxDensity * frac
+				fogMaxDensity = math.max(fogMaxDensity, fogData.fogMaxDensity)
 				fogStart = fogStart + fogData.fogStart * frac 
 				fogEnd = fogEnd + fogData.fogEnd * frac
 			end
@@ -1201,7 +1201,7 @@ end)
 			local fr, fg, fb = fogData.fogCol:Unpack()
 			r, g, b = r + (fr / 255) * frac, g + (fg / 255) * frac, b + (fb / 255) * frac 
 
-			fogMaxDensity = fogMaxDensity + fogData.fogMaxDensity * frac
+			fogMaxDensity = math.max(fogMaxDensity, fogData.fogMaxDensity)
 		end
 
 		fogCol = Color(r, g, b)

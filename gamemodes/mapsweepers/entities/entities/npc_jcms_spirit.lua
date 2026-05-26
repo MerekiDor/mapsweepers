@@ -56,6 +56,8 @@ function ENT:Initialize()
 
 		self.npcCarryGoal = math.random(3, 5)
 		self.wantToCarry = true
+
+		self:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 	end
 
 	if CLIENT then
