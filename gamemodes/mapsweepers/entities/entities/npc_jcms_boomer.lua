@@ -152,26 +152,29 @@ if SERVER then
 	end
 
 	function ENT:Think()
-		if self:GetIsExploding() and CurTime() > self:GetExplodeTime() then
+		local selfTbl = self:GetTable()
+		local cTime = CurTime()
+
+		if selfTbl:GetIsExploding() and cTime > selfTbl:GetExplodeTime() then
 			self:Burst()
 		else
 			local enemy = self:GetEnemy()
 			local isAngry = false
 			if IsValid(enemy) then
 				isAngry = true
-				local viscon = enemy:Visible(enemy) and (CurTime()-self:GetEnemyLastTimeSeen(enemy)) < 1
+				local viscon = enemy:Visible(enemy) and (cTime-self:GetEnemyLastTimeSeen(enemy)) < 1
 
 				if viscon and self:GetPos():DistToSqr( self:GetEnemyLastKnownPos(enemy) ) < 200^2 then
-					if not self:GetIsExploding() then
-						self:SetIsExploding(true)
-						self:SetExplodeTime(CurTime() + 2.5)
+					if not selfTbl:GetIsExploding() then
+						selfTbl:SetIsExploding(true)
+						selfTbl:SetExplodeTime(cTime + 2.5)
 					end
 				end
 			end
 
-			if CurTime() - self.lastPhraseTime > 5 then
+			if cTime - selfTbl.lastPhraseTime > 5 then
 				self:EmitSound(isAngry and "NPC_JCMSBoomer.Angry" or "NPC_JCMSBoomer.Idle")
-				self.lastPhraseTime = CurTime() + math.random()
+				selfTbl.lastPhraseTime = cTime + math.random()
 			end
 		end
 	end

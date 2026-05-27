@@ -958,12 +958,13 @@ local nmt = FindMetaTable("NPC")
 	end
 
 
-	function jcms.team_SameTeam(e1, e2)
-		if (e1 == e2) or ( jcms.team_JCorp(e1) and jcms.team_JCorp(e2) ) then
+	--For loops. Allows one entity's jcorp/npcteam returns to be passed in so that they aren't repeated.
+	--Having these as duplicates is bad, but if I made the original call this it'd degrade performance (as jcms.team_NPC would be called early unnecessarily).
+	function jcms.team_SameTeam_optimised(e1JCorp, e1NPC, e1, e2)
+		if e1JCorp and jcms.team_JCorp(e2) then
 			return jcms.team_pvpSameTeam(e1, e2)
 		else
-			local bothNPCs = jcms.team_NPC(e1) and jcms.team_NPC(e2)
-
+			local bothNPCs = e1NPC and jcms.team_NPC(e2)
 			if bothNPCs then
 				local director = jcms.director
 				if director and director.totalWar then
@@ -975,7 +976,32 @@ local nmt = FindMetaTable("NPC")
 					if eTbl1.jcms_faction and eTbl2.jcms_faction then
 						return eTbl1.jcms_faction == eTbl2.jcms_faction
 					else
-						return bothNPCs
+						return true
+					end
+				end
+			else
+				return jcms.team_pvpSameTeam_Strict(e1, e2) --Friendly if both have a pvp team and both are the same team, hostile otherwise.
+			end
+		end
+	end
+
+	function jcms.team_SameTeam(e1, e2)
+		if (e1 == e2) or ( jcms.team_JCorp(e1) and jcms.team_JCorp(e2) ) then
+			return jcms.team_pvpSameTeam(e1, e2)
+		else
+			local bothNPCs = jcms.team_NPC(e1) and jcms.team_NPC(e2)
+			if bothNPCs then
+				local director = jcms.director
+				if director and director.totalWar then
+					return true
+				else
+					eTbl1 = e1:GetTable()
+					eTbl2 = e2:GetTable()
+
+					if eTbl1.jcms_faction and eTbl2.jcms_faction then
+						return eTbl1.jcms_faction == eTbl2.jcms_faction
+					else
+						return true
 					end
 				end
 			else

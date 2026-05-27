@@ -45,6 +45,8 @@ function EFFECT:Init( data )
 		if self.scale > 0.5 then
 			self.emitter = ParticleEmitter(self.entpos)
 		end
+		
+		self:SetRenderBoundsWS(self.origin, self.entpos, Vector(16, 16, 16))
 	elseif data:GetFlags() == 0 or data:GetFlags() == 2 or data:GetFlags() == 3 then -- 0: appear, 2: disappear 3: disappear (ragdoll)
 		self.isPortal = false
 		self.ent = data:GetEntity()
@@ -92,14 +94,15 @@ function EFFECT:GenPoints()
 	selfTbl.points[1] = selfTbl.origin
 
 	local n = math.random(4, 7)
+	local distToOrigin = selfTbl.entpos:Distance(selfTbl.origin)
 	for i=1, n do
-		local nv = LerpVector(math.Remap(i+math.random()-0.5,0,n+2,0,1), selfTbl.origin, selfTbl.entpos)
-		nv.x = nv.x + math.Rand(-10, 10)
-		nv.y = nv.y + math.Rand(-10, 10)
+		local nv = LerpVector(math.Remap(i+math.random()-0.5, 0, n+2, 0, 1), selfTbl.origin, selfTbl.entpos)
+		local ox, oy, oz = nv:Unpack()
 
 		local f = math.Remap(i, 0, n+1, 0, 1)
 		local parabolic = math.max(0,-4*(f*f)+4*f)
-		nv.z = nv.z + math.Rand(-10, 10) + parabolic * selfTbl.entpos:Distance(selfTbl.origin)/2
+	
+		nv:SetUnpacked(ox+math.Rand(-10,10), oy+math.Rand(-10,10), oz+math.Rand(-10, 10) + parabolic*distToOrigin/2)
 		selfTbl.points[i+1] = nv
 	end
 	selfTbl.points[n+2] = selfTbl.entpos
@@ -110,14 +113,13 @@ function EFFECT:Think()
 	if selfTbl.t < selfTbl.tout then
 		if selfTbl.isPortal then
 			self:GenPoints()
-			self:SetRenderBoundsWS(selfTbl.origin, selfTbl.entpos, Vector(16, 16, 16))
 		elseif not selfTbl.entRenderOverride then
 			selfTbl.entRenderOverride = selfTbl.ent.RenderOverride
 			selfTbl.ent.RenderOverride = selfTbl.RenderEntity
 			selfTbl.ent.jcms_spawneffect = self
 		end
 
-		selfTbl.fadein = selfTbl.t > 0 and (selfTbl.fadein*16 + 2)/15 or (selfTbl.fadein*self.fadeinSpeed + 1)/(self.fadeinSpeed+1)
+		selfTbl.fadein = selfTbl.t > 0 and (selfTbl.fadein*16 + 2)/15 or (selfTbl.fadein*selfTbl.fadeinSpeed + 1)/(selfTbl.fadeinSpeed+1)
 		if selfTbl.t > 0 then
 			selfTbl.alphaout = selfTbl.alphaout / 1.5
 		end
