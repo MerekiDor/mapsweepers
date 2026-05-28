@@ -166,7 +166,7 @@ if SERVER then
 				local cTime = CurTime()
 				if safe or selfTbl.nextSlowCharge < cTime then 
 					selfTbl:SetCharge(charge + 1)
-					selfTbl.nextSlowCharge = cTime + 10
+					selfTbl.nextSlowCharge = cTime + 5
 				end
 
 				if selfTbl:GetCharge() > maxcharge then 

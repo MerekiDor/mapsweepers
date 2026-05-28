@@ -191,18 +191,20 @@ if SERVER then
 	end
 
 	function ENT:Burst()
+		local selfTbl = self:GetTable()
+
 		self:Remove()
-		hook.Call("OnNPCKilled", GAMEMODE, self, self.lastAttacker, self.lastInflictor)
+		hook.Call("OnNPCKilled", GAMEMODE, self, selfTbl.lastAttacker, selfTbl.lastInflictor)
 		local pos = self:WorldSpaceCenter()
 
 		local ed = EffectData()
 		ed:SetOrigin(pos)
-		ed:SetRadius(self.BurstRadius)
+		ed:SetRadius(selfTbl.BurstRadius)
 		ed:SetNormal(vector_up)
 		ed:SetMagnitude(0.6)
 		ed:SetFlags(4)
 		util.Effect("jcms_blast", ed)
-		if self.wasPrimed then
+		if selfTbl.wasPrimed then
 			ed:SetFlags(1)
 			util.Effect("Explosion", ed)
 		end
@@ -212,8 +214,9 @@ if SERVER then
 		dmg:SetInflictor(self)
 		dmg:SetReportedPosition(pos)
 
-		local enemyBurst = ( IsValid(self.lastAttacker) and self:Disposition(self.lastAttacker) == D_HT ) or ( self:Health() <= 0 )
-		for i, ent in ipairs(ents.FindInSphere(pos, self.BurstRadius)) do
+		local enemyBurst = ( IsValid(selfTbl.lastAttacker) and self:Disposition(selfTbl.lastAttacker) == D_HT ) or ( self:Health() <= 0 )
+		local primedMul = (selfTbl.wasPrimed and 150 or 1)
+		for i, ent in ipairs(ents.FindInSphere(pos, selfTbl.BurstRadius)) do
 			local phys = ent:GetPhysicsObject()
 			if IsValid(phys) then
 				local entpos = ent:WorldSpaceCenter()
@@ -221,12 +224,12 @@ if SERVER then
 				local dist = diff:Length()
 				diff:Normalize()
 
-				local falloff = math.Clamp(1 - (dist / self.BurstRadius), 0, 1)
-				dmg:SetDamage(falloff * (self.wasPrimed and 150 or 1))
+				local falloff = math.Clamp(1 - (dist / selfTbl.BurstRadius), 0, 1)
+				dmg:SetDamage(falloff * primedMul)
 				dmg:SetDamagePosition(entpos)
 				dmg:SetDamageType(DMG_CRUSH)
 
-				diff:Mul(falloff*self.BurstForce)
+				diff:Mul(falloff*selfTbl.BurstForce)
 
 				local mt = ent:GetMoveType()
 				if mt == MOVETYPE_VPHYSICS then
@@ -247,7 +250,7 @@ if SERVER then
 			end
 		end
 
-		if not self.wasObliterated then
+		if not selfTbl.wasObliterated then
 			local vel = Vector(0, 0, 0)
 			for i=1, enemyBurst and 3 or 7 do
 				local crabNPC = jcms.npc_Spawn("zombie_explodingcrab", pos + VectorRand(-25, 25))
@@ -256,9 +259,7 @@ if SERVER then
 				local cos, sin = math.cos(ang), math.sin(ang)
 				local mag = math.random() * 320
 
-				vel.x = cos * mag
-				vel.y = sin * mag
-				vel.z = math.Rand(-150, 420)
+				vel:SetUnpacked(cos*mag, sin*mag, math.Rand(-150, 420))
 				crabNPC:SetVelocity(vel)
 			end
 		end

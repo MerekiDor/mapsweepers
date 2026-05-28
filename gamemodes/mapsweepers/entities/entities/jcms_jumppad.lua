@@ -33,6 +33,9 @@ end
 
 function ENT:Initialize()
 	if SERVER then
+		self.jcms_DontCollideWithNPCs = true
+		self:SetCustomCollisionCheck(true)
+        
 		self:SetModel("models/jcms/jcorp_jumppad.mdl")
 		self:PhysicsInitStatic(SOLID_VPHYSICS)
 	end

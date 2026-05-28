@@ -276,38 +276,38 @@ if SERVER then
 		local enemy = self:GetEnemy()
 		
 		--Enemy's too close to us, immediately drop our carried NPCs.
-		if self.wantToCarry and self:GetCarriedNPCCount() > 0 and IsValid( enemy ) and enemy:GetPos():DistToSqr( selfPos ) < self.GrabDistance^2 then
-			self.wantToCarry = false
+		if selfTbl.wantToCarry and self:GetCarriedNPCCount() > 0 and IsValid( enemy ) and enemy:GetPos():DistToSqr( selfPos ) < selfTbl.GrabDistance^2 then
+			selfTbl.wantToCarry = false
 		end
 
 
-		if self.wantToCarry then							-- We're looking for NPCs to eat
-			if not(not self.carryCooldown or cTime > self.carryCooldown) then return end --Cooldown
+		if selfTbl.wantToCarry then							-- We're looking for NPCs to eat
+			if not(not selfTbl.carryCooldown or cTime > selfTbl.carryCooldown) then return end --Cooldown
 
 			--Grab one valid target within our radius & wait.
-			for i, npc in ipairs( ents.FindInSphere(selfPos, self.GrabDistance) ) do
-				if self:IsGoodGrabTarget(npc) and self:Visible(npc) and (not IsValid(npc:GetEnemy()) or npc:GetEnemy():GetPos():DistToSqr(npc:GetPos()) > self.MinGrabDist^2) then
+			for i, npc in ipairs( ents.FindInSphere(selfPos, selfTbl.GrabDistance) ) do
+				if selfTbl.IsGoodGrabTarget_optimised(self, selfTbl, npc) and self:Visible(npc) and (not IsValid(npc:GetEnemy()) or npc:GetEnemy():GetPos():DistToSqr(npc:GetPos()) > selfTbl.MinGrabDist^2) then
 					self:CarryNPC(npc)
-					self.carryCooldown = cTime + 0.25
+					selfTbl.carryCooldown = cTime + 0.25
 					break
 				end
 			end
 
 			--If we've carried enough, stop searching / return to other behaviours. 
-			if self:GetCarriedNPCCount() >= self.npcCarryGoal then
-				self.wantToCarry = false
-				self.carryCooldown = cTime + 1
+			if self:GetCarriedNPCCount() >= selfTbl.npcCarryGoal then
+				selfTbl.wantToCarry = false
+				selfTbl.carryCooldown = cTime + 1
 			end
 		elseif self:GetCarriedNPCCount() > 0 and IsValid(enemy) then
 			local viscon = self:Visible(enemy) and (cTime-self:GetEnemyLastTimeSeen(enemy)) < 1
 
-			if viscon and enemy:GetPos():DistToSqr(selfPos) < self.DeployDistance^2 then
-				self:DeployNPCs(enemy:GetPos(), farDeploy)
+			if viscon and enemy:GetPos():DistToSqr(selfPos) < selfTbl.DeployDistance^2 then
+				self:DeployNPCs(enemy:GetPos())
 
 				self:ClearSchedule()
 				self:SetSchedule(SCHED_RUN_FROM_ENEMY)
-				self.carryCooldown = cTime + 5
-				self.wantToCarry = true
+				selfTbl.carryCooldown = cTime + 5
+				selfTbl.wantToCarry = true
 			end
 		end
 	end
