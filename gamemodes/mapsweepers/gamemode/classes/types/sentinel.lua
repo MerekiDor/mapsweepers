@@ -45,7 +45,36 @@ class.runSpeed = 160
 class.boostedRunSpeed = 250
 class.disallowSprintAttacking = true
 
+class.barrierLength = 12
+class.barrierCooldown = 3
+
 jcms.class_useNewSentinel = false
+
+function class.PerformBarrierLogic(ply, active)
+	local ct = CurTime()
+	local length = class.barrierLength
+	local cooldown = class.barrierCooldown
+
+	if ply.jcms_sentinelBarrierCooldown and ply.jcms_sentinelBarrierCooldown > ct then
+		ply.jcms_sentinelBarrierExpiresAt = nil
+		active = false
+	elseif ply.jcms_sentinelBarrierExpiresAt and ct >= ply.jcms_sentinelBarrierExpiresAt then
+		ply.jcms_sentinelBarrierCooldown = ct + cooldown
+		active = false
+	elseif active then
+		if not ply.jcms_sentinelBarrierExpiresAt then
+			ply.jcms_sentinelBarrierExpiresAt = ct + length
+		end
+		ply.jcms_sentinelBarrierCooldown = nil
+	else
+		ply.jcms_sentinelBarrierExpiresAt = nil
+		if not ply.jcms_sentinelBarrierCooldown then
+			ply.jcms_sentinelBarrierCooldown = ct + cooldown
+		end
+	end
+
+	return active
+end
 
 if SERVER then
 	function class.OnSpawn(ply, data)
@@ -278,8 +307,9 @@ if SERVER then
 		
 			if charge > 0 then
 				local oldArmor = ply:Armor()
-				local newArmor = math.min( oldArmor + charge, 250 ) --Can charge past max armour.
-				if newArmor ~= oldArmor then
+				local newArmor = math.min( oldArmor + charge, ply:GetMaxArmor() * 2 ) -- Can charge past max armour.
+
+				if newArmor > oldArmor then
 					ply:SetArmor( newArmor )
 					ply:EmitSound("items/battery_pickup.wav", 50, 110 + charge * 5 + math.random()*5, 0.75)
 				end
@@ -288,6 +318,34 @@ if SERVER then
 	end
 
 	function class.Think(ply)
+		class.ThinkBarrier(ply)
+		class.ThinkGasMask(ply)
+	end
+
+	function class.ThinkBarrier(ply)
+		local active = ply:IsWalking() and ply:Alive() and ply:GetObserverMode() == OBS_MODE_NONE and not IsValid(ply:GetVehicle()) and not IsValid(ply:GetNWEntity("jcms_vehicle"))
+		active = class.PerformBarrierLogic(ply, active)
+		
+		local barrier = ply.jcms_sentinelBarrier
+		if active then
+			if not IsValid(barrier) then
+				barrier = ents.Create("jcms_sentinelbarrier")
+				barrier:SetModel("models/jcms/jcorp_sentinelbarrier.mdl")
+				barrier:SetMaterial("models/props_combine/portalball001_sheet")
+				barrier:SetColor(Color(0, 161, 255))
+				barrier:AddEFlags(EFL_DONTBLOCKLOS)
+				barrier:SetCollisionGroup(COLLISION_GROUP_DEBRIS_TRIGGER)
+				barrier:SetSentinel(ply)
+				barrier:Spawn()
+				ply.jcms_sentinelBarrier = barrier
+			end
+		elseif IsValid(barrier) then
+			barrier:Remove()
+			ply.jcms_sentinelBarrier = nil
+		end
+	end
+
+	function class.ThinkGasMask(ply)
 		if CurTime() - ply.sentinel_lastDmgBlocked < 2 then
 			if not(ply.sentinel_breathSound:IsPlaying()) then 
 				ply.sentinel_breathSound:PlayEx(1, 80)
@@ -306,6 +364,109 @@ if CLIENT then
 		resistance = "2",
 		mobility = "-2"
 	}
+
+	function jcms.draw_SentinelAnchor()
+		if jcms.hud_myclass == "sentinel" then
+			local anchoredBy
+			for i, ent in ipairs(ents.FindInSphere(jcms.locPly:WorldSpaceCenter(), 200)) do
+				if ent.SentinelAnchor and (not ent.GetHackedByRebels or not ent:GetHackedByRebels()) then 
+					anchoredBy = ent
+					break
+				end
+			end
+
+			local W = 5
+			jcms.hud_sentinelAnchorAnim = ((jcms.hud_sentinelAnchorAnim or 0)*W + (anchoredBy and 1 or 0))/(W+1)
+			local anim = jcms.hud_sentinelAnchorAnim
+
+			if anim > 0.001 then
+				local off = 6
+				local str1 = language.GetPhrase("jcms.sentinelanchored_title")
+				local str2 = language.GetPhrase("jcms.sentinelanchored_desc1")
+				local str3 = anchoredBy and language.GetPhrase("jcms.sentinelanchored_desc2"):format(anchoredBy.PrintName or anchoredBy:GetClass()) or jcms.hud_sentinelAnchorLastString or ""
+				jcms.hud_sentinelAnchorLastString = str3
+				
+				surface.SetAlphaMultiplier(anim)
+				draw.SimpleText(str1, "jcms_hud_big", 0, -24, jcms.color_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+				draw.SimpleText(str2, "jcms_hud_medium", 0, -24, jcms.color_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+				draw.SimpleText(str3, "jcms_hud_medium", 0, 36, jcms.color_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+				
+				render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
+					draw.SimpleText(str1, "jcms_hud_big", 0, -24-off, jcms.color_bright, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+					draw.SimpleText(str2, "jcms_hud_medium", 0, -24-off, jcms.color_pulsing, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+					draw.SimpleText(str3, "jcms_hud_medium", 0, 36-off, jcms.color_pulsing, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+				render.OverrideBlend(false)
+				surface.SetAlphaMultiplier(1)
+			end
+		else
+			jcms.hud_sentinelAnchorAnim = 0
+			jcms.hud_sentinelAnchorLastString = nil
+		end
+	end
+
+	function jcms.draw_SentinelBarrier()
+		local w, h = 500, 24
+		local x, y = -w/2, -200-h
+		local off = 6
+
+		local barrierEnt = jcms.locPly.jcms_sentinelBarrier
+		local active = IsValid(barrierEnt)
+		active = class.PerformBarrierLogic(jcms.locPly, active)
+		
+		local health = 0
+		local ct = CurTime()
+		if active then
+			health = math.Clamp( (jcms.locPly.jcms_sentinelBarrierExpiresAt - ct) / class.barrierLength, 0, 1)
+		else
+			health = 1 - math.Clamp( (jcms.locPly.jcms_sentinelBarrierCooldown - ct) / class.barrierCooldown, 0, 1)
+		end
+
+		local accumulatedFactor = active and barrierEnt:GetShieldRestorationFactor() or 0
+		local accumulated = math.ceil( accumulatedFactor * jcms.locPly:GetMaxArmor() )
+		local isAtMaxDamage = active and (barrierEnt:GetDamageTaken() >= barrierEnt:GetMaxDamageTaken())
+
+		local str1 = ("[%s]"):format( (input.LookupBinding("+walk") or "N/A"):upper() )
+		local str2 = [=[Bullet Barrier]=]
+		local str3 = ([=[Accumulated shields: %d]=]):format(accumulated)
+
+		local colorDark = active and jcms.color_dark or jcms.color_dark_alt
+		local colorBright = active and (isAtMaxDamage and jcms.color_alert or jcms.color_bright) or jcms.color_bright_alt
+		local unavailable = (not active and health < 1)
+
+		if unavailable then
+			surface.SetAlphaMultiplier(0.3)
+		end
+
+		surface.SetDrawColor(colorDark)
+		if active then
+			draw.SimpleText(str3, "jcms_hud_medium", x + w/2, y - 18, colorDark, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+		else
+			if not unavailable then
+				draw.SimpleText(str1, "jcms_hud_medium", x + w/2, y + h + 12, colorDark, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+			end
+
+			draw.SimpleText(str2, "jcms_hud_medium", x + w/2, y - 12, colorDark, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+		end
+		surface.DrawRect(x, y, w, h)
+		
+		render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
+			surface.SetDrawColor(colorBright)
+			surface.DrawRect(x, y-off, w*health, h)
+			if active then
+				draw.SimpleText(str3, "jcms_hud_medium", x + w/2, y - 18 - off, colorBright, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+			elseif health > 0 then
+				if not unavailable then
+					draw.SimpleText(str1, "jcms_hud_medium", x + w/2, y + h + 12 - off, colorBright, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+				end
+
+				draw.SimpleText(str2, "jcms_hud_medium", x + w/2, y - 12 - off, colorBright, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+			end
+		render.OverrideBlend(false)
+
+		if unavailable then
+			surface.SetAlphaMultiplier(1)
+		end
+	end
 
 	function class.CalcViewModelView( wep, viewModel, oldPos, oldAng, cPos, cAng, ply )
 		if jcms.cvar_motionsickness:GetBool() then return end
@@ -374,8 +535,13 @@ if CLIENT then
 		plyTable.jcms_viewBobProgress = bob
 		plyTable.jcms_viewBobDiffVector = diff
 		plyTable.jcms_viewBobFov = fov
+	end
 
-
+	function class.DrawHUD(ply)
+		jcms.setup3d2dCentral("bottom")
+			jcms.draw_SentinelAnchor()
+			jcms.draw_SentinelBarrier()
+		cam.End3D2D()
 	end
 	
 	function class.TranslateActivity(ply, act)
