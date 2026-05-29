@@ -943,12 +943,14 @@ local nmt = FindMetaTable("NPC")
 	end
 
 	function jcms.team_pvpSameTeam(e1, e2) --Shared pvp Team?
+		if e1 == e2 then return true end
 		local e1Pvp = e1:GetNWInt("jcms_pvpTeam", -1)
 		local e2Pvp = e2:GetNWInt("jcms_pvpTeam", -1)
 		return e1Pvp == -1 or e2Pvp == -1 or e1Pvp == e2Pvp --If either lacks pvp or both on same team
 	end
 
 	function jcms.team_pvpSameTeam_Strict(e1, e2) --Shared pvp team, team -1 is hostile (to self & others)
+		if e1 == e2 then return true end
 		local e1Pvp = e1:GetNWInt("jcms_pvpTeam", -1)
 		local e2Pvp = e2:GetNWInt("jcms_pvpTeam", -1)
 		return e1Pvp == e2Pvp and not (e1Pvp == -1 or e2Pvp == -1)
