@@ -1,0 +1,7 @@
+"LightmappedGeneric"
+{
+	"$basetexture" "jcms/maps/jcorp_sign2"
+	"$decal" "1"
+	"$translucent" "1"
+	"$decalscale" "0.125"
+}
