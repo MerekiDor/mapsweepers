@@ -251,13 +251,13 @@ if CLIENT then
 
 	local emt = FindMetaTable("Entity") --Optimisation
 	local function drawModels(entities, eyePos)
-		local maxDist, minDist = 5000, 0
+		local maxDist2, minDist2 = 5000^2, 0^2
 
 		for i, ent in ipairs(entities) do 
 			if IsValid(ent) and class.highlightEnts[emt.GetClass(ent)] then
 				local dist = emt.GetPos(ent):DistToSqr(eyePos)
 				
-				if dist < maxDist^2 and dist > minDist^2 then
+				if dist < maxDist2 and dist > minDist2 then
 					emt.DrawModel(ent)
 				end
 			end
@@ -265,7 +265,7 @@ if CLIENT then
 	end
 
 	function class.PreDrawOpaqueRenderables(ply)
-		local eyePos = EyePos()
+		local eyePos = jcms.EyePos_lowAccuracy
 	
 		render.SetStencilEnable(true)
 		render.ClearStencil()
@@ -278,12 +278,12 @@ if CLIENT then
 		render.SetStencilZFailOperation(STENCIL_REPLACE)
 		render.SetStencilReferenceValue(1)
 		
-		cam.Start3D()
+		--cam.Start3D()
 			render.OverrideBlend(true, BLEND_ZERO, BLEND_ONE, BLENDFUNC_ADD)
-			drawModels(ents.FindByClass("item_*"), eyePos) --Way better than ents.iterator for optimisation. even if this is a little jank.
-			drawModels(ents.FindByClass("jcms_shop"), eyePos)
+				drawModels(ents.FindByClass("item_*"), eyePos) --Way better than ents.iterator for optimisation. even if this is a little jank.
+				drawModels(ents.FindByClass("jcms_shop"), eyePos)
 			render.OverrideBlend(false)
-		cam.End3D()
+		--cam.End3D()
 		
 		render.SetStencilCompareFunction(STENCIL_EQUAL)
 		render.SetStencilReferenceValue(1)
@@ -291,17 +291,16 @@ if CLIENT then
 			local r, g, b = jcms.color_bright:Unpack()
 			local scrW, scrH = ScrW(), ScrH()
 			render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE_MINUS_SRC_ALPHA, BLENDFUNC_ADD)
-			surface.SetDrawColor(r, g, b, 200)
-			jcms.hud_DrawNoiseRect(0, 0, scrW, scrH, 24)
+				surface.SetDrawColor(r, g, b, 200)
+				jcms.hud_DrawNoiseRect(0, 0, scrW, scrH, 24)
 
 			render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
-			surface.SetDrawColor(r, g, b, 255)
-			jcms.hud_DrawNoiseRect(0, 0, scrW, scrH, 24)
+				surface.SetDrawColor(r, g, b, 255)
+				jcms.hud_DrawNoiseRect(0, 0, scrW, scrH, 24)
+			render.OverrideBlend(false)
 		cam.End2D()
-		render.OverrideBlend(false)
 		
 		render.SetStencilEnable( false )
 		render.ClearStencil()
-
 	end
 end

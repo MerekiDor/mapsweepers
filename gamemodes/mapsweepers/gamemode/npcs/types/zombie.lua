@@ -518,10 +518,23 @@ jcms.npc_types.zombie_creep = {
 	anonymous = true, --Don't contribute to the softcap / director.
 	isStatic = true,
 	
-	check = function(director)
-		--More of a precaution against duplicates than anything else
-		return jcms.npc_capCheck("npc_jcms_zombiecreep", 10)
-	end
+	check = function() return false end --Stop us from spawning naturally
+}
+
+jcms.npc_types.zombie_creeper = {
+	faction = "zombie",
+
+	danger = jcms.NPC_DANGER_STRONG,
+    cost = 0.05,
+    swarmWeight = 0.1,
+	swarmLimit = 4,
+
+	class = "npc_jcms_creeper",
+	bounty = 15,
+	
+	--[[check = function(director)
+		return jcms.npc_capCheck("npc_jcms_zombiecreep", 20)
+	end--]]
 }
 
 

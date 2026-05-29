@@ -119,7 +119,13 @@ if SERVER then
 
 		self.jcms_ignoreStraggling = true
 	
-		self.jcms_zombieCreep_cell = jcms.zombieCreep_GetCell( self:GetPos() )
+		local cell = jcms.zombieCreep_GetCell( self:GetPos() )
+		if jcms.zombieCreepCells[cell] then							--We're in an occupied cell, don't want to double up, get rid of us.
+			self:Remove()
+			return
+		end
+		--Set our cell and occupy it.
+		self.jcms_zombieCreep_cell = cell
 		jcms.zombieCreep_OccupyCell(self.jcms_zombieCreep_cell)
 
 		-- // Expansion Cell detection {{{
@@ -155,7 +161,14 @@ if SERVER then
 		local selfTbl = self:GetTable()
 		local cTime = CurTime()
 
-		if selfTbl.nextExpansion < cTime and table.Count(selfTbl.expansionPoints) > 0 then
+		if selfTbl.nextExpansion < cTime then
+			local expansionTime = 5 * math.sqrt(#ents.FindByClass("npc_jcms_zombiecreep"))
+			selfTbl.nextExpansion = cTime + expansionTime
+
+			--Stop expanding if we're too close to the player. Having creep intrude *into* your nest is annoying, and serves no gameplay purpose.
+			local nearest, dist = jcms.GetNearestSweeper(self:WorldSpaceCenter())
+			if dist < 1250 then return end
+
 			--Spawn another creeper at the first available cell.
 			for cell, pos in pairs(selfTbl.expansionPoints) do 
 				if not jcms.zombieCreepCells[cell] then
@@ -163,14 +176,15 @@ if SERVER then
 					break
 				end
 			end
-			selfTbl.nextExpansion = cTime + 15 * math.sqrt(#ents.FindByClass("npc_jcms_zombiecreep"))
 		end
 
 		self:NextThink(cTime + 1) --Slower update rate, default of 10 times per second is extreme for what we're doing.
 	end
 
 	function ENT:OnRemove()
-		jcms.zombieCrep_ClearCell(self.jcms_zombieCreep_cell)
+		if self.jcms_zombieCreep_cell then 
+			jcms.zombieCrep_ClearCell(self.jcms_zombieCreep_cell)
+		end
 	end
 	
 	function ENT:OnTakeDamage(dmgInfo)
@@ -197,13 +211,19 @@ if CLIENT then
 	local vecCellSize = Vector(cellWidth, cellWidth, cellHeight)
 
 	function ENT:Initialize()
-		self.jcms_zombieCreep_cell = jcms.zombieCreep_GetCell( self:GetPos() )
+		local cell = jcms.zombieCreep_GetCell( self:GetPos() )
+		if jcms.zombieCreepCells[cell] then	return end --Occupied, we're about to be deleted
+
+		--Set our cell and occupy it.
+		self.jcms_zombieCreep_cell = cell
 		jcms.zombieCreep_OccupyCell(self.jcms_zombieCreep_cell)
 
 		hook.Call("jcms_ZombieCreep_RebuildMesh")
 	end
 
 	function ENT:OnRemove()
+		if not self.jcms_zombieCreep_cell then return end
+
 		jcms.zombieCrep_ClearCell(self.jcms_zombieCreep_cell)
 		hook.Call("jcms_ZombieCreep_RebuildMesh")
 	end
