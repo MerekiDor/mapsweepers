@@ -84,9 +84,9 @@ if SERVER then
 	function ENT:UpdateRangeCap()
 		local spewCount = #ents.FindByClass("npc_jcms_zombiespewer")
 		local spewValues = {
-			[1] = 4000,
+			[1] = 3000,
 			[2] = 1750,
-			[3] = 850
+			[3] = 1000
 		}
 
 		local dist = spewValues[spewCount] or math.huge

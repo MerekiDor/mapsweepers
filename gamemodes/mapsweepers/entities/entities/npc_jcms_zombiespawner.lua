@@ -65,7 +65,7 @@ if SERVER then
 			timer.Simple(30, function()
 				if not IsValid(self) then return end
 				self.jcms_upgradeLevel = 1
-				self:SetHealth(self:Health() * 1.35)
+				self:SetHealth(self:Health() * 1.25)
 				self:SetMaxHealth(self:GetMaxHealth() * 1.5)
 
 				--TODO: SFX
@@ -77,7 +77,7 @@ if SERVER then
 					timer.Simple(30, function()
 						if not IsValid(self) then return end
 						self.jcms_upgradeLevel = 2
-						self:SetHealth(self:Health() * 1.35)
+						self:SetHealth(self:Health() * 1.25)
 						self:SetMaxHealth(self:GetMaxHealth() * 1.5)
 					end)
 				end)

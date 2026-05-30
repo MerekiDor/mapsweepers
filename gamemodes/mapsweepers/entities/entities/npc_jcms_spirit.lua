@@ -372,7 +372,7 @@ if SERVER then
 
 		--Deploy our units
 		local foe = self:GetEnemy()
-		local upVec = Vector(0,0,10)
+		local upVec = Vector(0,0,5)
 		local deployed = 0
 		for i, v in ipairs(mostVectors) do
 			deployed = deployed + 1

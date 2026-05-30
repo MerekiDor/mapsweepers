@@ -130,7 +130,7 @@ if CLIENT then
 			if self.rainStage <= 0 then return end 
 
 			local data = {}
-			data.fogCol = Color(100, 0, 0)
+			data.fogCol = Color(125, 0, 0)
 			data.fogMaxDensity = 1 * self.rainStage
 			data.fogMode = MATERIAL_FOG_LINEAR
 			data.fogStart = 0
@@ -197,7 +197,7 @@ if CLIENT then
 
 				part:SetStartAlpha(200)
 				part:SetEndAlpha(0)
-				part:SetColor( 100 + math.random(0,10), 0, 0 )
+				part:SetColor( 125 + math.random(0,10), 0, 0 )
 
 				part:SetStartSize(0)
 				part:SetEndSize(500 + dist/5)

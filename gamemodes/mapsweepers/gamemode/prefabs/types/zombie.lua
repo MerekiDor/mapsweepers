@@ -35,7 +35,7 @@ prefabs.zombie_barnacles = {
 			endpos = centre + Vector(0,0,1000)
 		})
 
-		return tr.Hit and not tr.HitSky and math.acos(tr.HitNormal:Dot(-jcms.vectorUp)) < math.pi/4
+		return tr.Hit and tr.HitWorld and not tr.HitSky and math.acos(tr.HitNormal:Dot(-jcms.vectorUp)) < math.pi/4
 	end,
 
 	areaWeight = function(area) 
@@ -43,6 +43,25 @@ prefabs.zombie_barnacles = {
 	end,
 
 	stamp = function(area, data)
-		return jcms.npc_Spawn("zombie_barnacle", area:GetCenter())
+		local mainBarnacle = jcms.npc_Spawn("zombie_barnacle", area:GetCenter())
+
+		--Spawn up to 2 additional barnacles for a total of 3
+		local upV = Vector(0,0,1000)
+		for i=1, 2 do 
+			local pos = area:GetRandomPoint()
+
+			local tr = util.TraceLine({
+				start = pos,
+				endpos = pos + upV
+			})
+
+			--Extra hitworld check so that we don't spawn on other barnacles.
+			if tr.Hit and  tr.HitWorld and not tr.HitSky and math.acos(tr.HitNormal:Dot(-jcms.vectorUp)) < math.pi/4 then 
+				jcms.npc_Spawn("zombie_barnacle", pos)
+			end
+		end
+
+
+		return mainBarnacle
 	end
 }

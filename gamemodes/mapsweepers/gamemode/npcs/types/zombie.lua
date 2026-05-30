@@ -1151,7 +1151,7 @@ jcms.npc_types.zombie_barnacle = {
 			start = npc:GetPos(),
 			endpos = npc:GetPos() + Vector(0,0,32768)
 		}, npc)
-		if not tr.Hit or tr.HitSky then
+		if not tr.Hit or tr.HitSky or not tr.HitWorld then
 			npc:Remove()
 			return
 		end
