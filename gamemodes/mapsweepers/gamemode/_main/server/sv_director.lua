@@ -185,6 +185,15 @@
 			return CurTime() - (jcms.director.missionStartTime or 0)
 		end
 
+		function jcms.director_GetBountyMul()
+			local d = jcms.director
+			if d and d.missionType and jcms.missions[d.missionType] and jcms.missions[d.missionType].calcBountyMul then 
+				return jcms.missions[d.missionType].calcBountyMul(d, d.missionData)
+			end
+
+			return 1
+		end
+
 		function jcms.director_IsSuddenDeath()
 			return jcms.director and jcms.director.suddenDeathTime and jcms.director_GetMissionTime() > jcms.director.suddenDeathTime
 		end
@@ -1075,7 +1084,7 @@
 
 			["models/gibs/antlion_worker_gibs_head.mdl"] = 7.5, --The rest of the worker gibs are ragdolls.
 			
-			["models/gunship.mdl"] = 25
+			["models/gunship.mdl"] = 25,
 			["models/crashedgunship.mdl"] = 45
 		}
 

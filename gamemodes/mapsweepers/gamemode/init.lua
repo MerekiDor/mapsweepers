@@ -1847,6 +1847,8 @@ end
 			end
 
 			bounty = bounty * jcms.cvar_cash_mul_final:GetFloat()
+			bounty = bounty * jcms.director_GetBountyMul()
+			
 			jcms.spreadContributionBounty(npc, bounty, attacker)
 		end
 	end
