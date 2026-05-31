@@ -164,7 +164,9 @@ jcms.npc_types.combine_scanner = {
 	portalScale = 0.5,
 
 	class = "npc_cscanner",
-	bounty = 15,
+	bounty = 20,
+
+	airUnit = true, --Stop us from receiving the in-air bonus
 
 	proficiency = WEAPON_PROFICIENCY_GOOD
 }
@@ -349,6 +351,15 @@ jcms.npc_types.combine_gunship = {
 		local healthMult = npc:GetMaxHealth() / (100 * 50) --Keep us scaling with default boss HP Scaling
 		npc.jcms_gunship_maxHits = math.floor(math.max(2 * healthMult, 2)) --2 Hits
 		npc.jcms_gunship_hits = npc.jcms_gunship_maxHits
+
+		if math.random() < 0.001 then --Tiny chance to spawn already dead
+			local prop = ents.Create("prop_ragdoll")
+			prop:SetModel("models/crashedgunship.mdl")
+			prop:SetPos(npc:GetPos())
+			prop:Spawn()
+			
+			npc:Remove()
+		end
 	end,
 
 	think = function(npc, state) --Strafe w/ deathray occasionally

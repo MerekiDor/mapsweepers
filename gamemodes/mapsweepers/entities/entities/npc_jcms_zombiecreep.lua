@@ -98,6 +98,8 @@ ENT.RenderGroup = RENDERGROUP_BOTH
 -- // }}}
 
 if SERVER then
+	jcms.zombieCreepCell_LastDestroyed = jcms.zombieCreepCell_LastDestroyed or {} --Tracking last removal, used to stop instant refilling.
+
 	function ENT:Initialize()
 		self:SetModel("models/barnacle.mdl")
 		self:SetSubMaterial(0, "models/jcms/zombiepolyp/polyp_base")
@@ -171,7 +173,8 @@ if SERVER then
 
 			--Spawn another creeper at the first available cell.
 			for cell, pos in pairs(selfTbl.expansionPoints) do 
-				if not jcms.zombieCreepCells[cell] then
+				--Not occupied, >20s since it was last cleared.
+				if not jcms.zombieCreepCells[cell] and (jcms.zombieCreepCell_LastDestroyed[cell] or 0) + 20 < cTime then 
 					jcms.npc_Spawn("zombie_creep", pos)
 					break
 				end
@@ -183,6 +186,7 @@ if SERVER then
 
 	function ENT:OnRemove()
 		if self.jcms_zombieCreep_cell then 
+			jcms.zombieCreepCell_LastDestroyed[self.jcms_zombieCreep_cell] = CurTime()
 			jcms.zombieCrep_ClearCell(self.jcms_zombieCreep_cell)
 		end
 	end

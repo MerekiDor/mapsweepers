@@ -1816,7 +1816,7 @@ end
 				end
 			end
 
-			if not npc:OnGround() then
+			if not npc.jcms_isAirUnit and not npc:OnGround() then
 				bounty = bounty + jcms.cvar_cash_bonus_airborne:GetInt()
 			end
 

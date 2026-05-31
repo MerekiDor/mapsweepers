@@ -1076,6 +1076,7 @@
 			["models/gibs/antlion_worker_gibs_head.mdl"] = 7.5, --The rest of the worker gibs are ragdolls.
 			
 			["models/gunship.mdl"] = 25
+			["models/crashedgunship.mdl"] = 45
 		}
 
 

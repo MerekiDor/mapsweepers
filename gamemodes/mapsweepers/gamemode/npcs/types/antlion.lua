@@ -283,7 +283,7 @@ jcms.npc_types.antlion_drone = {
 
 	class = "npc_antlion",
 	suppressSwarmPortalEffect = true,
-	bounty = 15,
+	bounty = 18,
 
 	preSpawn = function(npc)
 		if not npc.jcms_fromPortal then
@@ -327,7 +327,7 @@ jcms.npc_types.antlion_waster = {
 	swarmWeight = 1.2,
 	
 	class = "npc_antlion",
-	bounty = 5,
+	bounty = 7,
 
 	preSpawn = function(npc)
 		if not npc.jcms_fromPortal then
@@ -1048,6 +1048,7 @@ jcms.npc_types.antlion_grubbomb = {
 
 	anonymous = true,
 	isStatic = true,
+	airUnit = true, --Stop us from receiving the in-air bonus
 
 	preSpawn  = function(npc)
 		jcms.mapgen_DropEntToNav(npc, npc:GetPos(), 800) --TODO: Maybe comment this out, I think this is only needed for debugspawn

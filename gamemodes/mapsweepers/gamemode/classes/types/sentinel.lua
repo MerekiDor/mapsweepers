@@ -164,9 +164,6 @@ if SERVER then
 						ply.sentinel_teleportSound:Stop()
 						ply.sentinel_isTeleporting = false
 
-						--TODO: ABSOLUTELY NEEDS TO BE INDICATED. Should be some large-text saying "ANCHORED" + some smaller text elaborating a bit
-						--(Telling people they won't teleport / that it's buildings causing this)
-						--This should ideally display whenever they're close to a building.
 						for i, ent in ipairs(ents.FindInSphere(ply:WorldSpaceCenter(), 200)) do
 							if ent.SentinelAnchor and (not ent.GetHackedByRebels or not ent:GetHackedByRebels()) then 
 								return --Don't teleport us if we're near a friendly building.

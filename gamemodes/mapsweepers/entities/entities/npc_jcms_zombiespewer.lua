@@ -31,12 +31,6 @@ ENT.AutomaticFrameAdvance = true
 
 --[[ TODO:
 	Swap fogdist to foglevel (or something like that) define ranges in ENT. table, use foglevel to also scale colormod intensity
-
-	Play a global sound on-spawn so that it's a little more obvious
-
-	Emit sounds in general (Poison zombie hurt sounds, and something to help lure players to us.
-
-	Need to also figure out ways to make this more obvious
 --]]
 
 function ENT:SetupDataTables()
@@ -51,7 +45,7 @@ if SERVER then
 
 		--TODO: Slightly depress so we're not elevated above the ground
 		
-		self:PhysicsInitBox( Vector(-50,-50,0),Vector(50,50,180) )
+		self:PhysicsInitBox( Vector(-56,-56,0),Vector(56,56,512) )
 		self:SetMoveType(MOVETYPE_NONE)
 
 		self:SetMaxHealth(1250)
@@ -75,6 +69,26 @@ if SERVER then
 
 		--Tell every spewer to update their cap
 		hook.Call("jcms_Spewer_UpdateRangeCap")
+
+		--SFX
+		--npc/stalker/go_alert2.wav 	--alert2a
+		self:EmitSound("npc/stalker/go_alert2a.wav", 140, 55 + math.Rand(0,15), 1, CHAN_STATIC, 0, 25, filter)
+
+		self.nextSpeak = CurTime() + 20 + math.Rand(0, 20)
+		--self.nextSpeak = CurTime() + 10
+	end
+
+	function ENT:Think()
+		if self.nextSpeak < CurTime() then
+			--npc/stalker/stalker_scream4.wav
+
+			self:EmitSound("npc/stalker/stalker_scream" .. tostring(math.random(1,4)) .. ".wav", 100, 60 + math.Rand(0,20), 1, CHAN_STATIC, 0, 25, filter)
+			self.nextSpeak = CurTime() + 20 + math.Rand(0, 20)
+			--self.nextSpeak = CurTime() + 10
+		end
+
+		self:NextThink(CurTime() + 5)
+		return true
 	end
 
 	function ENT:UpdateTransmitState()
@@ -104,8 +118,10 @@ if SERVER then
 
 		if dmg > 0 then
 			if bit.band( dmgInfo:GetDamageType(), DMG_BLAST ) > 0 then
-				dmgInfo:ScaleDamage(1.5)
+				dmgInfo:ScaleDamage(2)
 			end
+
+			--TODO: SFX
 
 			self.jcms_flinchProgress = self.jcms_flinchProgress + dmg 
 			self:SetHealth(self:Health() - dmg)
@@ -170,6 +186,8 @@ if CLIENT then
 			
 			jcms.fogStack_push(data)
 		end)
+
+		self:SetRenderBounds(Vector(-96,-96,0),Vector(96,96,512+64))
 	end
 
 	function ENT:Think()

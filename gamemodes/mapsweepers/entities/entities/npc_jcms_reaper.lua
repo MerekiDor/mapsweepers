@@ -49,8 +49,8 @@ if SERVER then
 		self:SetHullSizeNormal()
 		self:SetSolid(SOLID_BBOX)
 
-		self:SetMaxHealth(200)
-		self:SetHealth(200)
+		self:SetMaxHealth(175)
+		self:SetHealth(175)
 
 		self:SetMaxLookDistance(3000)
 		self:SetMoveInterval(0.01)

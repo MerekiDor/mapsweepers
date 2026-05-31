@@ -183,6 +183,7 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 
 		npcTbl.jcms_bounty = enemyData.bounty or 100
 		npcTbl.jcms_damageShare = {}
+		npcTbl.jcms_isAirUnit = enemyData.airUnit
 
 		if enemyData.danger == jcms.NPC_DANGER_BOSS or enemyData.danger == jcms.NPC_DANGER_RAREBOSS then --Make bosses stronger the more players there are
 			local npcHP, npcMHP = npc:Health(), npc:GetMaxHealth()
@@ -664,7 +665,7 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 -- // Tracking misc NPCs {{{
 
 	jcms.npc_entityAssignmentData = {
-		["npc_manhack"] = { bounty = 2, faction = "combine" },
+		["npc_manhack"] = { bounty = 10, faction = "combine", airUnit = true },
 		["npc_headcrab"] = { bounty = 1, faction = "zombie", nocollidewithnpcs = true },
 		["npc_headcrab_fast"] = { bounty = 1, faction = "zombie", nocollidewithnpcs = true },
 		["npc_headcrab_poison"] = { bounty = 2, faction = "zombie", nocollidewithnpcs = true },
@@ -694,7 +695,8 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 					ent.jcms_DontCollideWithNPCs = true
 					ent:SetCustomCollisionCheck(true)
 				end
-
+				
+				ent.jcms_isAirUnit = data.airUnit
 				jcms.npc_UpdateRelations(ent)
 			end
 				

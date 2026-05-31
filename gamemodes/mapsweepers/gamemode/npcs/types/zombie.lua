@@ -133,7 +133,8 @@ jcms.npc_commanders["zombie"] = {
 		-- // Horde Accel {{{
 			--""Resource"" used to accelerate hordes, depeletes as timer is sped up, and is replenished w/ a delay after being fully depleted.
 			if c.nextHorde < CurTime() then 
-				c.hordeScore = 200
+				c.hordeScore = 120
+				PrintMessage( HUD_PRINTTALK, "[Zombies] Horde Accel resumed" )
 			end
 
 			if c.hordeScore > 0 then
@@ -146,12 +147,16 @@ jcms.npc_commanders["zombie"] = {
 				local missionTime = jcms.director_GetMissionTime()
 				if missionTime >= 60 and (not d.debug) and (not missionData.evacuating) then
 					local oldSwarmNext = d.swarmNext
-					d.swarmNext = math.min( d.swarmNext, missionTime + 10 + #d.npcs*3 )
+					d.swarmNext = math.min( d.swarmNext, missionTime + 5 + #d.npcs*3 )
 
 					c.hordScore = c.hordeScore - (oldSwarmNext - d.swarmNext)
 				end
 
 				c.nextHorde = CurTime() + 150 -- New horde starts 2,5 minutes (150s) after last horde accel is exhausted
+
+				if c.hordeScore <= 0 then --DEBUG
+					PrintMessage( HUD_PRINTTALK, "[Zombies] Horde Accel ended" )
+				end
 			end
 		-- // }}}
 
@@ -1140,10 +1145,11 @@ jcms.npc_types.zombie_barnacle = {
 	swarmWeight = 0.0000001,
 
 	class = "npc_barnacle",
-	bounty = 20,
+	bounty = 25,
 
 	anonymous = true,
 	isStatic = true, 
+	airUnit = true, --Stop us from receiving the in-air bonus
 
 	preSpawn = function(npc)
 		-- Stick us to the ceiling
