@@ -149,7 +149,7 @@ if SERVER then
 				ply:EmitSound("buttons/blip2.wav", 65, 150)
 			end
 
-			if armour > 0 and ply.sentinel_canTeleport and not ply.sentinel_isTeleporting then
+			if armour > 0 and ply.sentinel_canTeleport and not ply.sentinel_isTeleporting and jcms.director then
 				timer.Simple(0, function() --Just checking if dmg > armour doesn't account for all of the modifiers we apply, so this guarantees accurate behaviour.
 					if not IsValid(ply) or ply:Armor() > 0 then return end 
 
@@ -353,6 +353,20 @@ if SERVER then
 			end
 		end
 	end
+
+	hook.Add("MapSweepersClassApplied", "jcms_RemoveSentinelBarrier", function(ply, class, data)
+		if class ~= "sentinel" then
+			if ply.sentinel_breathSound then
+				ply.sentinel_breathSound:Stop()
+				ply.sentinel_breathSound = nil
+			end
+
+			if IsValid(ply.jcms_sentinelBarrier) then
+				ply.jcms_sentinelBarrier:Remove()
+				ply.jcms_sentinelBarrier = nil
+			end
+		end
+	end)
 end
 
 if CLIENT then

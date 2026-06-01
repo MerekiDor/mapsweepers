@@ -60,7 +60,15 @@ function jcms.runprogress_CalculateDifficultyFromWinstreak(winstreak, totalWins)
 end
 
 function jcms.runprogress_GetDifficulty()
-	return jcms.util_IsPVP() and 1 or jcms.runprogress.difficulty
+	if jcms.specialmap_GetDifficulty then
+		return tonumber( jcms.specialmap_GetDifficulty() ) or 1
+	else
+		if jcms.util_IsPVP() then
+			return 1
+		else
+			return tonumber(jcms.runprogress.difficulty) or 1
+		end
+	end
 end
 
 function jcms.runprogress_Victory()

@@ -1219,8 +1219,13 @@ jcms.MAPGEN_CONSTRUCT_DIAMETER = math.sqrt(82411875)
 
 	function jcms.mapgen_GetMapSizeMultiplier()
 		local md = jcms.mapdata
+
 		if not md.areaTotalUnrestricted then
 			jcms.mapgen_AnalyzeMap()
+		end
+
+		if not md.valid then
+			return 1, 1, 1, 1, 1
 		end
 
 		--Area mult, volume mult

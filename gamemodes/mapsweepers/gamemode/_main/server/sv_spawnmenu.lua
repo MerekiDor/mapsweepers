@@ -1165,14 +1165,6 @@
 		},
 	}
 	
-	if jcms.inTutorial then
-		jcms.orders_tutorialInactive = {}
-		for orderName, orderData in pairs(jcms.orders) do
-			jcms.orders_tutorialInactive[ orderName ] = orderData
-			jcms.orders[ orderName ] = nil
-		end
-	end
-	
 	jcms.orders_lastused = {}
 	
 	function jcms.orders_Hash()
@@ -1241,7 +1233,7 @@
 		end
 	end
 
-	if not jcms.inTutorial then
+	if not jcms.inSpecialMap or jcms.specialmap_useOrderOverrides then
 		local orderOverridesFile = "mapsweepers/server/order_overrides.json"
 		hook.Add("InitPostEntity", "jcms_OrderOverrides", function(ply)
 			if file.Exists(orderOverridesFile, "DATA") then

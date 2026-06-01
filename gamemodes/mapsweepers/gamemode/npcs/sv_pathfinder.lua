@@ -58,14 +58,26 @@ jcms.pathfinder = jcms.pathfinder or {}
 				local maxs = bspReader.leafMaxs[leaf]
 
 				local bounds = maxs - mins
-				if bounds.x > 400 and bounds.y > 400 and bounds.z > 1500 then 
+				local passesCond = false
+				local numbersScaling = 1 -- need to squeeze airgraph into tinier maps I guess
+				if jcms.specialmap_AirgraphLeafCond then
+					passesCond, secondRtn = jcms.specialmap_AirgraphLeafCond(mins, maxs, leaf)
+
+					if type(secondRtn) == "number" then
+						numbersScaling = secondRtn
+					end
+				else
+					passesCond = bounds.x > 400 and bounds.y > 400 and bounds.z > 1500
+				end
+
+				if passesCond then 
 					local centre = (mins + maxs)/2
 					jcms.pathfinder.leafAirNodes[leaf-1] = {}
 
-					local divLen = math.max((bounds.z - 1500)/2, 1000) --1000 or enough to split into 2 nodes
-					local divCount = 1 + math.floor((bounds.z - 1500) / divLen) 
+					local divLen = math.max((bounds.z - 1500*numbersScaling)/2, 1000*numbersScaling) --1000 or enough to split into 2 nodes
+					local divCount = 1 + math.floor((bounds.z - 1500*numbersScaling) / divLen) 
 					for j=1, divCount, 1 do 
-						local position = Vector(centre.x, centre.y, mins.z + 1000 + (divLen * (j-1)))
+						local position = Vector(centre.x, centre.y, mins.z + 1000*numbersScaling + (divLen * (j-1)))
 						if bit.band(util.PointContents( position ), CONTENTS_SOLID) == 0 then
 							hullTrData.start = position
 							hullTrData.endpos = position

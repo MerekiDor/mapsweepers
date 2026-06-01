@@ -112,17 +112,21 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 -- // Spawning & Swarms {{{
 
 	function jcms.npc_GetAndIncrementSquadIndex()
-		local d = jcms.director
-		
-		if d then
-			-- Every time this function is called it counts an NPC.
-			-- If NPC count goes above [jcms.npcSquadSize], counter resets to 0
-			-- and a new squad is created. Basically this makes sure that all NPCs spawn in squads of [jcms.npcSquadSize].
-			d.squadIndex_npcCount = ( (d.squadIndex_npcCount or 0) + 1) % jcms.npcSquadSize
-			d.squadIndex = (d.squadIndex or 0) + (d.squadIndex_npcCount == 0 and 1 or 0)
-			return d.squadIndex
+		if jcms.specialmap_GetAndIncrementSquadIndex then
+			return jcms.specialmap_GetAndIncrementSquadIndex() or 0
 		else
-			return 0
+			local d = jcms.director
+			
+			if d then
+				-- Every time this function is called it counts an NPC.
+				-- If NPC count goes above [jcms.npcSquadSize], counter resets to 0
+				-- and a new squad is created. Basically this makes sure that all NPCs spawn in squads of [jcms.npcSquadSize].
+				d.squadIndex_npcCount = ( (d.squadIndex_npcCount or 0) + 1) % jcms.npcSquadSize
+				d.squadIndex = (d.squadIndex or 0) + (d.squadIndex_npcCount == 0 and 1 or 0)
+				return d.squadIndex
+			else
+				return 0
+			end
 		end
 	end
 
@@ -239,8 +243,14 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 		
 		jcms.npc_UpdateRelations(npc)
 
-		if jcms.director and not enemyData.anonymous and isNPC then
-			table.insert(jcms.director.npcs, npc)
+		if isNPC then
+			if jcms.specialmap_TrackNPC then
+				jcms.specialmap_TrackNPC(npc)
+			end
+
+			if jcms.director and not enemyData.anonymous then
+				table.insert(jcms.director.npcs, npc)
+			end
 		end
 
 		hook.Run("MapSweepersNPCSpawned", npc, enemyType, enemyData, pos, fromPortal)
@@ -774,7 +784,7 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 		end
 	end
 
-	function jcms.npc_airThink(npc) 
+	function jcms.npc_airThink(npc)
 		if not jcms.pathfinder.airNodes then return end
 
 		local enemy = npc:GetEnemy()

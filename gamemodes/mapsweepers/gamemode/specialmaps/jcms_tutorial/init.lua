@@ -22,10 +22,18 @@
 -- This code is 100%, pure and refined ass.
 -- it only ever loads on jcms_tutorial, though.
 
+jcms.specialmap_missionType = "tutorialmission"
+
 hook.Add("InitPostEntity", "jcms_TutorialBuild", function()
 	jcms.tutorialPhase = 0
 	jcms.tutorialEnts = {}
 	
+	jcms.orders_tutorialInactive = {}
+	for orderName, orderData in pairs(jcms.orders) do
+		jcms.orders_tutorialInactive[ orderName ] = orderData
+		jcms.orders[ orderName ] = nil
+	end
+
 	for i, ent in pairs(ents.GetAll()) do
 		local name = ent:GetName()
 		if #name > 0 then
@@ -422,3 +430,25 @@ hook.Add("MapSweepersPlayerOrder", "jcms_TutorialShootingRange", function(ply, o
 		end
 	end
 end)
+
+function jcms.specialmap_CustomSpawnFunction(ply, transition)
+	ply.jcms_justSpawned = true
+	ply:SetNWString("class", "infantry")
+	jcms.playerspawn_Sweeper(ply, ply:GetPos(), true)
+	ply:SetNWInt("jcms_cash", 0)
+	ply:SetTeam(1)
+	ply.jcms_justSpawned = false
+	jcms.net_SendRespawnEffect(ply)
+end
+
+function jcms.specialmap_CustomRespawnFunc(ply)
+	ply.jcms_justSpawned = true
+	ply:SetNWString("class", "infantry")
+	jcms.playerspawn_Sweeper(ply, jcms.tutorialPos, true)
+	ply:SetTeam(1)
+	ply.jcms_justSpawned = false
+	
+	if jcms.tutorialPhase == 5 then
+		ply:SetNWInt("jcms_cash", 500)
+	end
+end

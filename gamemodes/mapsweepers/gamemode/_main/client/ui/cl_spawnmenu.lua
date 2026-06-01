@@ -634,18 +634,10 @@ end
 			surface.SetAlphaMultiplier(0.5)
 		end
 
-		if not jcms.classmats then
-			jcms.classmats = {}
-		end
-
 		if canShowInfo then
 			local tgclass = ply:GetNWString("jcms_class")
 
-			if not jcms.classmats[ tgclass ] then
-				jcms.classmats[ tgclass ] = Material("jcms/classes/"..tgclass..".png")
-			end
-
-			local classmat = evacuated and jcms.mat_evac or jcms.classmats[ tgclass ]
+			local classmat = evacuated and jcms.mat_evac or jcms.mat_GetClassMat(tgclass)
 			if classmat and not classmat:IsError() then
 				surface.SetMaterial(classmat)
 				surface.SetDrawColor(jcms.color_bright)

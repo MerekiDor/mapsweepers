@@ -22,12 +22,26 @@ GM.Name = "Map Sweepers"
 GM.Author = "Octantis Addons"
 
 jcms = jcms or {}
-jcms.inTutorial = game.GetMap() == "jcms_tutorial"
 jcms.vectorOrigin = Vector(0, 0, 0)
 jcms.vectorUp = Vector(0, 0, 1)
 jcms.vectorOne = Vector(1, 1, 1)
 jcms.vectorInvalid = Vector(math.huge, math.huge, math.huge)
 
+jcms.inSpecialMap = false
+if file.Exists("gamemodes/mapsweepers/gamemode/specialmaps/" .. game.GetMap(), "GAME") then
+	jcms.inSpecialMap = game.GetMap()
+	print("Found special map: '" .. jcms.inSpecialMap .. "'")
+
+	local path = "specialmaps/" .. jcms.inSpecialMap
+	if SERVER then
+		include(path .. "/init.lua")
+		AddCSLuaFile(path .. "/cl_init.lua")
+	end
+	
+	if CLIENT then
+		include(path .. "/cl_init.lua")
+	end
+end
 
 local pmt = FindMetaTable("Player")
 local emt = FindMetaTable("Entity")
@@ -508,6 +522,12 @@ local nmt = FindMetaTable("NPC")
 				stats.numshots = gunData.Primary.NumShots or 1
 
 				stats.damage = gunData.Primary.Damage or 0
+
+				if gunData.IsTFAWeapon then
+					--stats.damage = stats.damage / math.sqrt(stats.numshots)
+					-- TODO investigate whatever the hell TFA is doing with numshots, it's definitely distributing damage but non-linearly
+				end
+
 				stats.firerate = 60 / (tonumber(gunData.Primary.RPM) or 1)
 				stats.automatic = gunData.Primary.Automatic
 				stats.accuracy = gunData.Primary.Spread or gunData.Primary.SpreadHip or 0

@@ -277,7 +277,7 @@ if SERVER then
 			net.WriteEntity( game.GetWorld() )
 			net.WriteUInt(WLD_OBJECTIVES_AND_DAMAGE, bits_wld)
 			net.WriteBool(true)
-			net.WriteString( (jcms.director and jcms.director.missionType) or "tutorialmission" )
+			net.WriteString( jcms.director and jcms.director.missionType or jcms.specialmap_missionType or "error" )
 			
 			net.WriteUInt(#objectives, 4)
 			for i, obj in ipairs(objectives) do
@@ -573,7 +573,7 @@ if SERVER then
 		end
 	end
 
-	function jcms.net_SendTip(to, isMission, cue, progress)
+	function jcms.net_SendTip(to, isMission, cue, progress, format)
 		net.Start("jcms_msg")
 			net.WriteBool(false)
 			net.WriteEntity(game.GetWorld())
@@ -584,6 +584,20 @@ if SERVER then
 			if isMission then --Missions cues still have unknown data
 				net.WriteString(cue)
 				net.WriteFloat( math.Clamp(tonumber(progress) or 0, 0, 1) )
+
+				if type(format) == "table" then
+					net.WriteBool(true)
+					net.WriteUInt(#format, 4)
+					for i, fmt in ipairs(format) do
+						net.WriteString(fmt)
+					end
+				elseif type(format) == "string" then
+					net.WriteBool(true)
+					net.WriteUInt(1, 4)
+					net.WriteString(format)
+				else
+					net.WriteBool(false)
+				end
 			else --Hint cues are predefined.
 				net.WriteBool(false)
 				net.WriteUInt(cue, 7)
@@ -1229,10 +1243,19 @@ if CLIENT then
 
 			if isTip then
 				local isMission = net.ReadBool()
-				local text 
 				if isMission then 
-					text = net.ReadString()
-					jcms.hud_UpdateTip(isMission, text, net.ReadFloat())
+					local text = net.ReadString()
+					local progress = net.ReadFloat()
+					local format
+					if net.ReadBool() then
+						format = {}
+						local formatCount = net.ReadUInt(4)
+						for i=1, formatCount do
+							local fmt = net.ReadString()
+							table.insert(format, fmt)
+						end
+					end
+					jcms.hud_UpdateTip(isMission, text, progress, format)
 				else
 					local isOrderMessage = net.ReadBool()
 					if isOrderMessage then
@@ -1240,7 +1263,7 @@ if CLIENT then
 						local format = net.ReadString()
 						jcms.hud_ShowOrderMessage(type, format)
 					else
-						text = jcms.hints[net.ReadUInt(7)]
+						local text = jcms.hints[net.ReadUInt(7)]
 						jcms.hud_UpdateTip(isMission, text)
 					end
 				end

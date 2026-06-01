@@ -204,11 +204,6 @@
 
 	function jcms.hud_npc_DrawSweeperStatus(col, colAlt)
 		local myPVPTeam = jcms.locPly:GetNWInt("jcms_pvpTeam", -1)
-
-		if not jcms.classmats then
-			jcms.classmats = {}
-		end
-		
 		local scoreboardAnim = 0
 
 		local sw = ScrW()
@@ -226,9 +221,6 @@
 			local y = Lerp(scoreboardAnim, 16, 100 + i*64)
 			if sweeper:Alive() and sweeper:GetObserverMode() == OBS_MODE_NONE then
 				local class = sweeper:GetNWString("jcms_class", "infantry")
-				if not jcms.classmats[ class ] then
-					jcms.classmats[ class ] = Material("jcms/classes/"..class..".png")
-				end
 				
 				local healthFrac = math.Clamp(sweeper:Health()/sweeper:GetMaxHealth(), 0, 1)
 				local armorFrac = math.Clamp(sweeper:Armor()/sweeper:GetMaxArmor(), 0, 1)
@@ -252,7 +244,12 @@
 				if sweeper:Team() == 2 then
 					draw.SimpleText("NPC", "jcms_small_bolder", x, y + 16, colAlt, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 				else
-					surface.SetMaterial(jcms.classmats[class])
+					local classmat = jcms.mat_GetClassMat(class)
+					if not classmat:IsError() then
+						classmat = jcms.mat_GetClassMat("recon")
+					end
+					
+					surface.SetMaterial(classmat)
 					if armorFrac <= 0 then
 						surface.SetDrawColor(col)
 						surface.DrawTexturedRectRotated(x + math.random()*4 - 2, y + 16 + math.random()*4 - 2, 32, 32, math.random()*2-1)
@@ -417,19 +414,13 @@
 		local tg = jcms.locPly:GetObserverTarget()
 		if IsValid(tg) and tg:IsPlayer() then
 			local tgclass = tg:GetNWString("jcms_class", "infantry")
-			
-			if not jcms.classmats then
-				jcms.classmats = {}
-			end
-
-			if not jcms.classmats[ tgclass ] then
-				jcms.classmats[ tgclass ] = Material("jcms/classes/"..tgclass..".png")
-			end
 
 			surface.SetDrawColor(col)
 			local tw = draw.SimpleText(language.GetPhrase("jcms.spectating") .. " " .. tg:Nick(), "jcms_big", ScrW()/2 + 16, ScrH() - 84, col, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
-			if not jcms.classmats[ tgclass ]:IsError() then
-				surface.SetMaterial(jcms.classmats[ tgclass ])
+			
+			local classmat = jcms.mat_GetClassMat(tgclass)
+			if not classmat:IsError() then
+				surface.SetMaterial(classmat)
 				surface.DrawTexturedRectRotated(ScrW()/2 - tw/2 - 16, ScrH() - 84 - 16, 32, 32, 0)
 			end
 		

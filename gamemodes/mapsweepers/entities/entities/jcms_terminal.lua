@@ -147,6 +147,17 @@ jcms.terminal_modelInfos = {
 		fwd = 13,
 		rotateUp = 90,
 		rotateRight = -90
+	},
+
+	["models/props_combine/combinebutton.mdl"] = {
+		theme = "jcorp",
+		width = 720,
+		height = 480,
+		up = 8,
+		right = 10,
+		fwd = 5,
+		rotateUp = 90,
+		rotateRight = -48
 	}
 }
 

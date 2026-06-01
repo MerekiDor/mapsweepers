@@ -69,11 +69,6 @@ include "_main/client/cl_bulletshields.lua"
 	end
 -- // }}}
 
-
-if jcms.inTutorial then
-	include "_main/client/cl_tutorial.lua"
-end 
-
 --Optimisation. Getting locPly from a lua table is cheaper than the function.
 jcms.locPly = jcms.locPly or NULL
 hook.Add("InitPostEntity", "jcms_cacheValues", function()

@@ -351,13 +351,7 @@ jcms.offgame = jcms.offgame or NULL
 				pnl.plyPnlSweeper:SetPaintBackground(false)
 				pnl.plyPnlSweeper.list = {}
 				pnl.plyPnlSweeper.elementDict = {}
-				pnl.plyPnlSweeper.classMats = {}
 				pnl.plyPnlSweeper.gunStats = {}
-				for class, data in pairs(jcms.classes) do
-					if data.jcorp then
-						pnl.plyPnlSweeper.classMats[ class ] = Material("jcms/classes/" .. class .. ".png")
-					end
-				end
 				function pnl.plyPnlSweeper:Think()
 					local lowres = jcms.util_IsLowRes()
 
@@ -404,7 +398,6 @@ jcms.offgame = jcms.offgame or NULL
 								elem:SetSize(self:GetWide(), elemSize)
 								elem.Paint = jcms.paint_PlayerLobby
 								elem.player = ply
-								elem.classMats = self.classMats
 								elem.gunStats = self.gunStats
 								elem.lowres = lowres
 								self.elementDict[ ply ] = elem
@@ -480,7 +473,6 @@ jcms.offgame = jcms.offgame or NULL
 								elem:SetSize(self:GetWide(), 24)
 								elem.Paint = jcms.paint_PlayerLobbyNPC
 								elem.player = ply
-								elem.classMats = self.classMats
 								elem.gunStats = self.gunStats
 								self.elementDict[ ply ] = elem
 
@@ -4193,6 +4185,77 @@ jcms.offgame = jcms.offgame or NULL
 					self:Remove()
 					jcms.modal_classChange_open = false
 				end
+			end
+		end
+
+		function jcms.offgame_ModalLoadoutSelector()
+			local frame = GetHUDPanel():Add("DFrame")
+			frame:SetSize(720, 480)
+			frame:SetDraggable(false)
+			frame:SetBackgroundBlur(true)
+			frame:SetDrawOnTop(true)
+			frame:ShowCloseButton(false)
+			frame:SetTitle("")
+			frame:MakePopup()
+			frame.Paint = jcms.paint_ModalChangeLoadout
+
+			frame:Center()
+
+			local close = frame:Add("DButton")
+			close:SetText("x")
+			close:SetSize(64, 24)
+			close:SetPos(frame:GetWide() - close:GetWide() - 8, 8)
+			function close:DoClick()
+				frame:Remove()
+				jcms.modal_classChange_open = false
+			end
+			close.Paint = jcms.paint_ButtonFilled
+
+			local gunpad = 8
+			local gunsize = 78
+			
+			local function wbtnFunc(wbtn)
+				if jcms.locPly:HasWeapon(wbtn.gunClass) then
+					RunConsoleCommand("jcms_removeweapon", wbtn.gunClass)
+					wbtn.owned = 0
+				else
+					RunConsoleCommand("jcms_giveweapon", wbtn.gunClass)
+					wbtn.owned = 1
+				end
+			end
+
+			local allguns = frame:Add("DScrollPanel")
+			allguns:SetPos(8, 48)
+			allguns:SetSize(frame:GetWide() - allguns:GetX() - 8, frame:GetTall() - allguns:GetY() - 8)
+
+			local sortedWeaponsList = weapons.GetList()
+			table.sort(sortedWeaponsList, function(first, last)
+				return (first.ClassName or "") < (last.ClassName or "")
+			end)
+
+			local columns = math.floor( allguns:GetWide() / (gunsize + gunpad) )
+			for i, w in ipairs( sortedWeaponsList ) do
+				local col = (i-1) % columns
+				local row = math.floor( (i-1) / columns )
+				local gunstats = jcms.gunstats_Get(w.ClassName)
+
+				if gunstats then
+					local wbtn = allguns:Add("DButton")
+					wbtn:SetPos(col * (gunsize + gunpad), row * (gunsize + gunpad))
+					wbtn:SetSize(gunsize, gunsize)
+					wbtn.Paint = jcms.paint_Gun
+					wbtn.gunClass = w.ClassName
+					wbtn.gunStats = jcms.gunstats_Get(wbtn.gunClass)
+					wbtn.cost = -1
+					wbtn.DoClick = wbtnFunc
+					wbtn.owned = jcms.locPly:HasWeapon(wbtn.gunClass) and 1 or 0
+				end
+			end
+
+			if IsValid(allguns.VBar) then
+				allguns.VBar.Paint = BLANK_DRAW
+				allguns.VBar:SetHideButtons(true)
+				allguns.VBar.btnGrip.Paint = jcms.paint_ScrollGrip
 			end
 		end
 

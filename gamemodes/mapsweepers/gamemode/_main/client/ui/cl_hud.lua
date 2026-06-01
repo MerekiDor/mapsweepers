@@ -40,6 +40,19 @@
 
 -- // }}}
 
+-- // Class Mats {{{
+
+	jcms.classMats = jcms.classMats or {}
+	function jcms.mat_GetClassMat(class)
+		if not jcms.classMats[ class ] then
+			jcms.classMats[ class ] = Material("jcms/classes/"..class..".png")
+		end
+
+		return jcms.classMats[ class ]
+	end
+
+-- }}}
+
 -- // Colors {{{
 
 	if not jcms.color_bright then
@@ -2011,13 +2024,20 @@
 	jcms.hud_tip_mission_fadetime = 0.35
 	jcms.hud_tip_mission_progress = 0
 
-	function jcms.hud_UpdateTip(isMission, text, missionProgress)
+	function jcms.hud_UpdateTip(isMission, text, missionProgress, formatOptions)
 		local time = CurTime()
 		text = language.GetPhrase( tostring(text) )
 
 		if isMission then
 			jcms.hud_tip_mission_progress = math.Clamp( tonumber(missionProgress) or 0, 0, 1 )
-			jcms.hud_tip_mission = string.format(text, jcms.hud_tip_mission_progress * 100 )
+
+			if formatOptions then
+				local s, rtn = pcall(string.format, text, unpack(formatOptions))
+				jcms.hud_tip_mission = s and rtn or text
+			else
+				local s, rtn = pcall(string.format, text, jcms.hud_tip_mission_progress * 100)
+				jcms.hud_tip_mission = s and rtn or text
+			end
 
 			if time > jcms.hud_tip_mission_time and time < jcms.hud_tip_mission_time + jcms.hud_tip_mission_duration then
 				jcms.hud_tip_mission_time = time
@@ -3204,7 +3224,8 @@
 		[3] = "#jcms.ordermsg_obstructed",
 		[4] = "#jcms.ordermsg_invalidtarget",
 		[5] = "#jcms.ordermsg_badplacement",
-		[6] = "#jcms.ordermsg_cooldown"
+		[6] = "#jcms.ordermsg_cooldown",
+		[7] = "#jcms.ordermsg_notallowed"
 	}
 
 	function jcms.hud_ShowOrderMessage(type, format)

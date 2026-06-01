@@ -355,6 +355,14 @@
 		return true
 	end
 
+	function jcms.paint_ModalChangeLoadout(p, w, h)
+		Derma_DrawBackgroundBlur(p, SysTime() - 1)
+		jcms_Modal(p, w, h)
+		draw.SimpleText("#jcms.editloadout", "jcms_big", w/2, 8, jcms.color_bright, TEXT_ALIGN_CENTER)
+
+		return true
+	end
+
 	function jcms.paint_ModalGameBranch(p, w, h)
 		local hasNMNavAddon = p.hasNMNavAddon
 		Derma_DrawBackgroundBlur(p, 0)
@@ -523,7 +531,7 @@
 			surface.SetDrawColor(jcms.color_bright)
 			if pvpTeam > 0 then
 				if sameTeamAsMe then
-					surface.SetMaterial(p.classMats[ desiredclass ])
+					surface.SetMaterial(jcms.mat_GetClassMat(desiredclass))
 					surface.DrawTexturedRect(baseX + iconSize + 4, baseY + 4, iconSize, iconSize)
 				else
 					draw.SimpleText("?", "jcms_hud_small", baseX + iconSize*1.7, baseY + iconSize*0.6, jcms.color_pulsing, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
@@ -534,7 +542,7 @@
 				surface.SetMaterial( jcms.hud_GetPVPTeamMat(pvpTeam) )
 				surface.DrawTexturedRect(baseX + 4, baseY + 4, iconSize, iconSize)
 			else
-				surface.SetMaterial(p.classMats[ desiredclass ])
+				surface.SetMaterial(jcms.mat_GetClassMat(desiredclass))
 				surface.DrawTexturedRect(baseX + 4, baseY + 4, iconSize, iconSize)
 				surface.SetAlphaMultiplier(1)
 			end
@@ -804,23 +812,27 @@
 		
 		surface.SetDrawColor(clr)
 		
-		if canAfford then
-			drawFilledPolyButton(w/2, h-16, w/2, 16, 4)
-		else
-			drawHollowPolyButton(w/2, h-16, w/2, 16, 4)
+		if cost > 0 then
+			if canAfford then
+				drawFilledPolyButton(w/2, h-16, w/2, 16, 4)
+			else
+				drawHollowPolyButton(w/2, h-16, w/2, 16, 4)
+			end
 		end
 		
 		if p.count and p.count > 1 then
 			draw.SimpleTextOutlined("+"..(p.count-1), "jcms_medium", 4, h-4, clr, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, jcms.color_dark)
 		elseif p.owned and p.owned > 0 then
-			draw.SimpleTextOutlined("x"..p.owned, "jcms_medium", w-4, h-16, clr, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM, 1, jcms.color_dark)
+			draw.SimpleTextOutlined("x"..p.owned, "jcms_medium", w-4, h-(cost>0 and 16 or 4), clr, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM, 1, jcms.color_dark)
 		end
 		
 		surface.SetDrawColor(clr.r, clr.g, clr.b, (p.owned and p.owned>0) and 255 or (canAfford and 150 or 25))
 		drawHollowPolyButton(0, 0, w, h, 4)
 		
-		draw.SimpleText(jcms.util_CashFormat(cost), "Default", w*3/4, h-8, canAfford and jcms.color_dark or clr, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-		
+		if cost > 0 then
+			draw.SimpleText(jcms.util_CashFormat(cost), "Default", w*3/4, h-8, canAfford and jcms.color_dark or clr, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		end
+
 		if jcms.weapon_favourites[ p.gunClass ] then
 			draw.SimpleTextOutlined("*", "jcms_medium", 3, -1, jcms.color_alert, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, jcms.color_dark)
 		end
@@ -2604,16 +2616,7 @@
 				if p.stats.wasSweeper then
 					if IsValid( p.stats.ply ) then
 						local tgclass = p.stats.class or p.stats.ply:GetNWString("jcms_class", "infantry")
-		
-						if not jcms.classmats then
-							jcms.classmats = {}
-						end
-			
-						if not jcms.classmats[ tgclass ] then
-							jcms.classmats[ tgclass ] = Material("jcms/classes/"..tgclass..".png")
-						end
-		
-						local classmat = jcms.classmats[ tgclass ]
+						local classmat = jcms.mat_GetClassMat(tgclass)
 		
 						if classmat and not classmat:IsError() then
 							surface.SetMaterial(classmat)

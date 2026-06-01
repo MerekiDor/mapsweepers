@@ -349,6 +349,14 @@
 	end
 
 	function jcms.mission_End(victory, aliveTeams)
+		if jcms.specialmap_HandleMissionEnd then
+			local performNormalEnding = jcms.specialmap_HandleMissionEnd(victory, aliveTeams)
+
+			if not performNormalEnding then
+				return
+			end
+		end
+
 		jcms.leaderboard_RoundEnd(jcms.util_IsPVP(), victory, aliveTeams)
 
 		-- Voting {{{
@@ -705,7 +713,7 @@
 			jcms.director_stats_SetLockedState(jcms.director, ply, "evacuated")
 		end
 
-		if jcms.director or jcms.inTutorial then
+		if jcms.director or jcms.inSpecialMap then
 			local position = ply:GetPos()
 			ply:KillSilent()
 			ply.jcms_justSpawned = true

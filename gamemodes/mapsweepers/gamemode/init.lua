@@ -130,11 +130,6 @@ AddCSLuaFile "_main/client/cl_codex.lua"
 AddCSLuaFile "npcs/cl_bestiary.lua"
 AddCSLuaFile "_main/client/cl_addoncompatibility.lua"
 
-if jcms.inTutorial then
-	include "_main/server/sv_tutorial.lua"
-	AddCSLuaFile "_main/client/cl_tutorial.lua"
-end
-
 -- // Sounds {{{
 
 	sound.Add( {
@@ -889,7 +884,7 @@ end
 
 					ent.jcms_consecMisses = -2
 				end
-			else
+			elseif not jcms.inSpecialMap then
 				-- Misses tracker for the announcer
 				local time = CurTime()
 				if (not ent.jcms_lastMissTime) or (time - ent.jcms_lastMissTime > 0.75) then
@@ -1052,14 +1047,8 @@ end
 	end
 
 	function GM:PlayerSpawn(ply, transition)
-		if jcms.inTutorial then
-			ply.jcms_justSpawned = true
-			ply:SetNWString("class", "infantry")
-			jcms.playerspawn_Sweeper(ply, ply:GetPos(), true)
-			ply:SetNWInt("jcms_cash", 0)
-			ply:SetTeam(1)
-			ply.jcms_justSpawned = false
-			jcms.net_SendRespawnEffect(ply)
+		if jcms.specialmap_CustomSpawnFunction then
+			jcms.specialmap_CustomSpawnFunction(ply, transition)
 		else
 			ply:SetMaterial("")
 			ply:SetColor(Color(255, 255, 255))
@@ -1257,19 +1246,11 @@ end
 		if not jcms.director then
 			if CurTime() - ply:GetNWFloat("jcms_lastDeathTime", 0) > 5 then
 				ply:Spawn()
-				if jcms.mapdata.valid then
-					jcms.playerspawn_Menu(ply)
+				if jcms.specialmap_CustomRespawnFunc then
+					jcms.specialmap_CustomRespawnFunc(ply)
 				else
-					if jcms.inTutorial then
-						ply.jcms_justSpawned = true
-						ply:SetNWString("class", "infantry")
-						jcms.playerspawn_Sweeper(ply, jcms.tutorialPos, true)
-						ply:SetTeam(1)
-						ply.jcms_justSpawned = false
-						
-						if jcms.tutorialPhase == 5 then
-							ply:SetNWInt("jcms_cash", 500)
-						end
+					if jcms.mapdata.valid then
+						jcms.playerspawn_Menu(ply)
 					else
 						jcms.playerspawn_Error(ply)
 					end
@@ -1445,6 +1426,8 @@ end
 
 -- // Maps {{{
 	jcms.mapBlacklist = { --CSS and TF2 maps have navmeshes, but they're incompatible with gmod.
+		--Map Sweepers
+			["jcms_firingrange"] = true,
 		--CSS
 			["cs_assault"] = true,
 			["cs_compound"] = true,
@@ -2442,6 +2425,38 @@ end
 		end
 	end)
 
+	concommand.Add("jcms_giveweapon", function(ply, cmd, args)
+		if not ply:IsPlayer() then return end
+
+		local allowed = false
+		if not allowed and jcms.specialmap_AllowWeaponManipulate then
+			allowed = jcms.specialmap_AllowWeaponManipulate(ply, args[1], false)
+		else
+			allowed = ply:IsAdmin()
+		end
+
+		if allowed then
+			ply.jcms_canGetWeapons = true
+			ply:Give(args[1])
+			ply.jcms_canGetWeapons = false
+		end
+	end)
+
+	concommand.Add("jcms_removeweapon", function(ply, cmd, args)
+		if not ply:IsPlayer() then return end
+		
+		local allowed = false
+		if jcms.specialmap_AllowWeaponManipulate then
+			allowed = jcms.specialmap_AllowWeaponManipulate(ply, args[1], true)
+		else
+			allowed = ply:IsAdmin()
+		end
+
+		if allowed then
+			ply:StripWeapon(args[1])
+		end
+	end)
+
 -- // }}}
 
 -- // PVP {{{
@@ -2790,7 +2805,7 @@ end
 		["doom_bloodpunch"] = true
 	}
 	
-	if not jcms.inTutorial then
+	if not jcms.inSpecialMap or jcms.specialmap_useWeaponPrices then
 		local weaponPricesFile = "mapsweepers/server/weapon_prices.json"
 		hook.Add("InitPostEntity", "jcms_WeaponPrices", function(ply)
 

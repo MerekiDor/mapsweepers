@@ -68,6 +68,7 @@ function ENT:SetPosToSentinel()
 	local pos, ang = ply:WorldSpaceCenter(), ply:EyeAngles()
 	local fwd = ang:Forward()
 	local up = ang:Up()
+	ang:RotateAroundAxis(up, 180)
 	
 	fwd:Mul(48 + math.abs(ang.p)/180*24)
 	pos:Add(fwd)
@@ -190,6 +191,7 @@ if CLIENT then
 
 	function ENT:DrawTranslucent()
 		self:SetPosToSentinel()
+		self:RemoveAllDecals()
 		self:SetupBones()
 
 		local damageDelta = 1 - 100 / (100 + self.damageDelta)

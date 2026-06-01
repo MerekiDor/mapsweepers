@@ -85,7 +85,7 @@ local prefabs = jcms.prefabs
 							local prop = ents.Create("item_item_crate")
 							prop:SetPos(extrapos)
 							prop:SetAngles(extraangle)
-							prop:SetKeyValue("ItemClass", "item_dynamic_resupply")
+							prop:SetKeyValue("ItemClass", "jcms_dynamicsupply")
 							prop:SetKeyValue("ItemCount", math.random()<0.1 and 2 or 1)
 							prop:Spawn()
 						else
