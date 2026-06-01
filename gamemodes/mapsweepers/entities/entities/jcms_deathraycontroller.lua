@@ -110,7 +110,7 @@ if SERVER then
 					priority = 1500^2 - self:DistanceSqrToTrace(tgpos, tr)/2
 				end
 			else
-				priority = (1.5 * math.max(target:GetMaxHealth() - 5, 10)) - self:DistanceSqrToTrace(tgpos, tr)/2
+				priority = (2 * math.max(target:GetMaxHealth() - 15, 10)) - self:DistanceSqrToTrace(tgpos, tr)^(2/3)
 			end
 			
 			--TODO: This trace is probably really expensive given how often this runs.

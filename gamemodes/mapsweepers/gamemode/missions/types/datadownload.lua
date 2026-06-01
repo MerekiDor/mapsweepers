@@ -177,7 +177,7 @@ jcms.missions.datadownload = {
 					computer:SetNWBool("jcms_terminal_locked", false)
 					jcms.terminal_ToPurpose(computer)
 
-					computer.jcms_datadownload_cost = jcms.util_IsPVP() and 1000 or 500
+					computer.jcms_datadownload_cost = jcms.util_IsPVP() and 1000 or 0
 				
 					function computer:jcms_terminal_Callback(cmd, data, ply)
 						if tonumber(data) and not missionData.defenseOngoing and not missionData.defenseCompleted then
@@ -274,8 +274,20 @@ jcms.missions.datadownload = {
 			-- // }}} 
 		-- // }}}
 
-		jcms.mapgen_PlaceNaturals(jcms.mapgen_AdjustCountForMapSize(24), weightOverride)
-		jcms.mapgen_PlaceEncounters()
+		--Nothing relating to resource collection (i.e. mafia lockers, cash caches). Don't want people to spend ages searching.
+		local allowedPrefabs = {
+			["emplacement"] = true,
+			["wall_charger"] = true,
+			["gambling"] = true,
+			["oil"] = true
+		}
+		
+		local function weightOverride(name, ogWeight)
+			return (allowedPrefabs[name] and ogWeight) or 0
+		end
+
+		jcms.mapgen_PlaceNaturals(jcms.mapgen_AdjustCountForMapSize(12), weightOverride)
+		--jcms.mapgen_PlaceEncounters()
 	end,
 
 	tagEntities = function(director, missionData, tags)
@@ -283,7 +295,12 @@ jcms.missions.datadownload = {
 
 		for i, computer in ipairs(missionData.computers) do
 			if IsValid(computer) then
-				tags[computer] = { name = "#jcms.obj_datadownloadcomputer", moving = false, active = tagsActive, landmarkIcon = "computer" }
+				tags[computer] = { 
+					name = "#jcms.obj_datadownloadcomputer", 
+					alwaysVisible = true,
+					moving = false, 
+					active = tagsActive, 
+					landmarkIcon = "computer" }
 			end
 		end
 
@@ -291,7 +308,7 @@ jcms.missions.datadownload = {
 			if IsValid(pillar) then
 				tags[pillar] = { 
 					name = "^" .. pillar:GetLabelSymbol(),
-					alwaysVisible = missionData.phase == 2,
+					alwaysVisible = true,
 					moving = false, 
 					active = tagsActive, 
 					locatorIgnore = true,
@@ -396,6 +413,10 @@ jcms.missions.datadownload = {
 	think = function(d)
 		local md = d.missionData
 		md.timeEstimate = 0
+
+		if md.phase ~= 2 and not md.evacuating then --No waves until we start the defense
+			d.swarmNext = jcms.director_GetMissionTime() + 2
+		end
 		
 		local pillarsShouldBeActive = false
 		local downloadSucceeded = false
@@ -430,14 +451,20 @@ jcms.missions.datadownload = {
 				local activePillars = 0
 				for i, pillar in ipairs(md.pillars) do 
 					totalPillars = totalPillars + 1
-					if not pillar:GetIsDisrupted() then activePillars = activePillars + 1 end
+					if not pillar:GetIsDisrupted() then 
+						activePillars = activePillars + 1 
+
+						for i, ply in player.Iterator() do 
+							jcms.giveCash(ply, 10)
+						end
+					end
 				end
 
 				if activePillars > 0 then
 					--5 Minutes at max power, scaling with difficulty
 					--Fewer pillars exponentially slows it.
 
-					local progressPower = (activePillars / totalPillars)^2
+					local progressPower = 1 --(activePillars / totalPillars)^2
 
 					if md.powerMultiplier ~= 0 and md.powerMultiplier ~= progressPower then
 						if progressPower < md.powerMultiplier then
@@ -456,11 +483,12 @@ jcms.missions.datadownload = {
 					md.powerMultiplier = progressPower
 
 					local scalar = (#d.npcs > 10) and jcms.runprogress_GetDifficulty() or 0.5
-					progressPower = progressPower * 1/((60*4.5) * (scalar^(3/4)) ) * (jcms.util_IsPVP() and 3.25 or 1)
+					progressPower = progressPower * 1/((60*4) * (scalar^(3/4)) ) * (jcms.util_IsPVP() and 3.25 or 1)
 
 					md.defenseProgress = math.Clamp(md.defenseProgress + progressPower, 0, 1)
 					md.timeEstimate = math.ceil( (1 - md.defenseProgress) / progressPower )
 
+					-- Completed the defense
 					if md.defenseProgress >= 1 then
 						md.uploadsCompleted = md.uploadsCompleted + 1 
 
@@ -550,7 +578,22 @@ jcms.missions.datadownload = {
 			end
 		end
 	end,
+	
+	calcBountyMul = function(d, missionData) --No bounty until evac
+		return missionData.evacuating and 1 or 0 --((missionData.phase == 2 and not missionData.evacuating) and 0) or 1
+	end,
+	
+	swarmCalcCost = function(director, baseCost)
+		local missionData = director.missionData
+		
+		if missionData.phase == 2 or missionData.evacuating then
+			return baseCost + 4
+		end
 
+		return 0
+	end,
+
+	--[[
 	swarmCalcCost = function(director, baseCost)
 		local md = director.missionData
 		
@@ -570,7 +613,7 @@ jcms.missions.datadownload = {
 		if phase == 2 then
 			return math.max(d.swarmDanger, jcms.NPC_DANGER_STRONG) -- Always strongs during defense
 		end
-	end,
+	end,--]]
 
 	--[[
 	swarmCalcBossCount = function(d, swarmCost)
@@ -579,26 +622,18 @@ jcms.missions.datadownload = {
 		end
 	end,--]]
 
+	
 	npcTypeQueueCheck = function(d, swarmCost, dangerCap, npcType, npcData, basePassesCheck)
-		local phase = d.missionData.phase
 		local weightMul
 
-		if phase == 1 then
-			-- More cops and hunters.
-			weightMul = ({
-				["combine_metrocop"] = 1.5,
-				["combine_hunter"] = 1.75
-			})[npcType]
-		elseif phase == 2 then
-			-- More hunters, less BS enemies during the defense
-			weightMul = ({
-				["combine_metrocop"] = 1.66,
-				["combine_hunter"] = 2.5,
-				["combine_suppressor"] = 0.5,
-				["combine_sniper"] = 0.75,
-				["combine_gunship"] = 0.5 --This isn't going to do anything because boss-spawns are guaranteed and combine only have one type - J
-			})[npcType]
-		end
+		-- More hunters, less BS enemies during the defense
+		weightMul = ({
+			["combine_metrocop"] = 1.66,
+			["combine_hunter"] = 2.5,
+			["combine_suppressor"] = 0.5,
+			["combine_sniper"] = 0.75,
+			["combine_gunship"] = 0.5 --This isn't going to do anything because boss-spawns are guaranteed and combine only have one type - J
+		})[npcType]
 
 		if weightMul then
 			return basePassesCheck, jcms.npc_GetScaledSwarmWeight(npcData) * weightMul
