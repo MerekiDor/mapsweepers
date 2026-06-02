@@ -530,6 +530,7 @@ jcms.npc_types.zombie_creep = {
 
 jcms.npc_types.zombie_creeper = {
 	faction = "zombie",
+	noArenaMode = true,
 
 	danger = jcms.NPC_DANGER_STRONG,
     cost = 0.05,

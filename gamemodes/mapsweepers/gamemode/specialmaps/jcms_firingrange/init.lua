@@ -151,7 +151,7 @@ end
                                 heavyThreshold = math.min( heavyThreshold, math.ceil(jcms.arena_settings.waves / 2) )
                             end
 
-                            intensity = jcms.arena_data.wave >= 3 and INTENSITY_HEAVY or INTENSITY_LIGHT
+                            intensity = jcms.arena_data.wave >= heavyThreshold and INTENSITY_HEAVY or INTENSITY_LIGHT
                         end
 
                         if jcms.doomdms_lastValues[ ply ] ~= intensity then
@@ -412,18 +412,21 @@ end
             end
         end
 
-        if #arena_data.npcs <= 3 and (arena_data.lastKillAt > 0) and (CurTime() - arena_data.lastKillAt > 12) then
+        if #arena_data.npcs <= 4 and (arena_data.lastKillAt > 0) and (CurTime() - arena_data.lastKillAt > 12) then
             for i, npc in ipairs(arena_data.npcs) do
                 jcms.net_SendLocator(arena_data.players, "as"..npc:EntIndex(), "#jcms.arenastraggler", npc, jcms.LOCATOR_GENERIC, 2)
             end
         end
 
+        local performObjectiveThink = false
         if mayThink then
             if #arena_data.players > 0 then
                 if (arena_data.wave >= arena_settings.waves) and (arena_settings.waves ~= math.huge) then
                     -- All waves done. We're now just waiting for all NPCs to die
                     if #arena_data.npcs <= 0 then
                         jcms.specialmap_EndArena(true)
+                    else
+                        performObjectiveThink = true
                     end
                 else
                     -- Waves not done but there may be extra conditions depending on the mode we've chosen
@@ -431,13 +434,16 @@ end
                         jcms.specialmap_NextWave()
                     end
 
-                    jcms.specialmap_ArenaThinkObjectives()
-                    game.GetWorld():SetNWInt("jcms_respawncount_1", arena_data.respawns or 0)
+                    performObjectiveThink = true
                 end
             else
                 jcms.specialmap_EndArena(false)
             end
         else
+            performObjectiveThink = true
+        end
+
+        if performObjectiveThink then
             jcms.specialmap_ArenaThinkObjectives()
             game.GetWorld():SetNWInt("jcms_respawncount_1", arena_data.respawns or 0)
         end
