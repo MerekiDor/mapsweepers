@@ -85,36 +85,70 @@ function jcms.specialmap_CleanupArena()
     end
 end
 
-function jcms.specialmap_CustomSpawnFunction(ply, transition)
-	ply.jcms_justSpawned = true
-	ply:SetNWString("class", "infantry")
-	jcms.playerspawn_Sweeper(ply, ply:GetPos(), true)
-	ply:SetNWInt("jcms_cash", 0)
-	ply:SetTeam(1)
-	ply.jcms_justSpawned = false
-	jcms.net_SendRespawnEffect(ply)
+function jcms.specialmap_GetArenaRespawnPos(ply)
+    local arena_settings = assert(jcms.arena_settings, "not in arena")
+    local arena_data = assert(jcms.arena_data, "not in arena")
+
+    local rbs = ents.FindByClass("jcms_respawnbeacon")
+    if #rbs > 0 then
+        local rb = rbs[ math.random(1, #rbs) ]
+        if IsValid(rb) then
+            rb:DoPostRespawnEffect(ply)
+            return rb:GetPos(), rb:GetAngles()
+        end
+    end
+    
+    local arena_x, arena_y, arena_z = arena_settings.pos:Unpack()
+    return Vector( arena_x + math.random(-3, 3)*32, arena_y + math.random(-3, 3)*32, arena_z ), Angle(0, math.random(1, 4)*90, 0)
 end
 
-function jcms.specialmap_CustomRespawnFunc(ply)
-	ply.jcms_justSpawned = true
-	ply:SetNWString("class", "infantry")
-    
+function jcms.specialmap_CustomSpawnFunction(ply, transition)
     local pos
     local ang
     if ply.jcms_inArena then
-        -- TODO account for RBs
-        pos = Vector(512 + math.random(-1, 1)*32, 2508 + math.random(-1,1)*32, 64)
-        ang = Angle(0, 90, 0)
+        if jcms.arena_data and ply.jcms_arenaSetToRespawn then
+            pos, ang = jcms.specialmap_GetArenaRespawnPos(ply)
+        else
+            pos = Vector(512 + math.random(-1, 1)*32, 2508 + math.random(-1,1)*32, 64)
+            ang = Angle(0, 90, 0)
+            ply.jcms_inArena = nil
+        end
     else
         pos = Vector(480 + math.random(-2, 2)*32, 1536 + math.random(-2, 2)*32, 0)
         ang = Angle(0, 0, 0)
     end
 
-    jcms.playerspawn_Sweeper(ply, pos, true)
-	ply:SetTeam(1)
+    ply.jcms_arenaSetToRespawn = nil
+
+    if ply:GetNWString("jcms_class", "") == "" then
+        -- spawning for the first time
+        jcms.printf("Spawning %s for the first time", ply:Nick())
+        ply:SetNWString("jcms_class", "infantry")
+        pos = ply:GetPos()
+        ang = ply:EyeAngles()
+    else
+        jcms.net_SendRespawnEffect(ply)
+    end
+
+    ply:SetNWString("jcms_desiredclass", ply:GetNWString("jcms_class", "infantry"))
+    ply.jcms_justSpawned = true
+        jcms.net_ShareMissionData({}, ply)
+        jcms.playerspawn_Sweeper(ply, pos, true)
+        jcms.specialmap_RestoreLoadout(ply, ply.jcms_lastLoadout)
+        ply:SetEyeAngles( ang )
+        ply:SetNWInt("jcms_cash", 0)
+        ply:SetTeam(1)
 	ply.jcms_justSpawned = false
-    ply.jcms_inArena = false
-    ply:SetEyeAngles( ang )
+end
+
+function jcms.specialmap_RestoreLoadout(ply, loadout)
+    for class in pairs(loadout) do
+        ply:Give(class)
+    end
+end
+
+function jcms.specialmap_CustomRespawnFunc(ply)
+    ply:Spawn()
 end
 
 function jcms.specialmap_TrackNPC(npc)
@@ -155,7 +189,7 @@ end
                     for i, ply in ipairs( player.GetHumans() ) do
                         local intensity = INTENSITY_NONE
                         if ply.jcms_inArena then
-                            intensity = jcms.arena_data.wave >= 5 and INTENSITY_HEAVY or INTENSITY_LIGHT
+                            intensity = jcms.arena_data.wave >= 3 and INTENSITY_HEAVY or INTENSITY_LIGHT
                         end
 
                         if jcms.doomdms_lastValues[ ply ] ~= intensity then
@@ -183,18 +217,28 @@ end
     end)
 -- }}}
 
--- Arena Function {{{
+-- Arena Functions {{{
+
+    function jcms.specialmap_BuildArenaSpawnpoints(spawnpoints)
+        for i, v in ipairs(ainReader.nodePositions) do
+            if ainReader.nodeTypes[i] == 2 then
+                table.insert(spawnpoints, v)
+            end
+        end
+    end
 
     function jcms.specialmap_StartArena(arena_settings)
         jcms.arena_settings = arena_settings
         jcms.arena_data = { 
             wave = 0, 
-            cost = 10 + arena_settings.difficulty * 3,
+            cost = 12 + arena_settings.difficulty * 3,
             costIncreases = 0,
             costIncreaseCountdown = 1,
             respawns = arena_settings.respawns,
-            players = table.Copy( jcms.arena_settings.players ),
+            players = table.Copy( arena_settings.players ),
+            spawnpoints = table.Copy( arena_settings.spawnpoints ),
             npcs = {},
+            npcsToKill = 0,
             killsTotal = 0,
             deathsTotal = 0,
             canProgress = false,
@@ -208,6 +252,7 @@ end
         game.GetWorld():SetNWString("jcms_missionfaction", arena_settings.faction)
         game.GetWorld():SetNWInt("jcms_difficulty", jcms.runprogress_GetDifficulty())
         jcms.net_ShareMissionData({}, arena_settings.players)
+        jcms.orders_ClearAllCooldowns()
 
         for i, ply in ipairs(arena_settings.players) do
             ply:SetHealth( ply:GetMaxHealth() )
@@ -271,6 +316,34 @@ end
         return arena_settings.waves >= math.huge and 0.999 or arena_data.wave / arena_settings.waves
     end
 
+    function jcms.specialmap_ArenaThinkObjectives()
+        local arena_settings = jcms.arena_settings
+        local arena_data = jcms.arena_data
+        if not (arena_settings and arena_data) then return end
+
+        local objectives = {}
+
+        local difficultyName = "#jcms.arenadifficulty_" .. (arena_settings.difficultyName or "normal")
+        if arena_settings.waves >= math.huge then
+            table.insert(objectives, { type = "arenawave", format = { arena_data.wave, difficultyName }, progress = 0, total = 0 })
+        else
+            table.insert(objectives, { type = "arenawave", format = { arena_data.wave, difficultyName }, progress = arena_data.wave, total = arena_settings.waves })
+        end
+        
+        if arena_data.npcsToKill > 0 then
+            table.insert(objectives, { type = "j", progress = arena_data.npcsToKill - #arena_data.npcs, total = arena_data.npcsToKill })
+        end
+
+        local newHash = util.SHA256( objectives and util.TableToJSON(objectives) or "" )
+        if newHash ~= arena_data.objectivesHash then
+            arena_data.objectivesHash = newHash
+            
+            if objectives then
+                jcms.net_ShareMissionData(objectives, arena_settings.players)
+            end
+        end
+    end
+
     function jcms.specialmap_ArenaThink()
         local arena_settings = jcms.arena_settings
         local arena_data = jcms.arena_data
@@ -278,8 +351,18 @@ end
 
         for i=#arena_data.players, 1, -1 do
             local ply = arena_data.players[i]
+
+            if ply.jcms_arenaSetToRespawn then
+                continue
+            end
+
             if not ( IsValid(ply) and ply:Alive() ) then
-                table.remove(arena_data.players, i)
+                if arena_data.respawns > 0 then
+                    ply.jcms_arenaSetToRespawn = true
+                    arena_data.respawns = math.max(0, arena_data.respawns - 1)
+                else
+                    table.remove(arena_data.players, i)
+                end
                 arena_data.deathsTotal = arena_data.deathsTotal + 1
             end
         end
@@ -323,9 +406,14 @@ end
                 if #arena_data.npcs <= 0 then
                     jcms.specialmap_EndArena(true)
                 end
-            elseif jcms.specialmap_ArenaCanProgress(arena_settings, arena_data) then
+            else
                 -- Waves not done but there may be extra conditions depending on the mode we've chosen
-                jcms.specialmap_NextWave()
+                if jcms.specialmap_ArenaCanProgress(arena_settings, arena_data) then
+                    jcms.specialmap_NextWave()
+                end
+
+                jcms.specialmap_ArenaThinkObjectives()
+                game.GetWorld():SetNWInt("jcms_respawncount_1", arena_data.respawns or 0)
             end
         else
             jcms.specialmap_EndArena(false)
@@ -340,17 +428,20 @@ end
         local arenaString = jcms.specialmap_GetArenaString()
         local arenaProgress = jcms.specialmap_GetArenaProgress()
         local killsString = jcms.util_CashFormat(arena_data.killsTotal)
+        game.GetWorld():SetNWInt("jcms_respawncount_1", 0)
 
         if victory then
             jcms.net_SendTip(arena_data.players, true, "#jcms.arenavictory", arenaProgress, { arenaString, killsString })
         else
             jcms.net_SendTip("all", true, "#jcms.arenafail", arenaProgress, { arenaString, killsString })
+            jcms.net_ShareMissionData({}, arena_data.players)
         end
 
         timer.Simple(3.5, function()
             for i, ply in ipairs(arena_data.players) do
                 if IsValid(ply) and ply:Alive() and ply.jcms_inArena then
                     ply:ScreenFade(SCREENFADE.OUT, color_white, 1, 0.5)
+                    jcms.net_ShareMissionData({}, ply)
                 end
             end
         end)
@@ -392,7 +483,7 @@ end
         if arena_data.costIncreaseCountdown <= 0 then
             arena_data.costIncreases = arena_data.costIncreases + 1
             arena_data.costIncreaseCountdown = 1 + arena_data.costIncreases
-            arena_data.cost = math.min(arena_data.cost + 2, 100)
+            arena_data.cost = math.min(arena_data.cost + 2.5, 100)
         end
 
         if arena_settings.wavebonus and arena_settings.wavebonus > 0 then
@@ -428,7 +519,7 @@ end
         for npcType, data in pairs(jcms.npc_types) do
             if (not hasEpisodes and data.episodes) then continue end
 
-            if (data.faction == arena_settings.faction or data.faction == "any") and (not data.secretNPC) and (not data.missionSpecific) and (data.danger <= dangerCap) then
+            if (data.faction == arena_settings.faction or data.faction == "any") and (not data.noArenaMode) and (not data.secretNPC) and (not data.missionSpecific) and (data.danger <= dangerCap) then
                 validTypes[ npcType ] = data.swarmWeight or 1
             end
         end
@@ -467,7 +558,7 @@ end
             end
         end
 
-        local spawnpoints = table.Copy(ainReader.nodePositions)
+        local spawnpoints = arena_data.spawnpoints
         table.Shuffle(spawnpoints)
 
         if #queue <= #spawnpoints then
@@ -495,6 +586,8 @@ end
         else
             print("TOO MANY", #queue, #spawnpoints)
         end
+
+        arena_data.npcsToKill = #arena_data.npcs + #queue
 
         if hasSupplyDrop and #spawnpoints > 0 then
             local randomSpot = spawnpoints[ math.random(1, #spawnpoints) ]
@@ -630,6 +723,15 @@ end
         if type(a1) == "Vector" and not jcms.specialmap_IsWithinArena(a1) and (jcms.orders[orderId].argparser ~= "orbital_fixed_outdoors") then
             jcms.net_SendOrderMessage(ply, 7, "")
             return true
+        end
+
+        if orderId == "respawnbeacon" then
+            if jcms.arena_settings and jcms.arena_settings.disablerb then
+                jcms.net_SendOrderMessage(ply, 7, "")
+                return true
+            elseif jcms.arena_data then
+                jcms.arena_data.respawns = jcms.arena_data.respawns + 1
+            end 
         end
     end)
 

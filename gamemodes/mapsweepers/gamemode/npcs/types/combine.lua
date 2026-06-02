@@ -155,6 +155,7 @@ jcms.npc_commanders["combine"] = {
 
 jcms.npc_types.combine_scanner = {
 	faction = "combine",
+	noArenaMode = true,
 	
 	danger = jcms.NPC_DANGER_FODDER,
 	cost = 0.1,
@@ -543,6 +544,7 @@ jcms.npc_types.combine_cybergunship = {
 
 jcms.npc_types.combine_breen = {
 	faction = "combine",
+	noArenaMode = true,
 	secretNPC = true,
 	
 	danger = jcms.NPC_DANGER_FODDER,
@@ -589,6 +591,7 @@ jcms.npc_types.combine_breen = {
 
 jcms.npc_types.gman = {
 	faction = "any",
+	noArenaMode = true,
 	secretNPC = true,
 	
 	danger = jcms.NPC_DANGER_FODDER,

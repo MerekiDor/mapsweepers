@@ -1075,6 +1075,11 @@ if CLIENT then
 
 					if #fmt > 0 then
 						objectivetype = jcms.objective_Localize(objectivetype)
+						for j, v in ipairs(fmt) do
+							if v:sub(1,1) == "#" then
+								fmt[j] = language.GetPhrase(v)
+							end
+						end
 						local s, rtn = pcall(string.format, objectivetype, unpack(fmt))
 						objectivetype = tostring(s and rtn or objectivetype)
 					end

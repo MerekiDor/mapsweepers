@@ -136,6 +136,7 @@ if SERVER then
 				arena_settings.waves = split_waves[2] == "0" and math.huge or math.max(1, math.ceil( tonumber(split_waves[2]) ))
 				arena_settings.respawns = math.max(1, math.ceil( tonumber(split_waves[3]) ))
 				arena_settings.faction = faction
+				arena_settings.difficultyName = difficulty
 				for i, v in ipairs(ent.jcms_difficultyOptions) do
 					if v == difficulty then
 						arena_settings.difficulty = tonumber(ent.jcms_difficultyValues[ i ]) or 1
@@ -151,6 +152,13 @@ if SERVER then
 				arena_settings.players = {}
 				arena_settings.pos = ent.arena_pos or jcms.specialmap_arenaPos or Vector(0, 0, 0)
 				arena_settings.radius = ent.arena_radius or jcms.specialmap_arenaRadius or 250
+				arena_settings.spawnpoints = {}
+
+				if jcms.specialmap_BuildArenaSpawnpoints then
+					jcms.specialmap_BuildArenaSpawnpoints(arena_settings.spawnpoints, arena_settings)
+				else
+					table.insert(arena_settings.spawnpoints, arena_settings.pos)
+				end
 				
 				local pivot = ply:WorldSpaceCenter()
 				local findInRadius = 512

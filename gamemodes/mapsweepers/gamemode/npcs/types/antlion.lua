@@ -639,6 +639,7 @@ jcms.npc_types.antlion_burrowerguard = {
 jcms.npc_types.antlion_mineralguard = {
 	faction = "antlion",
 	missionSpecific = "miningoperations",
+	noArenaMode = true,
 	
 	class = "npc_antlionguard",
 	suppressSwarmPortalEffect = true,
@@ -1038,6 +1039,7 @@ jcms.npc_types.antlion_reaper = {
 
 jcms.npc_types.antlion_grubbomb = {
 	faction = "antlion",
+	noArenaMode = true,
 
 	danger = jcms.NPC_DANGER_FODDER,
 	cost = 0.2,

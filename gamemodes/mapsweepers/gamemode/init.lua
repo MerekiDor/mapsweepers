@@ -1027,7 +1027,11 @@ AddCSLuaFile "_main/client/cl_addoncompatibility.lua"
 		ply:Spawn()
 		if mode == "sweeper" then
 			if ply.jcms_lastLoadout then
-				jcms.spawnmenu_PurchaseLoadout(ply, ply.jcms_lastLoadout, 0, 0) -- Restore the weapons you used to have for free
+				if jcms.specialmap_RestoreLoadout then
+					jcms.specialmap_RestoreLoadout(ply, ply.jcms_lastLoadout)
+				else
+					jcms.spawnmenu_PurchaseLoadout(ply, ply.jcms_lastLoadout, 0, 0) -- Restore the weapons you used to have for free
+				end
 				ply.jcms_lastLoadout = nil
 			end
 			
@@ -1239,16 +1243,16 @@ AddCSLuaFile "_main/client/cl_addoncompatibility.lua"
 	function GM:PlayerDeathThink(ply)
 		-- For handling players who spawned without a director present for some reason.
 		-- If this is a valid map, we respawn the player in lobby so that they can start the game proper.
-		-- If this is a tutorial map, we do a generic tutorial respawn.
+		-- If this is a special map, we delegate the logic to it.
 		-- If this is NOT a valid map, we respawn the player in debug mode.
 		
 		-- NOTE: Will not get called for evacuated players and players in-lobby.
 		if not jcms.director then
 			if CurTime() - ply:GetNWFloat("jcms_lastDeathTime", 0) > 5 then
-				ply:Spawn()
 				if jcms.specialmap_CustomRespawnFunc then
 					jcms.specialmap_CustomRespawnFunc(ply)
 				else
+					ply:Spawn()
 					if jcms.mapdata.valid then
 						jcms.playerspawn_Menu(ply)
 					else

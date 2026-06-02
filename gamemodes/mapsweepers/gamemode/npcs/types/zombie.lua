@@ -512,6 +512,7 @@ jcms.npc_types.zombie_polyp = {
 
 jcms.npc_types.zombie_creep = {
 	faction = "zombie",
+	noArenaMode = true,
 
 	danger = jcms.NPC_DANGER_STRONG,
     cost = 0.15,
@@ -1144,6 +1145,7 @@ jcms.npc_types.zombie_charple = {
 
 jcms.npc_types.zombie_barnacle = {
 	faction = "zombie",
+	noArenaMode = true,
 
 	danger = jcms.NPC_DANGER_FODDER,
 	cost = 0.2,
