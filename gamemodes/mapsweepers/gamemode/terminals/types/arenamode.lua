@@ -134,7 +134,7 @@ if SERVER then
 				local arena_settings = {}
 				arena_settings.nextwave = split_waves[1]
 				arena_settings.waves = split_waves[2] == "0" and math.huge or math.max(1, math.ceil( tonumber(split_waves[2]) ))
-				arena_settings.respawns = math.max(1, math.ceil( tonumber(split_waves[3]) ))
+				arena_settings.respawns = math.max(0, math.ceil( tonumber(split_waves[3]) ))
 				arena_settings.faction = faction
 				arena_settings.difficultyName = difficulty
 				for i, v in ipairs(ent.jcms_difficultyOptions) do

@@ -43,17 +43,6 @@ function jcms.specialmap_GetAndIncrementSquadIndex()
     end
 end
 
-function jcms.specialmap_IsWithinArena(pos)
-    local pad = 4
-    local mins_arena = Vector( -2528-pad, 2608-pad, -383-pad )
-    local maxs_arena = Vector( 2208+pad, 4656+pad, 230+pad )
-
-    local mins_observation = Vector(-336-pad, 2608-pad, -22-pad)
-    local maxs_observation = Vector(16+pad, 4656+pad, 191+pad)
-
-    return pos:WithinAABox(mins_arena, maxs_arena) and not pos:WithinAABox(mins_observation, maxs_observation)
-end
-
 function jcms.specialmap_AirgraphLeafCond(mins, maxs, leaf)
     local aux = maxs + mins
     aux:Mul(0.5)
@@ -68,40 +57,6 @@ function jcms.specialmap_AirgraphLeafCond(mins, maxs, leaf)
     end
 end
 
-function jcms.specialmap_CleanupArena()
-    local excluded_classes = {
-        ["ai_hint"] = true,
-        ["spotlight_end"] = true,
-        ["beam"] = true
-    }
-
-    for i, ent in ents.Iterator() do
-        if not ent:CreatedByMap() and jcms.specialmap_IsWithinArena(ent:WorldSpaceCenter()) then
-            local classname = ent:GetClass()
-            if not excluded_classes[ ent ] then
-                ent:Dissolve()
-            end
-        end
-    end
-end
-
-function jcms.specialmap_GetArenaRespawnPos(ply)
-    local arena_settings = assert(jcms.arena_settings, "not in arena")
-    local arena_data = assert(jcms.arena_data, "not in arena")
-
-    local rbs = ents.FindByClass("jcms_respawnbeacon")
-    if #rbs > 0 then
-        local rb = rbs[ math.random(1, #rbs) ]
-        if IsValid(rb) then
-            rb:DoPostRespawnEffect(ply)
-            return rb:GetPos(), rb:GetAngles()
-        end
-    end
-    
-    local arena_x, arena_y, arena_z = arena_settings.pos:Unpack()
-    return Vector( arena_x + math.random(-3, 3)*32, arena_y + math.random(-3, 3)*32, arena_z ), Angle(0, math.random(1, 4)*90, 0)
-end
-
 function jcms.specialmap_CustomSpawnFunction(ply, transition)
     local pos
     local ang
@@ -112,6 +67,7 @@ function jcms.specialmap_CustomSpawnFunction(ply, transition)
             pos = Vector(512 + math.random(-1, 1)*32, 2508 + math.random(-1,1)*32, 64)
             ang = Angle(0, 90, 0)
             ply.jcms_inArena = nil
+            ply:SetNWInt("jcms_cash", 0)
         end
     else
         pos = Vector(480 + math.random(-2, 2)*32, 1536 + math.random(-2, 2)*32, 0)
@@ -124,6 +80,7 @@ function jcms.specialmap_CustomSpawnFunction(ply, transition)
         -- spawning for the first time
         jcms.printf("Spawning %s for the first time", ply:Nick())
         ply:SetNWString("jcms_class", "infantry")
+        ply:SetNWInt("jcms_cash", 0)
         pos = ply:GetPos()
         ang = ply:EyeAngles()
     else
@@ -136,7 +93,6 @@ function jcms.specialmap_CustomSpawnFunction(ply, transition)
         jcms.playerspawn_Sweeper(ply, pos, true)
         jcms.specialmap_RestoreLoadout(ply, ply.jcms_lastLoadout)
         ply:SetEyeAngles( ang )
-        ply:SetNWInt("jcms_cash", 0)
         ply:SetTeam(1)
 	ply.jcms_justSpawned = false
 end
@@ -189,6 +145,12 @@ end
                     for i, ply in ipairs( player.GetHumans() ) do
                         local intensity = INTENSITY_NONE
                         if ply.jcms_inArena then
+                            local heavyThreshold = 5
+
+                            if jcms.arena_settings then
+                                heavyThreshold = math.min( heavyThreshold, math.ceil(jcms.arena_settings.waves / 2) )
+                            end
+
                             intensity = jcms.arena_data.wave >= 3 and INTENSITY_HEAVY or INTENSITY_LIGHT
                         end
 
@@ -225,6 +187,51 @@ end
                 table.insert(spawnpoints, v)
             end
         end
+    end
+
+    function jcms.specialmap_IsWithinArena(pos)
+        local pad = 4
+        local mins_arena = Vector( -2528-pad, 2608-pad, -383-pad )
+        local maxs_arena = Vector( 2208+pad, 4656+pad, 230+pad )
+
+        local mins_observation = Vector(-336-pad, 2608-pad, -22-pad)
+        local maxs_observation = Vector(16+pad, 4656+pad, 191+pad)
+
+        return pos:WithinAABox(mins_arena, maxs_arena) and not pos:WithinAABox(mins_observation, maxs_observation)
+    end
+
+    function jcms.specialmap_CleanupArena()
+        local excluded_classes = {
+            ["ai_hint"] = true,
+            ["spotlight_end"] = true,
+            ["beam"] = true
+        }
+
+        for i, ent in ents.Iterator() do
+            if not ent:CreatedByMap() and jcms.specialmap_IsWithinArena(ent:WorldSpaceCenter()) then
+                local classname = ent:GetClass()
+                if not excluded_classes[ ent ] then
+                    ent:Dissolve()
+                end
+            end
+        end
+    end
+
+    function jcms.specialmap_GetArenaRespawnPos(ply)
+        local arena_settings = assert(jcms.arena_settings, "not in arena")
+        local arena_data = assert(jcms.arena_data, "not in arena")
+
+        local rbs = ents.FindByClass("jcms_respawnbeacon")
+        if #rbs > 0 then
+            local rb = rbs[ math.random(1, #rbs) ]
+            if IsValid(rb) then
+                rb:DoPostRespawnEffect(ply)
+                return rb:GetPos(), rb:GetAngles()
+            end
+        end
+        
+        local arena_x, arena_y, arena_z = arena_settings.pos:Unpack()
+        return Vector( arena_x + math.random(-3, 3)*32, arena_y + math.random(-3, 3)*32, arena_z ), Angle(0, math.random(1, 4)*90, 0)
     end
 
     function jcms.specialmap_StartArena(arena_settings)
@@ -333,6 +340,17 @@ end
         if arena_data.npcsToKill > 0 then
             table.insert(objectives, { type = "j", progress = arena_data.npcsToKill - #arena_data.npcs, total = arena_data.npcsToKill })
         end
+        
+        local nextwave = arena_settings.nextwave
+        if arena_data.wave < arena_settings.waves then
+            if nextwave == "15s" or nextwave == "30s" or nextwave == "60s" then
+                local time = tonumber( nextwave:sub(1, 2) ) or 15
+                local remains = math.ceil( math.max(0, arena_data.lastWaveAt + time - CurTime()) )
+                table.insert(objectives, { type = "arenanextwave", progress = remains, style = 1 })
+            elseif nextwave == "press" and #arena_data.npcs == 0 then
+                table.insert(objectives, { type = "arenapressbutton", progress = 0, total = 0 })
+            end
+        end
 
         local newHash = util.SHA256( objectives and util.TableToJSON(objectives) or "" )
         if newHash ~= arena_data.objectivesHash then
@@ -367,30 +385,30 @@ end
             end
         end
 
-        if arena_data.dontThinkUntil and CurTime() < arena_data.dontThinkUntil then
-            return
-        end
+        local mayThink = not (arena_data.dontThinkUntil and CurTime() < arena_data.dontThinkUntil)
 
-        for i=#arena_data.npcs, 1, -1 do
-            local npc = arena_data.npcs[i]
-            local shouldRemove = false
-            if IsValid(npc) then
-                local state = npc:GetNPCState()
-                if npc.jcms_Think then
-                    npc:jcms_Think(state)
-                end
+        if mayThink then
+            for i=#arena_data.npcs, 1, -1 do
+                local npc = arena_data.npcs[i]
+                local shouldRemove = false
+                if IsValid(npc) then
+                    local state = npc:GetNPCState()
+                    if npc.jcms_Think then
+                        npc:jcms_Think(state)
+                    end
 
-                if state == NPC_STATE_DEAD then
+                    if state == NPC_STATE_DEAD then
+                        shouldRemove = true
+                    end
+                else
                     shouldRemove = true
                 end
-            else
-                shouldRemove = true
-            end
 
-            if shouldRemove then
-                table.remove(arena_data.npcs, i)
-                arena_data.killsTotal = arena_data.killsTotal + 1
-                arena_data.lastKillAt = CurTime()
+                if shouldRemove then
+                    table.remove(arena_data.npcs, i)
+                    arena_data.killsTotal = arena_data.killsTotal + 1
+                    arena_data.lastKillAt = CurTime()
+                end
             end
         end
 
@@ -400,23 +418,28 @@ end
             end
         end
 
-        if #arena_data.players > 0 then
-            if (arena_data.wave >= arena_settings.waves) and (arena_settings.waves ~= math.huge) then
-                -- All waves done. We're now just waiting for all NPCs to die
-                if #arena_data.npcs <= 0 then
-                    jcms.specialmap_EndArena(true)
+        if mayThink then
+            if #arena_data.players > 0 then
+                if (arena_data.wave >= arena_settings.waves) and (arena_settings.waves ~= math.huge) then
+                    -- All waves done. We're now just waiting for all NPCs to die
+                    if #arena_data.npcs <= 0 then
+                        jcms.specialmap_EndArena(true)
+                    end
+                else
+                    -- Waves not done but there may be extra conditions depending on the mode we've chosen
+                    if jcms.specialmap_ArenaCanProgress(arena_settings, arena_data) then
+                        jcms.specialmap_NextWave()
+                    end
+
+                    jcms.specialmap_ArenaThinkObjectives()
+                    game.GetWorld():SetNWInt("jcms_respawncount_1", arena_data.respawns or 0)
                 end
             else
-                -- Waves not done but there may be extra conditions depending on the mode we've chosen
-                if jcms.specialmap_ArenaCanProgress(arena_settings, arena_data) then
-                    jcms.specialmap_NextWave()
-                end
-
-                jcms.specialmap_ArenaThinkObjectives()
-                game.GetWorld():SetNWInt("jcms_respawncount_1", arena_data.respawns or 0)
+                jcms.specialmap_EndArena(false)
             end
         else
-            jcms.specialmap_EndArena(false)
+            jcms.specialmap_ArenaThinkObjectives()
+            game.GetWorld():SetNWInt("jcms_respawncount_1", arena_data.respawns or 0)
         end
     end
 
@@ -459,6 +482,12 @@ end
                     local off_y = offsets[ ((i-1) % (#offsets)) + 1 ]
                     ply:SetPos(pos + Vector(off_x, off_y, 0))
                     ply:ScreenFade(SCREENFADE.IN, color_white, 0.75, 0.15)
+
+                    ply:SetNWInt("jcms_cash", 0)
+                    ply:SetHealth( ply:GetMaxHealth() )
+                    ply:SetArmor( ply:GetMaxArmor() )
+                    ply:RemoveAllAmmo()
+                    jcms.util_TryGiveAmmo(ply, 100)
                 end
             end
             jcms.specialmap_CleanupArena()
@@ -616,95 +645,97 @@ end
 
 -- }}}
 
--- Terminals {{{
+-- Building the map {{{
+    
+    hook.Add("InitPostEntity", "jcms_FiringRangeBuild", function()
+        -- Firing Range {{{
+            -- Class Changer
+            if IsValid( jcms.specialmap_term1 ) then jcms.specialmap_term1:Remove() end
+            jcms.specialmap_term1 = ents.Create("jcms_terminal")
+            jcms.specialmap_term1:SetPos( Vector(478, 1866, 44) )
+            jcms.specialmap_term1:SetAngles( Angle(-8, -90, 0) )
+            jcms.specialmap_term1:Spawn()
+            jcms.specialmap_term1:InitAsTerminal("models/props_combine/combinebutton.mdl", "cheat_changeclass")
+            jcms.specialmap_term1.jcms_hackType = nil
 
-    -- Firing Range {{{
-        -- Class Changer
-        if IsValid( jcms.specialmap_term1 ) then jcms.specialmap_term1:Remove() end
-        jcms.specialmap_term1 = ents.Create("jcms_terminal")
-        jcms.specialmap_term1:SetPos( Vector(478, 1866, 44) )
-        jcms.specialmap_term1:SetAngles( Angle(-8, -90, 0) )
-        jcms.specialmap_term1:Spawn()
-        jcms.specialmap_term1:InitAsTerminal("models/props_combine/combinebutton.mdl", "cheat_changeclass")
-        jcms.specialmap_term1.jcms_hackType = nil
+            -- Weapon/Ammo Giver
+            if IsValid( jcms.specialmap_term2 ) then jcms.specialmap_term2:Remove() end
+            jcms.specialmap_term2 = ents.Create("jcms_terminal")
+            jcms.specialmap_term2:SetPos( Vector(684, 1664, 27) )
+            jcms.specialmap_term2:SetAngles( Angle(-8, 180, 0) )
+            jcms.specialmap_term2:Spawn()
+            jcms.specialmap_term2:InitAsTerminal("models/props_combine/combinebutton.mdl", "cheat_giveguns")
+            jcms.specialmap_term2.jcms_hackType = nil
 
-        -- Weapon/Ammo Giver
-        if IsValid( jcms.specialmap_term2 ) then jcms.specialmap_term2:Remove() end
-        jcms.specialmap_term2 = ents.Create("jcms_terminal")
-        jcms.specialmap_term2:SetPos( Vector(684, 1664, 27) )
-        jcms.specialmap_term2:SetAngles( Angle(-8, 180, 0) )
-        jcms.specialmap_term2:Spawn()
-        jcms.specialmap_term2:InitAsTerminal("models/props_combine/combinebutton.mdl", "cheat_giveguns")
-        jcms.specialmap_term2.jcms_hackType = nil
+            -- Cash Giver
+            if IsValid( jcms.specialmap_term3 ) then jcms.specialmap_term3:Remove() end
+            jcms.specialmap_term3 = ents.Create("jcms_terminal")
+            jcms.specialmap_term3:SetPos( Vector(684, 1664-256, 27) )
+            jcms.specialmap_term3:SetAngles( Angle(-8, 180, 0) )
+            jcms.specialmap_term3:Spawn()
+            jcms.specialmap_term3:InitAsTerminal("models/props_combine/combinebutton.mdl", "cheat_givecash")
+            jcms.specialmap_term3.jcms_hackType = nil
+        -- }}}
 
-        -- Cash Giver
-        if IsValid( jcms.specialmap_term3 ) then jcms.specialmap_term3:Remove() end
-        jcms.specialmap_term3 = ents.Create("jcms_terminal")
-        jcms.specialmap_term3:SetPos( Vector(684, 1664-256, 27) )
-        jcms.specialmap_term3:SetAngles( Angle(-8, 180, 0) )
-        jcms.specialmap_term3:Spawn()
-        jcms.specialmap_term3:InitAsTerminal("models/props_combine/combinebutton.mdl", "cheat_givecash")
-        jcms.specialmap_term3.jcms_hackType = nil
-    -- }}}
+        -- Arena {{{
+            -- Settings - Left
+            if IsValid( jcms.specialmap_term4 ) then jcms.specialmap_term4:Remove() end
+            jcms.specialmap_term4 = ents.Create("jcms_terminal")
+            jcms.specialmap_term4:SetPos( Vector(-847, 2273, 54) )
+            jcms.specialmap_term4:SetAngles( Angle(-12, 45, 0) )
+            jcms.specialmap_term4:Spawn()
+            jcms.specialmap_term4:InitAsTerminal("models/props_combine/combinebutton.mdl", "arena_waves")
+            jcms.specialmap_term4.jcms_hackType = nil
 
-    -- Arena {{{
-        -- Settings - Left
-        if IsValid( jcms.specialmap_term4 ) then jcms.specialmap_term4:Remove() end
-        jcms.specialmap_term4 = ents.Create("jcms_terminal")
-        jcms.specialmap_term4:SetPos( Vector(-847, 2273, 54) )
-        jcms.specialmap_term4:SetAngles( Angle(-12, 45, 0) )
-        jcms.specialmap_term4:Spawn()
-        jcms.specialmap_term4:InitAsTerminal("models/props_combine/combinebutton.mdl", "arena_waves")
-        jcms.specialmap_term4.jcms_hackType = nil
+            -- Settings - Center
+            if IsValid( jcms.specialmap_term5 ) then jcms.specialmap_term5:Remove() end
+            jcms.specialmap_term5 = ents.Create("jcms_terminal")
+            jcms.specialmap_term5:SetPos( Vector(-866, 2330, 54) )
+            jcms.specialmap_term5:SetAngles( Angle(-12, 0, 0) )
+            jcms.specialmap_term5:Spawn()
+            jcms.specialmap_term5:InitAsTerminal("models/props_combine/combinebutton.mdl", "arena_basics")
+            jcms.specialmap_term5.jcms_hackType = nil
 
-        -- Settings - Center
-        if IsValid( jcms.specialmap_term5 ) then jcms.specialmap_term5:Remove() end
-        jcms.specialmap_term5 = ents.Create("jcms_terminal")
-        jcms.specialmap_term5:SetPos( Vector(-866, 2330, 54) )
-        jcms.specialmap_term5:SetAngles( Angle(-12, 0, 0) )
-        jcms.specialmap_term5:Spawn()
-        jcms.specialmap_term5:InitAsTerminal("models/props_combine/combinebutton.mdl", "arena_basics")
-        jcms.specialmap_term5.jcms_hackType = nil
+            -- Settings - Right
+            if IsValid( jcms.specialmap_term6 ) then jcms.specialmap_term6:Remove() end
+            jcms.specialmap_term6 = ents.Create("jcms_terminal")
+            jcms.specialmap_term6:SetPos( Vector(-836, 2379, 54) )
+            jcms.specialmap_term6:SetAngles( Angle(-12, -45, 0) )
+            jcms.specialmap_term6:Spawn()
+            jcms.specialmap_term6:InitAsTerminal("models/props_combine/combinebutton.mdl", "arena_bonuses")
+            jcms.specialmap_term6.jcms_hackType = nil
 
-        -- Settings - Right
-        if IsValid( jcms.specialmap_term6 ) then jcms.specialmap_term6:Remove() end
-        jcms.specialmap_term6 = ents.Create("jcms_terminal")
-        jcms.specialmap_term6:SetPos( Vector(-836, 2379, 54) )
-        jcms.specialmap_term6:SetAngles( Angle(-12, -45, 0) )
-        jcms.specialmap_term6:Spawn()
-        jcms.specialmap_term6:InitAsTerminal("models/props_combine/combinebutton.mdl", "arena_bonuses")
-        jcms.specialmap_term6.jcms_hackType = nil
+            jcms.specialmap_term5.term_waves = jcms.specialmap_term4
+            jcms.specialmap_term5.term_bonuses = jcms.specialmap_term6
 
-        jcms.specialmap_term5.term_waves = jcms.specialmap_term4
-        jcms.specialmap_term5.term_bonuses = jcms.specialmap_term6
+            -- Class Changer (locker room)
+            if IsValid( jcms.specialmap_term7 ) then jcms.specialmap_term7:Remove() end
+            jcms.specialmap_term7 = ents.Create("jcms_terminal")
+            jcms.specialmap_term7:SetPos( Vector(573, 2572, 44) )
+            jcms.specialmap_term7:SetAngles( Angle(-8, -90, 0) )
+            jcms.specialmap_term7:Spawn()
+            jcms.specialmap_term7:InitAsTerminal("models/props_combine/combinebutton.mdl", "cheat_changeclass")
+            jcms.specialmap_term7.jcms_hackType = nil
 
-        -- Class Changer (locker room)
-        if IsValid( jcms.specialmap_term7 ) then jcms.specialmap_term7:Remove() end
-        jcms.specialmap_term7 = ents.Create("jcms_terminal")
-        jcms.specialmap_term7:SetPos( Vector(573, 2572, 44) )
-        jcms.specialmap_term7:SetAngles( Angle(-8, -90, 0) )
-        jcms.specialmap_term7:Spawn()
-        jcms.specialmap_term7:InitAsTerminal("models/props_combine/combinebutton.mdl", "cheat_changeclass")
-        jcms.specialmap_term7.jcms_hackType = nil
+            -- Weapon/Ammo Giver (locker room)
+            if IsValid( jcms.specialmap_term8 ) then jcms.specialmap_term8:Remove() end
+            jcms.specialmap_term8 = ents.Create("jcms_terminal")
+            jcms.specialmap_term8:SetPos( Vector(573-128, 2572, 44) )
+            jcms.specialmap_term8:SetAngles( Angle(-8, -90, 0) )
+            jcms.specialmap_term8:Spawn()
+            jcms.specialmap_term8:InitAsTerminal("models/props_combine/combinebutton.mdl", "cheat_giveguns")
+            jcms.specialmap_term8.jcms_hackType = nil
 
-        -- Weapon/Ammo Giver (locker room)
-        if IsValid( jcms.specialmap_term8 ) then jcms.specialmap_term8:Remove() end
-        jcms.specialmap_term8 = ents.Create("jcms_terminal")
-        jcms.specialmap_term8:SetPos( Vector(573-128, 2572, 44) )
-        jcms.specialmap_term8:SetAngles( Angle(-8, -90, 0) )
-        jcms.specialmap_term8:Spawn()
-        jcms.specialmap_term8:InitAsTerminal("models/props_combine/combinebutton.mdl", "cheat_giveguns")
-        jcms.specialmap_term8.jcms_hackType = nil
-
-        -- Cash Giver (locker room)
-        if IsValid( jcms.specialmap_term9 ) then jcms.specialmap_term9:Remove() end
-        jcms.specialmap_term9 = ents.Create("jcms_terminal")
-        jcms.specialmap_term9:SetPos( Vector(573-128-64, 2572, 44) )
-        jcms.specialmap_term9:SetAngles( Angle(-8, -90, 0) )
-        jcms.specialmap_term9:Spawn()
-        jcms.specialmap_term9:InitAsTerminal("models/props_combine/combinebutton.mdl", "cheat_givecash")
-        jcms.specialmap_term9.jcms_hackType = nil
-    -- }}}
+            -- Cash Giver (locker room)
+            if IsValid( jcms.specialmap_term9 ) then jcms.specialmap_term9:Remove() end
+            jcms.specialmap_term9 = ents.Create("jcms_terminal")
+            jcms.specialmap_term9:SetPos( Vector(573-128-64, 2572, 44) )
+            jcms.specialmap_term9:SetAngles( Angle(-8, -90, 0) )
+            jcms.specialmap_term9:Spawn()
+            jcms.specialmap_term9:InitAsTerminal("models/props_combine/combinebutton.mdl", "cheat_givecash")
+            jcms.specialmap_term9.jcms_hackType = nil
+        -- }}}
+    end)
 
 -- }}}
 
@@ -732,6 +763,38 @@ end
             elseif jcms.arena_data then
                 jcms.arena_data.respawns = jcms.arena_data.respawns + 1
             end 
+        end
+    end)
+
+    hook.Add("OnEntityCreated", "jcms_ArenaNerfs", function(ent)
+        if not IsValid(ent) then return end
+        local class = ent:GetClass()
+
+        if class == "jcms_turret" then
+            timer.Simple(0, function()
+                if not IsValid(ent) then return end
+                local maxclip = ent:GetTurretMaxClip()
+                local clip = ent:GetTurretClip()
+                local nerfFactor = 0.1
+
+                maxclip = math.ceil(maxclip * nerfFactor)
+                clip = math.min(maxclip, math.ceil(clip * nerfFactor))
+                
+                ent:SetTurretMaxClip( maxclip )
+                ent:SetTurretClip( clip )
+            end)
+        elseif class == "jcms_tesla" or class == "jcms_shieldcharger" then
+            timer.Simple(0, function()
+                local maxhp = ent:GetMaxHealth()
+                local hp = ent:Health()
+                local nerfFactor = 0.4
+
+                maxhp = math.ceil(maxhp * nerfFactor)
+                hp = math.min(maxhp, math.ceil(hp * nerfFactor))
+
+                ent:SetMaxHealth(maxhp)
+                ent:SetHealth(hp)
+            end)
         end
     end)
 

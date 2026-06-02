@@ -1047,7 +1047,7 @@ AddCSLuaFile "_main/client/cl_addoncompatibility.lua"
 			ply.jcms_lastLoadout = nil
 			jcms.playerspawn_Menu(ply)
 		end
-		ply.jcms_justSpawned = nil
+		ply.jcms_justSpawned = false
 	end
 
 	function GM:PlayerSpawn(ply, transition)

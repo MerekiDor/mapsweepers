@@ -1442,7 +1442,7 @@
 						ply:Give(class, true)
 						ply:SetNWInt("jcms_cash", plyCash - cost)
 					end
-					ply.jcms_canGetWeapons = nil
+					ply.jcms_canGetWeapons = false
 
 					return true
 				end
