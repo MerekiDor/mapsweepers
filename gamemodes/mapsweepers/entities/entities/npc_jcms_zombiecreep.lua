@@ -302,8 +302,9 @@ if CLIENT then
 								
 				--table.insert(jcms.zombieCreepBoxes, {chunkStart, chunkEnd})
 
+				local offs = Vector(10, 10, 10)
 				--Calculate our mins / maxes for the box
-				table.insert(jcms.zombieCreepBoxes, {jcms.zombieCreep_GetCellPos(chunkStart), jcms.zombieCreep_GetCellPos(chunkEnd) + vecCellSize})
+				table.insert(jcms.zombieCreepBoxes, {jcms.zombieCreep_GetCellPos(chunkStart) - offs, jcms.zombieCreep_GetCellPos(chunkEnd) + vecCellSize + offs})
 				--We still have to check after our mesh's last x, but we can skip a few cells we've already looked at.
 				i = xEnd + 1
 			else
@@ -313,17 +314,131 @@ if CLIENT then
 	end)
 
 
-	local zCreepBoxCol = Color(255, 0, 0, 25)
-	hook.Add("PostDrawTranslucentRenderables", "jcms_ZombieCreep_Render", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
-		if bDrawingDepth or bDrawingSkybox or isDraw3DSkyBox then return end
+	--models/flesh
+	--models/flesh
+
+	local debugMat = Material("CONCRETE/CONCRETEFLOOR026A")
+	--local mat_flesh = Material("models/flesh")
+	jcms.zombieCreep_Material = CreateMaterial("jcms_zombieCreep_flesh", "LightmappedGeneric", {
+		["$basetexture"] = "models/flesh",
+		--["$vertexcolor"] = "1",
+		--["$noclamp"] = "1"
+		--["$vertexalpha"] = "1",
+	})
+	local rt = GetRenderTarget("debugWorldTest", ScrW(), ScrH())
+	local drawing = false
+	local zCreepBoxCol = Color(255, 0, 0, 0)
+	hook.Add("PreDrawOpaqueRenderables", "jcms_ZombieCreep_Render", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
+		if bDrawingDepth or bDrawingSkybox or isDraw3DSkyBox or render.GetRenderTarget() or drawing then return end
+
+		render.SetStencilEnable(true)
+		render.ClearStencil()
+		render.SetStencilTestMask(255)
+		render.SetStencilWriteMask(255)
+
+		render.SetStencilCompareFunction(STENCIL_ALWAYS)
+		render.SetStencilPassOperation(STENCIL_INCRSAT)
+		render.SetStencilFailOperation(STENCIL_KEEP)
+		render.SetStencilZFailOperation(STENCIL_KEEP)
+		render.SetStencilReferenceValue(1)
+		
+		render.SetColorMaterial()
+
 
 		render.SetColorMaterial()
 		for i, box in ipairs(jcms.zombieCreepBoxes) do 
 			local mins = box[1]
 			local maxs = box[2]
-
+			
+			render.SetStencilPassOperation(STENCIL_INCRSAT)
 			render.DrawBox(jcms.vectorOrigin, angle_zero, mins, maxs, zCreepBoxCol)
+			
+			render.SetStencilPassOperation(STENCIL_DECRSAT)
 			render.DrawBox(jcms.vectorOrigin, angle_zero, maxs, mins, zCreepBoxCol)
+
+
+
+			--[[
+			if jcms.EyePos_lowAccuracy:WithinAABox( mins, maxs ) then 
+				render.DrawBox(jcms.vectorOrigin, angle_zero, mins, maxs, zCreepBoxCol)
+				render.DrawBox(jcms.vectorOrigin, angle_zero, maxs, mins, zCreepBoxCol)
+			else
+				render.DrawBox(jcms.vectorOrigin, angle_zero, mins, maxs, zCreepBoxCol)
+				render.DrawBox(jcms.vectorOrigin, angle_zero, maxs, mins, zCreepBoxCol)
+			end--]]
 		end
+
+		
+		render.SetStencilReferenceValue(1)
+		render.SetStencilCompareFunction(STENCIL_LESSEQUAL)
+		render.DrawTextureToScreen( rt )
+
+		render.SetStencilEnable( false )
+		render.ClearStencil()
+
+		--[[
+		render.PushRenderTarget(rt)
+		render.WorldMaterialOverride(mat_flesh)
+			drawing = true
+
+			render.Clear( 0,0,0,0, false, false)
+
+			render.RenderView({
+				drawviewmodel = false,
+				drawhud = false, 
+				drawmonitors =  false,
+				drawviewer = false,	
+			})
+			drawing = false
+
+		render.WorldMaterialOverride()
+		render.PopRenderTarget()--]]
 	end)
+
+
+	-- // World Render {{{	
+	
+		hook.Add("RenderScene", "jcms_DrawZombieCreep", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
+			if drawing then return end
+
+			local debugStart = SysTime()
+			render.PushRenderTarget(rt)
+			render.WorldMaterialOverride(jcms.zombieCreep_Material)
+				drawing = true
+
+				render.SuppressEngineLighting( true )
+				render.Clear( 0,0,0,0, false, false)
+
+				render.RenderView({
+					drawviewmodel = false,
+					drawhud = false, 
+					drawmonitors =  false,
+					drawviewer = false,	
+				})
+
+				drawing = false
+				render.SuppressEngineLighting( false )
+
+			render.WorldMaterialOverride()
+			render.PopRenderTarget()
+
+			
+			print((SysTime() - debugStart) * 1000)
+
+			--render.DrawTextureToScreen( rt )
+			--return true	
+		end)
+
+		hook.Add("PreDrawTranslucentRenderables", "0jcms_worldRender_Suppress", function()
+			if drawing then return true end
+		end)
+
+		hook.Add("PreDrawOpaqueRenderables", "0jcms_worldRender_Suppress", function()
+			if drawing then return true end
+		end)
+
+		hook.Add("PreDrawSkyBox", "0jcms_worldRender_Suppress", function()
+			if drawing then return true end
+		end)
+	-- // }}}
 end

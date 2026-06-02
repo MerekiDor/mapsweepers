@@ -89,7 +89,7 @@ if SERVER then
 	ENT.GrabWhitelist = { --Grabbing anything faster than us is a waste, grabbing anything that can't/shouldn't move is bad.
 		["npc_zombie"] = true,
 		["npc_poisonzombie"] = true,
-		["npc_zombine"] = true,
+		--["npc_zombine"] = true,
 		["npc_jcms_boomer"] = true
 		--Would include sprit, but that actually reduces the rate at which zombies get to you on average
 	}

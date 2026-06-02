@@ -426,6 +426,7 @@ jcms.npc_types.zombie_explodingcrab = {
 	end
 }
 
+--[[
 jcms.npc_types.zombie_polyp = {
 	faction = "zombie",
 
@@ -507,7 +508,7 @@ jcms.npc_types.zombie_polyp = {
 		--These can technically spawn infinitely, and have a performance impact, so we need to cap them.
 		return jcms.npc_capCheck("npc_jcms_zombiepolyp", 12)
 	end
-}
+}--]]
 
 jcms.npc_types.zombie_creep = {
 	faction = "zombie",
