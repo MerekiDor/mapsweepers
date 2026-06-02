@@ -94,6 +94,46 @@ if SERVER then
 			return
 		end
 
+		-- // Barrier Reduction {{{
+			local barrier = ply.jcms_sentinelBarrier
+			if IsValid(barrier) then
+				local absorption, absorptionMelee = barrier.Absorption, barrier.MeleeAbsorption
+
+				if absorption and absorptionMelee then
+					local isMelee = bit.band( bit.bor(DMG_BLAST, DMG_CLUB, DMG_CRUSH, DMG_SLASH), dmg:GetDamageType() ) > 0
+					local fwd = barrier:GetAngles():Forward()
+					local vec = ply:EyePos()
+					vec:Sub( dmg:GetDamagePosition() )
+
+					if isMelee then
+						vec.z = vec.z / 2
+					end
+
+					vec:Normalize()
+					local dot = fwd:Dot(vec)
+					
+					if dot >= (isMelee and 0.3 or 0.4) then
+						local tanked = tonumber( isMelee and absorptionMelee or absorption ) or 0
+
+						if tanked > 0 then
+							local dmgValue = dmg:GetDamage()
+
+							dmg:SetDamage( dmgValue * tanked )
+							barrier:TakeDamageInfo(dmg)
+
+							fwd:Mul( dmgValue*tanked*2 )
+							ply:SetVelocity( fwd )
+							
+							dmg:SetDamage( dmgValue * (1 - tanked) )
+							if tanked >= 1 then
+								return
+							end
+						end
+					end
+				end
+			end
+		-- // }}}
+
 		-- // Thorns {{{
 			local attacker = dmg:GetAttacker()
 			if IsValid(attacker) then 

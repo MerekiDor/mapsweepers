@@ -28,6 +28,9 @@ ENT.Category = "Map Sweepers"
 ENT.Spawnable = false
 ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 
+ENT.Absorption = 0.2
+ENT.MeleeAbsorption = 0.75
+
 function ENT:SetupDataTables()
 	self:NetworkVar("Float", 0, "DamageTaken")
 	self:NetworkVar("Float", 1, "MinDamageTaken")
