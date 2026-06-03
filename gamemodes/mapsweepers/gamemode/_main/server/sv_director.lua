@@ -509,14 +509,16 @@
 
 	-- Swarm-related {{{
 	
-		function jcms.director_SpawnSwarm(d, fullQueue, isInitialSwarm)
+		function jcms.director_SpawnSwarm(d, fullQueue)
 			local time = CurTime()
 
-			--Aggro chance scales to 100% over 30 mins, w/ the baseline scaling by difficulty. (Eventually reaching 100% at 10x)
-			local aggroChance = math.min( (jcms.director_GetMissionTime() / (60*30))^(1/3) + math.log( jcms.runprogress_GetDifficulty(), 1), d.npcs_alarm * 0.6 + 0.1)
-
-			if isInitialSwarm then
-				aggroChance = 0 -- Ambient enenies don't have aggro
+			local aggroChance = 1
+			if jcms.cvar_patrollingnpcs:GetBool() then
+				-- "Patrolling NPCs" setting. NPCs don't know where the player is until we're evacuating.
+				aggroChance = 0
+			else
+				-- Aggro chance scales to 100% over 30 mins, w/ the baseline scaling by difficulty. (Eventually reaching 100% at 10x)
+				aggroChance = math.min( (jcms.director_GetMissionTime() / (60*30))^(1/3) + math.log( jcms.runprogress_GetDifficulty(), 1), d.npcs_alarm * 0.6 + 0.1)
 			end
 
 			local zoneList = jcms.mapgen_ZoneList()
@@ -525,6 +527,7 @@
 			if d.missionData.evacuating then
 				aggroChance = (aggroChance + 0.95)/2
 			end
+			print("SWARM AGGRO CHANCE", aggroChance)
 			
 			local totalPopulation = 0
 			for zoneId, population in pairs(d.zonePopulations) do
@@ -1671,7 +1674,7 @@
 				
 				if swarmCost >= 20 then
 					jcms.announcer_SpeakChance(0.75,jcms.ANNOUNCER_SWARM_BIG)
-				else
+				elseif d.npcs_inCombat > 0 then
 					jcms.announcer_SpeakChance(0.45, jcms.ANNOUNCER_SWARM)
 				end
 
@@ -1712,6 +1715,8 @@
 		
 		function jcms.director_ThinkEncounters(d)
 			if d.encounters then
+				local patrollingNPCs = jcms.cvar_patrollingnpcs:GetBool()
+
 				local difficulty_freq = math.Clamp(jcms.cvar_swarm_frequency:GetFloat(), 0.001, 5)
 				local difficulty_size = math.Clamp(jcms.cvar_swarm_size:GetFloat(), 0, 5)
 
@@ -1721,12 +1726,12 @@
 					return
 				end
 				
-				if CurTime() - d.encounterTriggerLast >= 6/difficulty_freq then
+				if (CurTime() - d.encounterTriggerLast) >= ((patrollingNPCs and 2.75 or 6)/difficulty_freq) then
 					local sweepers = jcms.GetAliveSweepers()
 					
-					for i, enc in ipairs(d.encounters) do
-						debugoverlay.Sphere(enc.pos, enc.rad, 0.5, Color(200*(enc.danger-1), 255, 0))
-					end
+					-- for i, enc in ipairs(d.encounters) do
+					-- 	debugoverlay.Sphere(enc.pos, enc.rad, 0.5, Color(200*(enc.danger-1), 255, 0))
+					-- end
 					
 					for i=#d.encounters, 1, -1 do
 						local enc = d.encounters[i]
@@ -1737,20 +1742,39 @@
 						local encPos = enc.pos
 						
 						local mustTrigger = false
-					local aggressor = NULL
-						for j, ply in ipairs(sweepers) do
-							local dist2 = encPos:DistToSqr(ply:WorldSpaceCenter())
-							if (dist2 <= enc.rad^2)
-							or (dist2 <= (enc.rad*1.5)^2 and ply:TestPVS(encPos)) 
-							or (dist2 <= (enc.rad*2.5)^2 and ply:VisibleVec(encPos)) then
-								mustTrigger = true
-								aggressor = ply
-								break
+						if patrollingNPCs then
+							-- Encounters are triggered from further away and the player isn't revealed to the NPCs
+							for j, ply in ipairs(sweepers) do
+								local rad = enc.rad
+								local dist2 = encPos:DistToSqr(ply:WorldSpaceCenter())
+
+								if (dist2 <= (enc.rad*3)^2 and not ply:VisibleVec(encPos)) then
+									local inPVS = ply:TestPVS(encPos)
+									if inPVS then
+										mustTrigger = true
+										break
+									elseif dist2 <= (enc.rad*1.25)^2 then
+										mustTrigger = true
+										break
+									end
+								end
+							end
+						else
+							-- Classic encounters
+							for j, ply in ipairs(sweepers) do
+								local rad = enc.rad
+								local dist2 = encPos:DistToSqr(ply:WorldSpaceCenter())
+								if (dist2 <= rad^2)
+								or (dist2 <= (rad*1.5)^2 and ply:TestPVS(encPos)) 
+								or (dist2 <= (rad*2.5)^2 and ply:VisibleVec(encPos)) then
+									mustTrigger = true
+									break
+								end
 							end
 						end
-						
+
 						if mustTrigger then
-							local worked = jcms.director_TriggerEncounter(d, enc, aggressor)
+							local worked = jcms.director_TriggerEncounter(d, enc)
 							table.remove(d.encounters, i)
 						end
 					end
@@ -1758,7 +1782,7 @@
 			end
 		end
 		
-		function jcms.director_TriggerEncounter(d, enc, aggressor)
+		function jcms.director_TriggerEncounter(d, enc)
 			local difficulty_size = math.Clamp(jcms.cvar_swarm_size:GetFloat(), 0, 5)
 			local difficulty_warn = math.Clamp(jcms.cvar_swarm_warning:GetFloat(), 0, 30)
 

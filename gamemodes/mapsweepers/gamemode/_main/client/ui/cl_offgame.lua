@@ -2654,27 +2654,39 @@ jcms.offgame = jcms.offgame or NULL
 							content:SetPaintBackground(false)
 							content:DockPadding(0, 0, 0, 16)
 							bar:SetContents(content)
+
+							local currentY = 16
 		
 							local cb
 							cb = content:Add("DCheckBoxLabel")
-							cb:SetPos(24, 16)
+							cb:SetPos(24, currentY)
 							cb:SetText("#jcms.opt_noepisodes")
 							cb:SetWide(400)
 							cb:SetConVar("jcms_noepisodes")
 							cb.Paint = jcms.paint_CheckBoxLabel
+							currentY = currentY + 24
+
+							cb = content:Add("DCheckBoxLabel")
+							cb:SetPos(24, currentY)
+							cb:SetText("#jcms.opt_patrollingnpcs")
+							cb:SetWide(400)
+							cb:SetConVar("jcms_patrollingnpcs")
+							cb.Paint = jcms.paint_CheckBoxLabel
+							currentY = currentY + 32
 
 							local scale = content:Add("DNumSlider")
 							scale:SetText("#jcms.opt_ffmul")
 							scale:SetSize(contentSize - 48, 24)
-							scale:SetPos(24, 24 + 16)
+							scale:SetPos(24, currentY)
 							scale:SetMinMax(0, 2)
 							scale:SetConVar("jcms_friendlyfire_multiplier")
 							scale.Paint = jcms.paint_NumSlider
+							currentY = currentY + 24
 
 							local softcap = content:Add("DNumSlider")
 							softcap:SetText("#jcms.opt_softcap")
 							softcap:SetSize(contentSize - 48, 24)
-							softcap:SetPos(24, 24*2 + 32)
+							softcap:SetPos(24, currentY)
 							softcap:SetMinMax(1, 100)
 							softcap:SetDecimals(0)
 							softcap:SetConVar("jcms_npc_softcap")

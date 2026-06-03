@@ -325,7 +325,6 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 			if not ainReader.nodePositions or not jcms.mapdata.nodeAreas then return end
 		end
 
-
 		--Get the eyePositions of our sweepers to use later
 		local swpEyes = {}
 		local sweepers = jcms.GetAliveSweepers()
@@ -339,6 +338,16 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 		local trRes = {}
 		local trData = { mask = MASK_SOLID_BRUSHONLY, output = trRes }
 		local addVec = Vector(0,0,16)
+
+		local dist2_min = 750^2
+		local dist2_max = 6500^2
+		local dist2_tovis = 3000^2
+
+		local patrollingNPCs = jcms.cvar_patrollingnpcs:GetBool()
+		if patrollingNPCs then
+			dist2_min = dist2_tovis + 1
+			dist2_max = dist2_max * 2 -- x1.41 increase!
+		end
 		
 		local nodeDistDict = {}
 		local validNodePositions = {}
@@ -356,10 +365,10 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 				end
 
 				--Only use nodes between 750 and 6500 units
-				if nearest > 750^2 and nearest < 6500^2 then 
+				if nearest > dist2_min and nearest < dist2_max then 
 					local visible = false
 
-					if nearest > 3000 then --Check if we can be seen, but only within 3000u
+					if nearest > dist2_tovis then --Check if we can be seen, but only within 3000u
 						trData.start = nodePos
 						for i, eyePos in ipairs(swpEyes) do 
 							trData.endpos = eyePos
@@ -395,7 +404,7 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 				util.TraceEntityHull(vTrData, npc)
 
 				if not vTrRes.Hit then 
-					jcms.SendStragglerAfterDelay(npc, nPos, 1) --Send with a portal effect/etc
+					jcms.SendStragglerAfterDelay(npc, nPos, 1, patrollingNPCs) --Send with a portal effect/etc
 					table.remove(validNodePositions, i) --Don't spawn other npcs here.
 					break --On-to the next npc
 				end
@@ -403,7 +412,7 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 		end
 	end
 
-	function jcms.SendStragglerAfterDelay(npc, pos, stragglerDelay)
+	function jcms.SendStragglerAfterDelay(npc, pos, stragglerDelay, noRowdy)
 		local colorInt = jcms.factions_GetColorInteger(npc.jcms_faction)
 		npc.jcms_npcStragglerTime = CurTime() + 1
 		npc.jcms_npcIsStraggler = false
@@ -420,7 +429,10 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 		timer.Simple(stragglerDelay, function()
 			if IsValid(npc) then
 				npc:SetPos(pos)
-				jcms.npc_GetRowdy(npc)
+
+				if not noRowdy then
+					jcms.npc_GetRowdy(npc)
+				end
 
 				local ed = EffectData()
 				ed:SetColor(colorInt)

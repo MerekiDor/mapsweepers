@@ -169,6 +169,7 @@ local nmt = FindMetaTable("NPC")
 	-- Replicated
 	jcms.cvar_announcer_type = CreateConVar("jcms_announcer_type", "default", FCVAR_JCMS_SHARED_SAVED, "Selects the current announcer by name.")
 	jcms.cvar_noepisodes = CreateConVar("jcms_noepisodes", "0", FCVAR_JCMS_SHARED_SAVED, "If set to 1, Half-Life 2: Episode One & Two content will never appear in-game. Useful if you don't want your poor friends to see errors.")
+	jcms.cvar_patrollingnpcs = CreateConVar("jcms_patrollingnpcs", "0", FCVAR_JCMS_SHARED_SAVED, "If set to 1, NPCs spawned in swarms will not immediately know the player's location. Missions such as Hell may still override this, however.")
 
 	if SERVER then
 		cvars.AddChangeCallback("jcms_pvpallowed", function(cvar, oldValue, newValue)

@@ -194,14 +194,6 @@
 						end
 					end)
 				end
-				
-				-- timer.Simple(0.1, function()
-				-- 	if jcms.director then
-				-- 		local queue = jcms.director_MakeQueue(jcms.director, jcms.mapgen_AdjustCountForMapSize(5), jcms.NPC_DANGER_FODDER)
-				-- 		jcms.director_SpawnSwarm(jcms.director, queue, true)
-				-- 		jcms.printf("Spawning initial ambient NPCs. Count: %d", #queue)
-				-- 	end
-				-- end)
 			else
 				jcms.director = nil
 				ErrorNoHalt("Mission generation failed!\n"..tostring(genRtn))
