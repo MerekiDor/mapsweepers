@@ -1123,15 +1123,14 @@ jcms.npc_types.zombie_charple = {
 					--TODO: SFX
 
 					local nearest, dist = jcms.GetNearestSweeper(npc:GetPos())
-
 					local dur = dist < 100 and 2 or 3
 
 					local ed = EffectData()
-					ed:SetMagnitude(3)
+					ed:SetMagnitude(dur)
 					ed:SetOrigin(ent:GetPos())
 					ed:SetNormal(ent:GetAngles():Up())
 					ed:SetRadius(65)
-					ed:SetFlags(dur)
+					ed:SetFlags(3)
 					util.Effect("jcms_blast", ed)
 
 					if jcms.smokeScreens then
