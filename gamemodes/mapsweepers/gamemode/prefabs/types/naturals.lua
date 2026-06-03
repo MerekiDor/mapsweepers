@@ -53,7 +53,11 @@ local prefabs = jcms.prefabs
 		weight = 0.12,
 
 		check = function(area)
-			return area:IsFlat() and ( area:GetSizeX()*area:GetSizeY() ) > 60000
+			return jcms.mapgen_AreaFlat(area) and ( area:GetSizeX()*area:GetSizeY() ) > 60000
+		end,
+
+		areaWeight = function(area)
+			return (jcms.mapdata.areaDepths[area] or 0)/3 + (#area:GetVisibleAreas() / jcms.mapdata.visUnrestricted.max)*2 + 1
 		end,
 
 		stamp = function(area, data)
@@ -267,6 +271,33 @@ local prefabs = jcms.prefabs
 			ent:SetPos(v)
 			ent:Spawn()
 			return ent
+		end
+	}
+
+	prefabs.jalopy = {
+		natural = true,
+		weight = 0.01,
+
+		check = function(area)
+			return jcms.mapgen_AreaFlat(area) and ( area:GetSizeX()*area:GetSizeY() ) >= 250000
+		end,
+
+		areaWeight = function(area)
+			return (jcms.mapdata.areaDepths[area] or 0)
+		end,
+
+		stamp = function(area, data)
+			local jalopy = ents.Create("prop_vehicle_jeep")
+			jalopy:SetModel("models/vehicle.mdl")
+			jalopy:SetKeyValue("vehiclescript", "scripts/vehicles/jalopy.txt")
+
+			local v = jcms.mapgen_AreaPointAwayFromEdges(area, 250)
+			v.z = v.z + 24
+			jalopy:SetPos(v)
+			jalopy:SetAngles(Angle(0, math.random(1, 4)*90 + math.Rand(-12, 12), 0))
+
+			jalopy:Spawn()
+			jalopy:Activate()
 		end
 	}
 -- // }}}
