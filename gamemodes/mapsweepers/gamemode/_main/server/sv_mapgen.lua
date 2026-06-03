@@ -328,7 +328,7 @@ jcms.MAPGEN_CONSTRUCT_DIAMETER = math.sqrt(82411875)
 
 	jcms.mapdata = jcms.mapdata or { analyzed = false, vaild = false }
 
-	function jcms.mapgen_AnalyzeMap()
+	function jcms.mapgen_AnalyzeMap(dontAddToValidList)
 		local analyseStart = SysTime()
 
 		local md = jcms.mapdata
@@ -620,7 +620,7 @@ jcms.MAPGEN_CONSTRUCT_DIAMETER = math.sqrt(82411875)
 			md.valid = false
 		end
 
-		if md.valid and (not ai.GetNodeCount or ai.GetNodeCount() > 0) then --checks if the function exists bc I don't wanna boot up 32bit just to check if it's only on dev rn
+		if (not dontAddToValidList) and (md.valid) and (not ai.GetNodeCount or ai.GetNodeCount() > 0) then --checks if the function exists bc I don't wanna boot up 32bit just to check if it's only on dev rn
 			jcms.addValidMap(game.GetMap()) --might be more accurate to call this setValidMap?
 		end
 

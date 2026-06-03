@@ -58,6 +58,10 @@ function jcms.specialmap_AirgraphLeafCond(mins, maxs, leaf)
 end
 
 function jcms.specialmap_CustomSpawnFunction(ply, transition)
+    if not jcms.mapdata.analyzed then
+        jcms.mapgen_AnalyzeMap(true)
+    end
+
     local pos
     local ang
     if ply.jcms_inArena then
@@ -217,6 +221,15 @@ end
 -- Arena Functions {{{
 
     function jcms.specialmap_BuildArenaSpawnpoints(spawnpoints)
+        if not ainReader.nodePositions or not jcms.mapdata.nodeAreas then
+            jcms.printf("Re-reading arena nodegraph (first time map launch?)")
+            jcms.mapgen_TryReadNodeData()
+            if not ainReader.nodePositions or not jcms.mapdata.nodeAreas then
+                error("Failed to read the NodeGraph for arena. Try restarting the map.")
+                return
+            end
+        end
+
         for i, v in ipairs(ainReader.nodePositions) do
             if ainReader.nodeTypes[i] == 2 then
                 table.insert(spawnpoints, v)
