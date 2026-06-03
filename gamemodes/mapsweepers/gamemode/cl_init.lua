@@ -857,22 +857,22 @@ end)
 			render.SetStencilReferenceValue(1)
 			
 			render.OverrideBlend(true, BLEND_ZERO, BLEND_ONE, BLENDFUNC_ADD)
-			if EyePos():DistToSqr(pos) > rad^2 then 
-				render.SetColorMaterial()
-				render.DrawSphere(pos, rad, 22, 22, color_white)
-				
-				render.SetStencilReferenceValue(0)
-				render.SetStencilPassOperation(STENCIL_REPLACE)
-				render.DrawSphere(pos, -rad, 22, 22, color_white)
-			else
-				render.ClearStencilBufferRectangle( 0,0, ScrW(), ScrH(), 1 )
+				if EyePos():DistToSqr(pos) > rad^2 then 
+					render.SetColorMaterial()
+					render.DrawSphere(pos, rad, 22, 22, color_white)
+					
+					render.SetStencilReferenceValue(0)
+					render.SetStencilPassOperation(STENCIL_REPLACE)
+					render.DrawSphere(pos, -rad, 22, 22, color_white)
+				else
+					render.ClearStencilBufferRectangle( 0,0, ScrW(), ScrH(), 1 )
 
-				render.SetStencilReferenceValue(0)
-				render.SetStencilPassOperation(STENCIL_REPLACE)
+					render.SetStencilReferenceValue(0)
+					render.SetStencilPassOperation(STENCIL_REPLACE)
 
-				render.SetColorMaterial()
-				render.DrawSphere(pos, -rad, 22, 22, color_white)
-			end
+					render.SetColorMaterial()
+					render.DrawSphere(pos, -rad, 22, 22, color_white)
+				end
 			
 			render.OverrideBlend(false)
 			
@@ -1127,7 +1127,7 @@ end)
 -- // }}}
 
 -- // Fog {{{
-	--add your data to the fogStack in PreDrawSkyBox
+	--add your data to the fogStack in RenderScene
 	jcms.fogStack = {}
 	jcms.mapFog = {
 		fogCol = color_white,

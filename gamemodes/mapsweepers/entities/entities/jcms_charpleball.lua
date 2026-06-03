@@ -121,8 +121,12 @@ if SERVER then
 			--TODO: Black smoke, not grey
 			--TODO: SFX
 			--self:EmitSound("weapons/flaregun/fire.wav", 90, 60)
+
+			local nearest, dist = jcms.GetNearestSweeper(self:GetPos())
+			local dur = dist < 150 and 7.5 or 12 
+
 			local ed = EffectData()
-			ed:SetMagnitude(12)
+			ed:SetMagnitude(dur)
 			ed:SetOrigin(self:WorldSpaceCenter())
 			ed:SetNormal(self:GetAngles():Up())
 			ed:SetRadius(150*self.jcms_upgradeLevel)
@@ -130,7 +134,7 @@ if SERVER then
 			util.Effect("jcms_blast", ed)
 
 			if jcms.smokeScreens then
-				table.insert(jcms.smokeScreens, { pos = self:WorldSpaceCenter(), rad = 125*self.jcms_upgradeLevel, expires = CurTime() + 10 }) 
+				table.insert(jcms.smokeScreens, { pos = self:WorldSpaceCenter(), rad = 125*self.jcms_upgradeLevel, expires = CurTime() + (dur-1) }) 
 			end
 		end
 

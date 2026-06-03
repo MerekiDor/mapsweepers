@@ -176,7 +176,7 @@ end)
 
 if CLIENT then
 	function ENT:Initialize()
-		hook.Add("PreDrawSkyBox", tostring(self), function()
+		hook.Add("RenderScene", tostring(self), function()
 			local data = {}
 			data.fogCol = Color(50, 0, 0)
 			data.fogMaxDensity = 1
@@ -218,7 +218,7 @@ if CLIENT then
 
 	function ENT:OnRemove()
 		-- // Fog Cleanup {{{
-			hook.Remove("PreDrawSkyBox", tostring(self))
+			hook.Remove("RenderScene", tostring(self))
 		-- // }}}
 
 		local ed = EffectData()

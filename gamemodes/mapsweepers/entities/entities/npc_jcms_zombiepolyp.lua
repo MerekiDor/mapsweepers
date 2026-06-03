@@ -185,7 +185,7 @@ if CLIENT then
 
 		self.pixVis = util.GetPixelVisibleHandle()
 
-		hook.Add("PreDrawSkyBox", tostring(self), function()
+		hook.Add("RenderScene", tostring(self), function()
 			local selfCentre = self:WorldSpaceCenter()
 			
 			local range = self:GetCloudRange()
@@ -215,7 +215,7 @@ if CLIENT then
 		ed:SetFlags(0)
 		util.Effect("jcms_bigblast", ed)
 
-		hook.Remove("PreDrawSkyBox", tostring(self))
+		hook.Remove("RenderScene", tostring(self))
 		self.emitter:Finish()
 		self.emitter2:Finish()
 		self.emitter3:Finish()

@@ -126,7 +126,7 @@ if CLIENT then
 
 		self.nextThunder = 0
 
-		hook.Add("PreDrawSkyBox", tostring(self), function()
+		hook.Add("RenderScene", tostring(self), function()
 			if self.rainStage <= 0 then return end 
 
 			local data = {}
@@ -142,7 +142,7 @@ if CLIENT then
 
 	function ENT:OnRemove()
 		self.emitter:Finish()
-		hook.Remove("PreDrawSkyBox", tostring(self))
+		hook.Remove("RenderScene", tostring(self))
 	end
 
 	function ENT:Think()

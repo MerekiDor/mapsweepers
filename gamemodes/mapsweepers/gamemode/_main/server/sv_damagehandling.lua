@@ -31,7 +31,7 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 		ent.jcms_lastDamageType = dmgType
 	end
 
-	if ent:IsPlayer() and ent:GetNWInt("jcms_antirad", 0) > 0 then --Radiation invulnerability
+	if ent:IsPlayer() and bit.band(dmgType, DMG_RADIATION) > 0 and ent:GetNWInt("jcms_antirad", 0) > 0 then --Radiation invulnerability
 		dmg:ScaleDamage(0)
 		return true
 	end
