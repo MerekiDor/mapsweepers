@@ -26,7 +26,7 @@ ENT.PrintName = "Zombie Creep"
 ENT.Author = "Octantis Addons"
 ENT.Category = "Map Sweepers"
 ENT.Spawnable = false
-ENT.RenderGroup = RENDERGROUP_BOTH
+ENT.RenderGroup = RENDERGROUP_OPAQUE
 
 
 -- // Cell stuff {{{
@@ -86,15 +86,13 @@ ENT.RenderGroup = RENDERGROUP_BOTH
 		end
 	-- // }}}
 
-	if SERVER then --TODO: Shared for prediction
-		hook.Add("SetupMove", "jcms_ZombieCreep_Snare", function(ply, mv, cmd)
-			local cell = jcms.zombieCreep_GetCell( ply:GetPos() )
-			if not jcms.zombieCreepCells[cell] then return end
-			if not ply:IsOnGround() then return end
+	hook.Add("SetupMove", "jcms_ZombieCreep_Snare", function(ply, mv, cmd)
+		local cell = jcms.zombieCreep_GetCell( ply:GetPos() )
+		if not jcms.zombieCreepCells[cell] then return end
+		if not ply:IsOnGround() then return end
 
-			mv:SetMaxClientSpeed(150)
-		end)
-	end
+		mv:SetMaxClientSpeed(135)
+	end)
 -- // }}}
 
 if SERVER then
@@ -132,11 +130,14 @@ if SERVER then
 
 		-- // Expansion Cell detection {{{
 			local ourArea = navmesh.GetNearestNavArea(self:GetPos())
-			if not IsValid(ourArea) then self:Remove() end --We're somewhere invalid, panic. 
+			if not IsValid(ourArea) then self:Remove() return end --We're somewhere invalid, panic. 
 			local selfZone = jcms.mapgen_ZoneDict()[ourArea]
-			if not selfZone then self:Remove() end --We're somewhere invalid, panic. 
+			if not selfZone then self:Remove() return end --We're somewhere invalid, panic. 
 
-			local nearbyAreas = jcms.director_GetAreasAwayFrom(jcms.mapgen_ZoneList()[selfZone], {self:GetPos()}, 0, cellWidth * 1.5)
+			local selfZoneTbl = jcms.mapgen_ZoneList()[selfZone]
+			if not selfZoneTbl then self:Remove() return end
+
+			local nearbyAreas = jcms.director_GetAreasAwayFrom(selfZoneTbl, {self:GetPos()}, 0, cellWidth * 1.5)
 			local adjacentCellDict = {}
 
 			table.Shuffle(nearbyAreas)
@@ -212,6 +213,8 @@ end
 
 if CLIENT then 
 	jcms.zombieCreepBoxes = jcms.zombieCreepBoxes or {}
+	--We need 2 extra offset versions to deal with issues caused by the nearZ clip plane
+
 	local vecCellSize = Vector(cellWidth, cellWidth, cellHeight)
 
 	function ENT:Initialize()
@@ -232,11 +235,12 @@ if CLIENT then
 		hook.Call("jcms_ZombieCreep_RebuildMesh")
 	end
 
-	function ENT:Draw()
-		local dist = jcms.EyePos_lowAccuracy:DistToSqr(self:WorldSpaceCenter())
-		if dist < 2000^2 then 
-			self:DrawModel()
-		end
+	--Checking every frame for THIS many entities is too expensive, and we don't need to be super accurate with when we change visibility, so using nodraw every 0.25s is better
+	function ENT:Think()
+		self:SetNoDraw(2000^2 < jcms.EyePos_lowAccuracy:DistToSqr(self:WorldSpaceCenter()) )
+		
+		self:SetNextClientThink(CurTime() + 0.25)
+		return true
 	end
 
 	--Calculate a list of boxes for zombiecreep using greedy meshing
@@ -299,12 +303,15 @@ if CLIENT then
 				-- // }}}
 
 				--We're not going to bother with z, as creep mostly expands horizontally, and vertical meshes will in 99% of cases be small, so expanding up might even make us less efficient.
-								
-				--table.insert(jcms.zombieCreepBoxes, {chunkStart, chunkEnd})
 
-				local offs = Vector(10, 10, 10)
+				local offs = Vector(15, 15, 15) --Z fighting prevention
+				local offs2 = Vector(5,5,5) --NearZ clip issue prevention
 				--Calculate our mins / maxes for the box
-				table.insert(jcms.zombieCreepBoxes, {jcms.zombieCreep_GetCellPos(chunkStart) - offs, jcms.zombieCreep_GetCellPos(chunkEnd) + vecCellSize + offs})
+				local mins, maxs = jcms.zombieCreep_GetCellPos(chunkStart) - offs, jcms.zombieCreep_GetCellPos(chunkEnd) + vecCellSize + offs
+
+				-- normal mins/maxes, inner mins/maxes, outermins/maxes
+				table.insert(jcms.zombieCreepBoxes, {mins, maxs, mins - offs2, maxs + offs2, mins + offs2, maxs - offs2})
+
 				--We still have to check after our mesh's last x, but we can skip a few cells we've already looked at.
 				i = xEnd + 1
 			else
@@ -313,19 +320,13 @@ if CLIENT then
 		end
 	end)
 
-
-	--models/flesh
-	--models/flesh
-
-	local debugMat = Material("CONCRETE/CONCRETEFLOOR026A")
-	--local mat_flesh = Material("models/flesh")
 	jcms.zombieCreep_Material = CreateMaterial("jcms_zombieCreep_flesh", "LightmappedGeneric", {
 		["$basetexture"] = "models/flesh",
 		--["$vertexcolor"] = "1",
 		--["$noclamp"] = "1"
 		--["$vertexalpha"] = "1",
 	})
-	local rt = GetRenderTarget("debugWorldTest", ScrW(), ScrH())
+	local rt = GetRenderTarget("jcms_ZombieCreep_WorldRT", ScrW(), ScrH())
 	local drawing = false
 	local zCreepBoxCol = Color(255, 0, 0, 0)
 	hook.Add("PreDrawOpaqueRenderables", "jcms_ZombieCreep_Render", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
@@ -341,31 +342,28 @@ if CLIENT then
 		render.SetStencilFailOperation(STENCIL_KEEP)
 		render.SetStencilZFailOperation(STENCIL_KEEP)
 		render.SetStencilReferenceValue(1)
-		
-		render.SetColorMaterial()
 
+		local eyePos = EyePos()
 
 		render.SetColorMaterial()
 		for i, box in ipairs(jcms.zombieCreepBoxes) do 
 			local mins = box[1]
 			local maxs = box[2]
-			
-			render.SetStencilPassOperation(STENCIL_INCRSAT)
-			render.DrawBox(jcms.vectorOrigin, angle_zero, mins, maxs, zCreepBoxCol)
-			
-			render.SetStencilPassOperation(STENCIL_DECRSAT)
-			render.DrawBox(jcms.vectorOrigin, angle_zero, maxs, mins, zCreepBoxCol)
+			if  eyePos:WithinAABox( mins, maxs ) then 
+				local iMins, iMaxs = box[3], box[4]
+				render.SetStencilPassOperation(STENCIL_INCRSAT)
+				render.PerformFullScreenStencilOperation()
 
-
-
-			--[[
-			if jcms.EyePos_lowAccuracy:WithinAABox( mins, maxs ) then 
-				render.DrawBox(jcms.vectorOrigin, angle_zero, mins, maxs, zCreepBoxCol)
-				render.DrawBox(jcms.vectorOrigin, angle_zero, maxs, mins, zCreepBoxCol)
+				render.SetStencilPassOperation(STENCIL_DECRSAT)
+				render.DrawBox(jcms.vectorOrigin, angle_zero, iMaxs, iMins, zCreepBoxCol)
 			else
-				render.DrawBox(jcms.vectorOrigin, angle_zero, mins, maxs, zCreepBoxCol)
-				render.DrawBox(jcms.vectorOrigin, angle_zero, maxs, mins, zCreepBoxCol)
-			end--]]
+				local oMins, oMaxs = box[5], box[6]
+				render.SetStencilPassOperation(STENCIL_INCRSAT)
+				render.DrawBox(jcms.vectorOrigin, angle_zero, oMins, oMaxs, zCreepBoxCol)
+				
+				render.SetStencilPassOperation(STENCIL_DECRSAT)
+				render.DrawBox(jcms.vectorOrigin, angle_zero, oMaxs, oMins, zCreepBoxCol)
+			end
 		end
 
 		
@@ -375,24 +373,6 @@ if CLIENT then
 
 		render.SetStencilEnable( false )
 		render.ClearStencil()
-
-		--[[
-		render.PushRenderTarget(rt)
-		render.WorldMaterialOverride(mat_flesh)
-			drawing = true
-
-			render.Clear( 0,0,0,0, false, false)
-
-			render.RenderView({
-				drawviewmodel = false,
-				drawhud = false, 
-				drawmonitors =  false,
-				drawviewer = false,	
-			})
-			drawing = false
-
-		render.WorldMaterialOverride()
-		render.PopRenderTarget()--]]
 	end)
 
 
@@ -401,7 +381,7 @@ if CLIENT then
 		hook.Add("RenderScene", "jcms_DrawZombieCreep", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
 			if drawing then return end
 
-			local debugStart = SysTime()
+			--local debugStart = SysTime()
 			render.PushRenderTarget(rt)
 			render.WorldMaterialOverride(jcms.zombieCreep_Material)
 				drawing = true
@@ -423,7 +403,7 @@ if CLIENT then
 			render.PopRenderTarget()
 
 			
-			print((SysTime() - debugStart) * 1000)
+			--print((SysTime() - debugStart) * 1000)
 
 			--render.DrawTextureToScreen( rt )
 			--return true	
