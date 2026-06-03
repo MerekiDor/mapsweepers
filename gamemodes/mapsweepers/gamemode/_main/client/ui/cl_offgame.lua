@@ -796,6 +796,7 @@ jcms.offgame = jcms.offgame or NULL
 						end
 
 						surface.PlaySound("buttons/button14.wav")
+						jcms.locPly:SetNWInt("jcms_pvpTeam", self.pvpTeam) -- "prediction", for a proper playermodel to get chosen
 						jcms.offgame_BuildMissionPrepTab(tab)
 						RunConsoleCommand("jcms_jointeam_pvp", self.pvpTeam)
 
@@ -1043,7 +1044,14 @@ jcms.offgame = jcms.offgame or NULL
 
 					if classData and classData.mdl and ent:GetModel() ~= classData.mdl then
 						oldCycle = ent:GetCycle()
-						ent:SetModel( classData.mdl )
+
+						local isPVP = jcms.util_IsPVP()
+						local myTeam = jcms.locPly:GetNWInt("jcms_pvpTeam", -1)
+						if isPVP and type(classData.mdls_pvp) == "table" and classData.mdls_pvp[ myTeam ] then
+							ent:SetModel( classData.mdls_pvp[ myTeam ] )
+						else
+							ent:SetModel( classData.mdl or "models/player/kleiner.mdl" )
+						end
 					end
 					
 					if ent:GetSequence() ~= sequenceId then
@@ -1393,11 +1401,13 @@ jcms.offgame = jcms.offgame or NULL
 			-- }}}
 
 			-- Other {{{
+				local isPVP = jcms.util_IsPVP()
+				local myTeam = jcms.locPly:GetNWInt("jcms_pvpTeam", -1)
 				local classData = jcms.classes[ jcms.cachedValues.playerClass ]
-				if classData and classData.mdl then
-					tab.classPnl.mdl:SetModel( classData.mdl )
+				if isPVP and type(classData.mdls_pvp) == "table" and classData.mdls_pvp[ myTeam ] then
+					tab.classPnl.mdl:SetModel( classData.mdls_pvp[ myTeam ] )
 				else
-					tab.classPnl.mdl:SetModel("models/player/kleiner.mdl")
+					tab.classPnl.mdl:SetModel( classData.mdl or "models/player/kleiner.mdl" )
 				end
 			-- }}}
 		end
