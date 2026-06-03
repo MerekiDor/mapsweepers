@@ -1121,16 +1121,21 @@ jcms.npc_types.zombie_charple = {
 				if (ent.jcms_upgradeLevel or 0) >= 2 then
 					--TODO: Black smoke, not grey
 					--TODO: SFX
+
+					local nearest, dist = jcms.GetNearestSweeper(npc:GetPos())
+
+					local dur = dist < 100 and 2 or 3
+
 					local ed = EffectData()
 					ed:SetMagnitude(3)
 					ed:SetOrigin(ent:GetPos())
 					ed:SetNormal(ent:GetAngles():Up())
 					ed:SetRadius(65)
-					ed:SetFlags(3)
+					ed:SetFlags(dur)
 					util.Effect("jcms_blast", ed)
 
 					if jcms.smokeScreens then
-						table.insert(jcms.smokeScreens, { pos = ent:WorldSpaceCenter(), rad = 50, expires = CurTime() + 2 }) 
+						table.insert(jcms.smokeScreens, { pos = ent:WorldSpaceCenter(), rad = 50, expires = CurTime() + (dur-1) }) 
 					end
 				end
 			end

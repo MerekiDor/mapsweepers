@@ -57,7 +57,7 @@ if SERVER then
 		--Upgrade
 		self.jcms_upgradeLevel = 0
 		--TODO: Might be worth considering making a better system for this (rather than just timers) if we want to expand/control it more nested timers will get a bit ridiculous eventually.
-		timer.Simple(60, function()
+		timer.Simple(80, function()
 			if not IsValid(self) then return end
 
 			self:SetModelScale(1.5, 30)
@@ -70,7 +70,7 @@ if SERVER then
 
 				--TODO: SFX
 
-				timer.Simple(60, function()
+				timer.Simple(80, function()
 					if not IsValid(self) then return end
 					
 					self:SetModelScale(2, 30)
