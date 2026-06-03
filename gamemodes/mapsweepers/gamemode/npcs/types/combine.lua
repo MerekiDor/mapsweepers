@@ -334,6 +334,7 @@ jcms.npc_types.combine_hunter = {
 
 jcms.npc_types.combine_gunship = {
 	faction = "combine",
+	arenaModeSoftlocker = true,
 	
 	danger = jcms.NPC_DANGER_BOSS,
 	cost = 5.5,
@@ -424,6 +425,7 @@ jcms.npc_types.combine_gunship = {
 
 jcms.npc_types.combine_cybergunship = {
 	faction = "combine",
+	arenaModeSoftlocker = true,
 	
 	danger = jcms.NPC_DANGER_RAREBOSS,
 	cost = 8,

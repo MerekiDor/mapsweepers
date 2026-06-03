@@ -4229,6 +4229,7 @@ jcms.offgame = jcms.offgame or NULL
 			allguns:SetSize(frame:GetWide() - allguns:GetX() - 8, frame:GetTall() - allguns:GetY() - 8)
 
 			local sortedWeaponsList = weapons.GetList()
+			table.Add(sortedWeaponsList, jcms.default_weapons_datas)
 			table.sort(sortedWeaponsList, function(first, last)
 				return (first.ClassName or "") < (last.ClassName or "")
 			end)

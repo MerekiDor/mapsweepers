@@ -226,6 +226,25 @@ if SERVER then
 			return false
 		end
 	}
+
+	terms.arena_nextwave = {
+		generate = function(ent)
+			return ""
+		end,
+
+		command = function(ent, cmd, data, ply)
+			local arena_settings = jcms.arena_settings
+			local arena_data = jcms.arena_data
+			if not (arena_settings and arena_data) then return false end
+
+			if arena_settings.nextwave == "press" and (not arena_data.dontThinkUntil or CurTime() >= arena_data.dontThinkUntil) then
+				arena_data.nextWaveTriggered = true
+				return true
+			else
+				return false
+			end
+		end
+	}
 end
 
 if CLIENT then
@@ -482,6 +501,29 @@ if CLIENT then
 				cam.PopModelMatrix()
 				return i
 			end
+		end
+	end
+
+	terms.arena_nextwave = function(ent, mx, my, w, h, modedata)
+		local color_bg, color_fg, color_accent = jcms.terminal_GetColors(ent)
+		local boxHeight = math.ceil( math.min(w*0.35, h*0.35) )
+		local bw, bh = boxHeight*4.2, boxHeight
+		local bx, by = w/2 - bw/2, h/2 - bh/2
+
+		surface.SetDrawColor(color_bg)
+		jcms.hud_DrawFilledPolyButton(bx, by, bw, bh, 32)
+
+		cam.PushModelMatrix(jcms.terminal_getGlitchMatrix(), true)
+			local bounce = math.abs( math.sin( (CurTime() * 8) % (math.pi * 2) ) ) * 5
+			render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
+			surface.SetDrawColor(color_fg)
+			jcms.hud_DrawHollowPolyButton(bx - bounce, by - bounce, bw + bounce*2, bh + bounce*2, 32)
+			render.OverrideBlend( false )
+			draw.SimpleText("#jcms.arenabuttontext", "jcms_hud_big", w/2, h/2, color_fg, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		cam.PopModelMatrix()
+
+		if mx >= bx and my >= by and mx <= bx + bw and my <= by + bh then
+			return 1
 		end
 	end
 end

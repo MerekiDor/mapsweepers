@@ -98,9 +98,35 @@ function jcms.specialmap_CustomSpawnFunction(ply, transition)
 end
 
 function jcms.specialmap_RestoreLoadout(ply, loadout)
-    for class in pairs(loadout) do
-        ply:Give(class)
+    if type(loadout) == "table" then
+        for class in pairs(loadout) do
+            ply:Give(class)
+        end
     end
+end
+
+function jcms.specialmap_GrantFreeOrbitalBeam()
+    if jcms.specialmap_freeOrbitalBeam then return end
+    jcms.specialmap_freeOrbitalBeam = true
+
+    jcms.specialmap_beamOriginalCost = jcms.orders.orbitalbeam.cost
+    jcms.orders.orbitalbeam.cost = 1
+    jcms.net_SendOrder("orbitalbeam", jcms.orders.orbitalbeam)
+    for i, ply in ipairs( player.GetAll() ) do
+        jcms.orders_ClearCooldown(ply, "orbitalbeam")
+    end
+
+    if jcms.arena_data and jcms.arena_data.players then
+        jcms.net_SendTip(jcms.arena_data.players, true, "#jcms.arenasoftlock", 0)
+    end
+end
+
+function jcms.specialmap_RestoreNormalOrbitalBeam()
+    if not jcms.specialmap_freeOrbitalBeam then return end
+    jcms.specialmap_freeOrbitalBeam = false
+
+    jcms.orders.orbitalbeam.cost = jcms.specialmap_beamOriginalCost or 750
+    jcms.net_SendOrder("orbitalbeam", jcms.orders.orbitalbeam)
 end
 
 function jcms.specialmap_CustomRespawnFunc(ply)
@@ -113,6 +139,11 @@ function jcms.specialmap_TrackNPC(npc)
 
         if jcms.arena_settings and jcms.arena_settings.bountymul then
             npc.jcms_bounty = math.ceil( (npc.jcms_bounty or 0) * jcms.arena_settings.bountymul )
+        end
+
+        local enemyData = jcms.npc_types[ npc.jcms_enemyType ]
+        if enemyData and enemyData.arenaModeSoftlocker then
+            npc.jcms_arenaSoftlocker = true
         end
     end
 end
@@ -149,6 +180,10 @@ end
 
                             if jcms.arena_settings then
                                 heavyThreshold = math.min( heavyThreshold, math.ceil(jcms.arena_settings.waves / 2) )
+
+                                if jcms.arena_settings.nextwave == "press" and #jcms.arena_data.npcs <= 0 then
+                                    heavyThreshold = math.huge
+                                end
                             end
 
                             intensity = jcms.arena_data.wave >= heavyThreshold and INTENSITY_HEAVY or INTENSITY_LIGHT
@@ -226,7 +261,9 @@ end
             local rb = rbs[ math.random(1, #rbs) ]
             if IsValid(rb) then
                 rb:DoPostRespawnEffect(ply)
-                return rb:GetPos(), rb:GetAngles()
+                local pos = rb:GetPos()
+                pos.z = pos.z + 6
+                return pos, rb:GetAngles()
             end
         end
         
@@ -254,6 +291,10 @@ end
             dontThinkUntil = 0,
             lastKillAt = 0
         }
+
+        if arena_settings.nextwave == "press" then
+            jcms.specialmap_ArenaSpawnNextButtons()
+        end
 
         game.GetWorld():SetNWString("jcms_missiontype", "arenamode")
         game.GetWorld():SetNWString("jcms_missionfaction", arena_settings.faction)
@@ -323,6 +364,37 @@ end
         return arena_settings.waves >= math.huge and 0.999 or arena_data.wave / arena_settings.waves
     end
 
+    function jcms.specialmap_ArenaSpawnNextButtons()
+        local arena_settings = jcms.arena_settings
+        local arena_data = jcms.arena_data
+        if not (arena_settings and arena_data) then return end
+        
+        if IsValid(arena_data.nextButton1) then
+            arena_data.nextButton1:Remove()
+        end
+
+        if IsValid(arena_data.nextButton2) then
+            arena_data.nextButton2:Remove()
+        end
+
+        local pos1 = Vector(96 + 4, 3632, -383 + 48)
+        local pos2 = Vector(-416 - 4, 3632, -383 + 48)
+
+        arena_data.nextButton1 = ents.Create("jcms_terminal")
+        arena_data.nextButton1:SetPos( pos1 )
+        arena_data.nextButton1:SetAngles( Angle(-8, 0, 0) )
+        arena_data.nextButton1:Spawn()
+        arena_data.nextButton1:InitAsTerminal("models/props_combine/combinebutton.mdl", "arena_nextwave")
+        arena_data.nextButton1.jcms_hackType = nil
+
+        arena_data.nextButton2 = ents.Create("jcms_terminal")
+        arena_data.nextButton2:SetPos( pos2 )
+        arena_data.nextButton2:SetAngles( Angle(-8, 180, 0) )
+        arena_data.nextButton2:Spawn()
+        arena_data.nextButton2:InitAsTerminal("models/props_combine/combinebutton.mdl", "arena_nextwave")
+        arena_data.nextButton2.jcms_hackType = nil
+    end
+
     function jcms.specialmap_ArenaThinkObjectives()
         local arena_settings = jcms.arena_settings
         local arena_data = jcms.arena_data
@@ -349,6 +421,17 @@ end
                 table.insert(objectives, { type = "arenanextwave", progress = remains, style = 1 })
             elseif nextwave == "press" and #arena_data.npcs == 0 then
                 table.insert(objectives, { type = "arenapressbutton", progress = 0, total = 0 })
+
+                if not ( IsValid(arena_data.nextButton1) and IsValid(arena_data.nextButton2) ) then
+                    jcms.specialmap_ArenaSpawnNextButtons()
+                end
+
+                if (arena_data.lastWaveAt > 0) and (CurTime() - arena_data.lastWaveAt >= 5) then
+                    local btn = CurTime() % 5 <= 2.5 and arena_data.nextButton1 or arena_data.nextButton2
+                    local pos = btn:GetPos()
+                    pos.z = pos.z - 16
+                    jcms.net_SendLocator(arena_data.players, "arenabtn", "#jcms.obj_arenapressbutton", pos, jcms.LOCATOR_WARNING, 1.5)
+                end
             end
         end
 
@@ -358,6 +441,43 @@ end
             
             if objectives then
                 jcms.net_ShareMissionData(objectives, arena_settings.players)
+            end
+        end
+    end
+
+    function jcms.specialmap_ArenaThinkSoftlock()
+        local arena_settings = jcms.arena_settings
+        local arena_data = jcms.arena_data
+        if not (arena_settings and arena_data) then return end
+        if #arena_data.npcs <= 0 then return end
+
+        local allNPCsSoftlock = true
+        for i, npc in ipairs(arena_data.npcs) do
+            if not npc.jcms_arenaSoftlocker or npc:Health() <= 0 then
+                allNPCsSoftlock = false
+                break
+            end
+        end
+
+        local idling = (arena_data.lastKillAt > 0) and (CurTime() - arena_data.lastKillAt > 12)
+
+        local noWayOut = true
+        for i, ply in ipairs(arena_data.players) do
+            if jcms.orders_CanUse(ply, "orbitalbeam") or jcms.orders_CanUse(ply, "antiairmissile") then
+                noWayOut = false
+                break
+            end
+        end
+
+        if allNPCsSoftlock and idling and noWayOut then
+            if not jcms.specialmap_freeOrbitalBeam then
+                jcms.specialmap_GrantFreeOrbitalBeam()
+            end
+
+            for i, ply in ipairs(arena_data.players) do
+                if ply:GetNWInt("jcms_cash", 0) < 5 then
+                    ply:SetNWInt("jcms_cash", 5)
+                end
             end
         end
     end
@@ -445,6 +565,7 @@ end
 
         if performObjectiveThink then
             jcms.specialmap_ArenaThinkObjectives()
+            jcms.specialmap_ArenaThinkSoftlock()
             game.GetWorld():SetNWInt("jcms_respawncount_1", arena_data.respawns or 0)
         end
     end
@@ -453,6 +574,7 @@ end
         local arena_settings = jcms.arena_settings
         local arena_data = jcms.arena_data
         if not (arena_settings and arena_data) then return end
+        jcms.specialmap_RestoreNormalOrbitalBeam()
 
         local arenaString = jcms.specialmap_GetArenaString()
         local arenaProgress = jcms.specialmap_GetArenaProgress()
@@ -510,6 +632,7 @@ end
         local arena_data = jcms.arena_data
         if not (arena_settings and arena_data) then return end
 
+        jcms.specialmap_RestoreNormalOrbitalBeam()
         arena_data.lastWaveAt = CurTime()
         arena_data.dontThinkUntil = CurTime() + 5
         arena_data.nextWaveTriggered = nil
@@ -596,30 +719,69 @@ end
         local spawnpoints = arena_data.spawnpoints
         table.Shuffle(spawnpoints)
 
-        if #queue <= #spawnpoints then
-            local navAreas = navmesh.GetAllNavAreas()
-            for i, npcType in ipairs(queue) do
-                local randomPly = arena_data.players[ math.random(1, #arena_data.players) ]
-                local randomArea = navAreas[ math.random(1, #navAreas) ]
+        if #spawnpoints <= 0 then
+            table.insert(spawnpoints, arena_settings.pos)
+        end
 
-                local pos = spawnpoints[i]
-                local npcData = jcms.npc_types[ npcType ]
-                if npcData.aerial then
-                    local nearestNode = jcms.pathfinder.getNearestNode(pos)
-                    if nearestNode then 
-                        pos = nearestNode.pos or pos
-                    end
-                elseif npcData.hullSize then 
-                    local nearestNode = jcms.pathfinder_ain_nearestHullNode(pos, npcData.hullSize)
-                    if nearestNode then 
-                        pos = ainReader.nodePositions[nearestNode] or pos
+        local navAreas = navmesh.GetAllNavAreas()
+        local function spawnAt(npcType, pos)
+            local randomPly = arena_data.players[ math.random(1, #arena_data.players) ]
+            local randomArea = navAreas[ math.random(1, #navAreas) ]
+            local npcData = jcms.npc_types[ npcType ]
+            if not npcData then return end
+            if npcData.aerial then
+                local nearestNode = jcms.pathfinder.getNearestNode(pos)
+                if nearestNode then 
+                    pos = nearestNode.pos or pos
+                end
+            elseif npcData.hullSize then 
+                local nearestNode = jcms.pathfinder_ain_nearestHullNode(pos, npcData.hullSize)
+                if nearestNode then 
+                    pos = ainReader.nodePositions[nearestNode] or pos
+                end
+            end
+            jcms.npc_SpawnFancy(npcType, pos, 3 + math.random(), randomPly, randomArea)
+        end
+
+        if (#queue <= #spawnpoints) and (arena_data.wave%4 ~= 1) then
+            for i, npcType in ipairs(queue) do
+                spawnAt(npcType, spawnpoints[i])
+            end
+        elseif #queue > 0 then
+            local npcsSpawned = 0
+            local squadCount = math.min(#spawnpoints, math.ceil(#queue / 3) + 1)
+            local npcsPerSquad = math.ceil(#queue / squadCount) * 2
+            local navAreas = navmesh.GetAllNavAreas()
+
+            for i=1, squadCount do
+                local vectors, allFit = jcms.director_PackSquadVectors(spawnpoints[i], npcsPerSquad, math.Rand(90, 105) )
+
+                for j=1, #vectors do
+                    local queueIndex = npcsSpawned + j
+                    local npcType = queue[ queueIndex ]
+                    if npcType then
+                        spawnAt(npcType, vectors[j])
+                        npcsSpawned = npcsSpawned + 1
+                    else
+                        break
                     end
                 end
 
-                jcms.npc_SpawnFancy(npcType, pos, 3 + math.random(), randomPly, randomArea)
+                if #vectors <= 0 then
+                    spawnAt(npcType, spawnpoints[i])
+                    npcsSpawned = npcsSpawned + 1
+                end
+
+                if npcsSpawned >= #queue then
+                    break
+                end
             end
+        end
+
+        if dangerCap >= jcms.NPC_DANGER_BOSS then
+            jcms.announcer_SpeakChance(0.75, jcms.ANNOUNCER_SWARM_BIG)
         else
-            print("TOO MANY", #queue, #spawnpoints)
+            jcms.announcer_SpeakChance(0.45, jcms.ANNOUNCER_SWARM)
         end
 
         arena_data.npcsToKill = #arena_data.npcs + #queue
@@ -642,7 +804,7 @@ end
 
             prop:SetAngles(AngleRand())
             prop:SetKeyValue("ItemClass", "jcms_dynamicsupply")
-            prop:SetKeyValue("ItemCount", dangerCap >= jcms.NPC_DANGER_BOSS and 2 or 1)
+            prop:SetKeyValue("ItemCount", dangerCap >= jcms.NPC_DANGER_BOSS and 4 or 2)
             prop:Spawn()
 
             jcms.net_SendLocator(arena_data.players, nil, "#jcms.arenasupplies", prop, jcms.LOCATOR_GENERIC, 10)

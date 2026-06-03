@@ -209,7 +209,7 @@ local nmt = FindMetaTable("NPC")
 			ClassName = "weapon_stunstick",
 			PrintName = "#weapon_stunstick",
 			WorldModel = "models/weapons/c_stunstick.mdl",
-			Primary = { Ammo = false, Damage = 47, RPM = 60, ClipSize = -1, Cone = 0 }
+			Primary = { Ammo = false, Damage = 25, RPM = 60, ClipSize = -1, Cone = 0 }
 		},
 
 		weapon_physcannon = {

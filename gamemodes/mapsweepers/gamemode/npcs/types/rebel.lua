@@ -1640,6 +1640,7 @@ jcms.npc_types.rebel_vortigaunt = {
 
 jcms.npc_types.rebel_helicopter = {
 	faction = "rebel",
+	arenaModeSoftlocker = true,
 	
 	danger = jcms.NPC_DANGER_BOSS,
 	cost = 5.5,
@@ -1680,6 +1681,7 @@ jcms.npc_types.rebel_helicopter = {
 
 jcms.npc_types.rebel_megacopter = {
 	faction = "rebel",
+	arenaModeSoftlocker = true,
 	
 	danger = jcms.NPC_DANGER_RAREBOSS,
 	cost = 6,

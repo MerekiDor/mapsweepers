@@ -1224,6 +1224,18 @@
 			jcms.net_SendOrderCooldown(ply, orderId, tonumber(cooldown) or 0)
 		end
 	end
+
+	function jcms.orders_ClearCooldown(ply, orderId)
+		if jcms.orders[ orderId ] then
+			if not jcms.orders_lastused[ orderId ] then
+				jcms.orders_lastused[ orderId ] = {}
+			end
+
+			local id = ply:SteamID64()
+			jcms.orders_lastused[ orderId ][ id ] = nil
+			jcms.net_SendOrderCooldown(ply, orderId, 0)
+		end
+	end
 	
 	function jcms.orders_ClearAllCooldowns()
 		table.Empty(jcms.orders_lastused)
