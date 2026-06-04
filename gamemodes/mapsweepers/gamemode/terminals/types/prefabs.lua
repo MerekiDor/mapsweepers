@@ -292,7 +292,7 @@ if SERVER then
 		
 		generate = function(ent)
 			if not ent.jcms_weaponclass then
-				local starterCash = jcms.cvar_cash_start:GetInt()
+				local starterCash = jcms.util_IsPVP() and jcms.cvar_cash_start_pvp:GetInt() or jcms.cvar_cash_start:GetInt()
 				local evacCash = jcms.cvar_cash_evac:GetInt()
 				local winCash = jcms.cvar_cash_victory:GetInt()
 

@@ -2881,16 +2881,37 @@ jcms.offgame = jcms.offgame or NULL
 							content:DockPadding(0, 0, 0, 16)
 							bar:SetContents(content)
 
-							for i, n in ipairs { "start_pvp", "start", "evac", "victory", "maxclerks" } do
-								jcms.offgame_CreateTextElement(content, 24, 12+(i-1)*28, contentSize - 48, 28, "#jcms.opt_cash_"..n, "jcms_cash_"..n)
-							end
-								
-							for i, n in ipairs { "mul_final", "mul_base", "mul_stunstick", "mul_very_far" } do
-								jcms.offgame_CreateTextElement(content, 24, 12+(i-1+5)*28, contentSize - 48, 28, "#jcms.opt_cash_"..n, "jcms_cash_"..n)
+							local cat_pve = content:Add("DPanel")
+							cat_pve:Dock(TOP)
+							cat_pve:DockMargin(8, 8, 8, 0)
+							cat_pve:SetTall(180)
+							cat_pve.jText = "#jcms.cashinpve"
+							cat_pve.Paint = jcms.paint_Panel
+							for i, n in ipairs { "start", "evac", "victory", "maxclerks" } do
+								jcms.offgame_CreateTextElement(cat_pve, 4, 32+(i-1)*28, contentSize - 24, 28, "#jcms.opt_cash_"..n, "jcms_cash_"..n)
 							end
 
+							local cat_pvp = content:Add("DPanel")
+							cat_pvp:Dock(TOP)
+							cat_pvp:DockMargin(8, 8, 8, 0)
+							cat_pvp:SetTall(96)
+							cat_pvp.jText = "#jcms.cashinpvp"
+							cat_pvp.Paint = jcms.paint_Panel
+							for i, n in ipairs { "start_pvp" } do
+								jcms.offgame_CreateTextElement(cat_pvp, 4, 32+(i-1)*28, contentSize - 24, 28, "#jcms.opt_cash_"..n, "jcms_cash_"..n)
+							end
+
+							local cat_both = content:Add("DPanel")
+							cat_both:Dock(TOP)
+							cat_both:DockMargin(8, 8, 8, 0)
+							cat_both:SetTall(320)
+							cat_both.jText = "#jcms.cashinboth"
+							cat_both.Paint = jcms.paint_Panel
+							for i, n in ipairs { "mul_final", "mul_base", "mul_stunstick", "mul_very_far" } do
+								jcms.offgame_CreateTextElement(cat_both, 4, 32+(i-1)*28, contentSize - 24, 28, "#jcms.opt_cash_"..n, "jcms_cash_"..n)
+							end
 							for i, n in ipairs { "bonus_sidearm", "bonus_airborne", "bonus_headshot", "bonus_headshot_instakill" } do
-								jcms.offgame_CreateTextElement(content, 24, 12+(i-1+10)*28, contentSize - 48, 28, "#jcms.opt_cash_"..n, "jcms_cash_"..n)
+								jcms.offgame_CreateTextElement(cat_both, 4, 32+(i+5-1)*28, contentSize - 24, 28, "#jcms.opt_cash_"..n, "jcms_cash_"..n)
 							end
 						end
 					-- }}}

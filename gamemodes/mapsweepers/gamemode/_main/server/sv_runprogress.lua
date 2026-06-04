@@ -106,7 +106,9 @@ function jcms.runprogress_ResetStartingCash(ply_or_sid64)
 end
 
 function jcms.runprogress_GetStartingCash(ply_or_sid64)
-	if jcms.util_IsPVP() then return jcms.cvar_cash_start:GetInt() end
+	if jcms.util_IsPVP() then 
+		return jcms.cvar_cash_start_pvp:GetInt()
+	end
 
 	local sid64 = tostring(ply_or_sid64)
 	if type(ply_or_sid64) == "Player" then
@@ -120,7 +122,6 @@ end
 function jcms.runprogress_UpdateAllPlayers()
 	for i, ply in player.Iterator() do 
 		ply:SetNWInt("jcms_cash", jcms.runprogress_GetStartingCash(ply))
-		--print(jcms.runprogress_GetStartingCash(ply))
 	end
 end
 

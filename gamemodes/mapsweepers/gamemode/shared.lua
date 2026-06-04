@@ -123,7 +123,8 @@ local nmt = FindMetaTable("NPC")
 	jcms.cvar_map_list = CreateConVar("jcms_map_list", "gm_flatgrass", FCVAR_JCMS_NOTIFY_AND_SAVE, "A comma-separated list of maps. This is either a whitelist or a blacklist, depending on the convar 'jcms_map_iswhitelist'")
 	jcms.cvar_map_votecount = CreateConVar("jcms_map_votecount", "6", FCVAR_JCMS_NOTIFY_AND_SAVE, "How many maps will be offered as options in the post-mission vote, provided that the server has this many available. Capped at 15.")
 
-	jcms.cvar_cash_start = CreateConVar("jcms_cash_start", "600", FCVAR_JCMS_NOTIFY_AND_SAVE, "The amount of cash a new sweeper spawns with.", 0, 10000)
+	jcms.cvar_cash_start = CreateConVar("jcms_cash_start", "600", FCVAR_JCMS_NOTIFY_AND_SAVE, "The amount of cash a new sweeper spawns with in PvE.", 0, 10000)
+	jcms.cvar_cash_start_pvp = CreateConVar("jcms_cash_start_pvp", "600", FCVAR_JCMS_NOTIFY_AND_SAVE, "The amount of cash a new sweeper spawns with in PvP.", 0, 10000)
 	jcms.cvar_cash_evac = CreateConVar("jcms_cash_evac", "75", FCVAR_JCMS_NOTIFY_AND_SAVE, "This amount of cash is given to the sweeper a successful evacuation.", 0, 10000)
 	jcms.cvar_cash_victory = CreateConVar("jcms_cash_victory", "75", FCVAR_JCMS_NOTIFY_AND_SAVE, "This much cash is given to players for each consecutive victory.", 0, 10000)
 	jcms.cvar_cash_maxclerks = CreateConVar("jcms_cash_maxclerks", "5", FCVAR_JCMS_SHARED_SAVED, "The upper cap on how many clerks (NPCs) can be evacuated for +1 J each.", 0, 10000)
@@ -162,8 +163,7 @@ local nmt = FindMetaTable("NPC")
 	jcms.cvar_pvprespawnmode = CreateConVar("jcms_pvprespawnmode", "0", FCVAR_JCMS_NOTIFY_AND_SAVE, "0=Team-wide, 1=Per-Player")
 	jcms.cvar_pvptracers = CreateConVar("jcms_pvptracers", "1", FCVAR_JCMS_NOTIFY_AND_SAVE, "Whether players get given team-coloured tracers") --TODO: Rename to jcms_pvptracers and change default after testing
 
-
-
+	-- Performance
 	jcms.cvar_performanceMode = CreateConVar("jcms_performancemode", "0", FCVAR_JCMS_NOTIFY_AND_SAVE, "Various more aggressive changes to improve performance")
 	
 	-- Replicated
