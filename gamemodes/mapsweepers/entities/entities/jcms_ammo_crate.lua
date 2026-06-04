@@ -22,6 +22,7 @@ AddCSLuaFile()
 
 ENT.Type = "anim"
 ENT.Base = "base_anim"
+ENT.PrintName = "Infinite Ammo Crate"
 ENT.Author = "Octantis Addons"
 ENT.Category = "Map Sweepers"
 ENT.Spawnable = false

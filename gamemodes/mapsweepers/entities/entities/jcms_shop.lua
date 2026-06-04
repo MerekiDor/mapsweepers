@@ -22,7 +22,7 @@ AddCSLuaFile()
 
 ENT.Type = "anim"
 ENT.Base = "base_anim"
-ENT.PrintName = "J Corp Remote Shop"
+ENT.PrintName = "Shop"
 ENT.Author = "Octantis Addons"
 ENT.Category = "Map Sweepers"
 ENT.Spawnable = false

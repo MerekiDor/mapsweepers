@@ -22,7 +22,7 @@ AddCSLuaFile()
 
 ENT.Type = "point"
 ENT.Base = "base_point"
-ENT.PrintName = "Map Sweepers dynamic items"
+ENT.PrintName = "Map Sweepers Dynamic Items"
 ENT.Author = "Octantis Addons"
 ENT.Category = "Map Sweepers"
 ENT.Spawnable = false

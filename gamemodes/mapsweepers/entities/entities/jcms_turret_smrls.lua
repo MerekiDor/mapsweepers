@@ -22,7 +22,7 @@ AddCSLuaFile()
 
 ENT.Type = "ai"
 ENT.Base = "jcms_turret"
-ENT.PrintName = "J Corp SMRLS"
+ENT.PrintName = "Missile Platform"
 ENT.Author = "Octantis Addons"
 ENT.Category = "Map Sweepers"
 ENT.Spawnable = false

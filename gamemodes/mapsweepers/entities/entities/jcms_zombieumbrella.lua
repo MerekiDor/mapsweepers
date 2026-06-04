@@ -22,7 +22,7 @@ AddCSLuaFile()
 
 ENT.Type = "ai"
 ENT.Base = "base_anim"
-ENT.PrintName = "Zombie Umbrella"
+ENT.PrintName = "Umbrella"
 ENT.Author = "Octantis Addons"
 ENT.Category = "Map Sweepers"
 ENT.Spawnable = false

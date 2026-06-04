@@ -22,7 +22,7 @@ AddCSLuaFile()
 
 ENT.Type = "ai"
 ENT.Base = "base_anim"
-ENT.PrintName = "Zombie Polyp"
+ENT.PrintName = "Polyp"
 ENT.Author = "Octantis Addons"
 ENT.Category = "Map Sweepers"
 ENT.Spawnable = false

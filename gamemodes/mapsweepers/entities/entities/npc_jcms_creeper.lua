@@ -22,7 +22,7 @@ AddCSLuaFile()
 
 ENT.Type = "ai"
 ENT.Base = "base_ai"
-ENT.PrintName = "Boomer"
+ENT.PrintName = "Creeper"
 ENT.Author = "Octantis Addons"
 ENT.Category = "Map Sweepers"
 ENT.Spawnable = false
