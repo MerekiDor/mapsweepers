@@ -619,9 +619,11 @@
 			local healthWidth = ( me:GetMaxHealth() * 4 )
 			local armorWidth = ( me:GetMaxArmor() * 4 )
 			local addX = 64
-			local respawns = jcms.util_GetRespawnCount(me:GetNWInt("jcms_pvpTeam", -1), me)
-			local deadteammates = 0
 			local myPvpTeam = me:GetNWInt("jcms_pvpTeam", -1)
+			local respawns = jcms.util_GetRespawnCount(myPvpTeam, me)
+			local respawnsTeam = jcms.util_GetRespawnCount(myPvpTeam)
+			local isPVP = jcms.util_IsPVP()
+			local deadteammates = 0
 			for i, ply in player.Iterator() do
 				if ply:GetNWInt("jcms_desiredteam") == 1 and jcms.team_pvpSameTeam_optimised(myPvpTeam, ply:GetNWInt("jcms_pvpTeam", -1)) and (not ply:GetNWBool("jcms_evacuated")) and (ply:GetObserverMode() == OBS_MODE_CHASE or ply:GetObserverMode() == OBS_MODE_NONE and not ply:Alive()) then
 					deadteammates = deadteammates + 1
@@ -636,9 +638,20 @@
 				local str = language.GetPhrase("jcms.deadteammates_hud"):format(deadteammates)
 				draw.SimpleText(str, "jcms_hud_small", 64 - 8, 34, jcms.color_dark_alt, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 			end
+
 			if respawns > 0 then
-				local str = language.GetPhrase("jcms.respawns_hud"):format(respawns)
-				draw.SimpleText(str, "jcms_hud_small", 64 + 8, deadteammates > 0 and 64 or 34, jcms.color_dark, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				local respawnsY = deadteammates > 0 and 64 or 34
+				if isPVP then
+					local str1 = language.GetPhrase("jcms.respawns_hud_pvp1"):format(respawnsTeam)
+					draw.SimpleText(str1, "jcms_hud_small", 64 + 8, respawnsY, jcms.color_dark, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+					if respawns > respawnsTeam then
+						local str2 = language.GetPhrase("jcms.respawns_hud_pvp2"):format(respawns - respawnsTeam)
+						draw.SimpleText(str2, "jcms_hud_small", 64 + 8, respawnsY + 30, jcms.color_dark, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+					end
+				else
+					local str = language.GetPhrase("jcms.respawns_hud"):format(respawns)
+					draw.SimpleText(str, "jcms_hud_small", 64 + 8, respawnsY, jcms.color_dark, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				end
 			end
 
 			surface.DrawRect(24 + addX, -48, healthWidth, 32)
@@ -697,8 +710,18 @@
 					draw.SimpleText(str, "jcms_hud_small", 64 - 8 + offsetIcon + xOffset, 34 - offsetIcon, color, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 				end
 				if respawns > 0 then
-					local str = language.GetPhrase("jcms.respawns_hud"):format(respawns)
-					draw.SimpleText(str, "jcms_hud_small", 64 + 8 + offsetIcon, (deadteammates > 0 and 64 or 34) - offsetIcon, jcms.color_bright, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+					local respawnsY = deadteammates > 0 and 64 or 34
+					if isPVP then
+						local str1 = language.GetPhrase("jcms.respawns_hud_pvp1"):format(respawnsTeam)
+						draw.SimpleText(str1, "jcms_hud_small", 64 + 8 + offsetIcon, respawnsY - offsetIcon, jcms.color_bright, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+						if respawns > respawnsTeam then
+							local str2 = language.GetPhrase("jcms.respawns_hud_pvp2"):format(respawns - respawnsTeam)
+							draw.SimpleText(str2, "jcms_hud_small", 64 + 8 + offsetIcon, respawnsY + 30 - offsetIcon, jcms.color_bright, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+						end
+					else
+						local str = language.GetPhrase("jcms.respawns_hud"):format(respawns)
+						draw.SimpleText(str, "jcms_hud_small", 64 + 8 + offsetIcon, respawnsY - offsetIcon, jcms.color_bright, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+					end
 				end
 				surface.DrawRect(24 + offsetHealth + addX, -48 - offsetHealth, healthWidth * fracHealth, 32)
 				jcms.hud_DrawStripedRect(24 + addX + offsetHealth/2 + healthWidth*fracHealth, -48 - offsetHealth/2 + 2, healthWidth*(1-fracHealth), 32-4)
