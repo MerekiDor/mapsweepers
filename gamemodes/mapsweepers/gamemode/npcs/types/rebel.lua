@@ -200,19 +200,21 @@
 			end
 		end
 
-		if (not IsValid(enemy) or not npc:Visible(enemy)) and cTime > npcTbl.jcms_nextIdleLine then 
-			--Idle voice lines every once in awhile
-			npc:EmitSound("jcms_rebel_idle_m") --TODO: Male/female
-			
-			--Set the entire squad to not play idle sounds for a while.
-			local delay = math.random(10, 25)
-			if npc:GetSquad() then
-				for i, squadNPC in ipairs(ai.GetSquadMembers( npc:GetSquad() )) do
-					squadNPC.jcms_nextIdleLine = cTime + delay
+		if npcTbl.jcms_nextIdleLine then
+			if (not IsValid(enemy) or not npc:Visible(enemy)) and (cTime > npcTbl.jcms_nextIdleLine) then 
+				--Idle voice lines every once in awhile
+				npc:EmitSound("jcms_rebel_idle_m") --TODO: Male/female
+				
+				--Set the entire squad to not play idle sounds for a while.
+				local delay = math.random(10, 25)
+				if npc:GetSquad() then
+					for i, squadNPC in ipairs(ai.GetSquadMembers( npc:GetSquad() )) do
+						squadNPC.jcms_nextIdleLine = cTime + delay
+					end
 				end
-			end
 
-			npcTbl.jcms_nextIdleLine = cTime + delay
+				npcTbl.jcms_nextIdleLine = cTime + delay
+			end
 		end
 	end
 
