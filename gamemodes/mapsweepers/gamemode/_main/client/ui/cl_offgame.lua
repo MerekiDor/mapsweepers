@@ -1934,7 +1934,7 @@ jcms.offgame = jcms.offgame or NULL
 					for j, part in ipairs(parts) do
 						local part_type = "text"
 						local part_text = ""
-						local _, b_index, part_num, part_beginning = part:find("^%s*(%d*)([%W%s]+) %w")
+						local _, b_index, part_num, part_beginning = part:find("^%s*(%d*)([%-%#%?%.%s]+) ")
 
 						if part_beginning == "-#" then
 							part_type = "caption"
@@ -2159,10 +2159,18 @@ jcms.offgame = jcms.offgame or NULL
 			local lowres = jcms.util_IsLowRes()
 
 			local listPanel = tab:Add("DPanel")
-			listPanel:SetSize(lowres and 128 or 220, tab:GetTall() - 64)
+			listPanel:SetSize(lowres and 128 or 230, tab:GetTall() - 64)
 			listPanel:SetPos(4, 32)
 			listPanel.Paint = jcms.paint_Panel
 			listPanel.jText = "#jcms.bestiary"
+			listPanel.isCut = false
+			local cutBtn = listPanel:Add("DImageButton")
+			cutBtn:SetSize(24, 24)
+			cutBtn:SetImage("jcms/cut.png")
+			cutBtn:SetPos(listPanel:GetWide() - 24 - 4, 4)
+			cutBtn:SetStretchToFit(false)
+			cutBtn.Paint = jcms.paint_ImageButton
+			cutBtn.hollow = true
 			local scrollArea = listPanel:Add("DScrollPanel")
 			scrollArea:SetPos(8, 32)
 			scrollArea:SetSize(listPanel:GetWide() - 16, listPanel:GetTall() - 32 - 8)
@@ -2198,116 +2206,137 @@ jcms.offgame = jcms.offgame or NULL
 			descArea.Paint = jcms.offgame_paint_BestiaryDescription
 			descArea.lowres = lowres
 
-			local factions = {}
-			local bestiaryData = {}
-			for name, entry in pairs(jcms.bestiary) do
-				if bestiaryData[ entry.faction ] then
-					table.insert(bestiaryData[ entry.faction ], name)
-				else
-					table.insert(factions, entry.faction)
-					bestiaryData[ entry.faction ] = { name }
+			local function buildBestiary(bestiaryEntries)
+				local factions = {}
+				local bestiaryData = {}
+				for name, entry in pairs(bestiaryEntries) do
+					if bestiaryData[ entry.faction ] then
+						table.insert(bestiaryData[ entry.faction ], name)
+					else
+						table.insert(factions, entry.faction)
+						bestiaryData[ entry.faction ] = { name }
+					end
 				end
-			end
 
-			table.sort(factions)
-			for faction, entryNames in pairs(bestiaryData) do
-				table.sort(entryNames, function(firstName, lastName)
-					local e1, e2 = jcms.bestiary[ firstName ], jcms.bestiary[ lastName ]
-					return e1.bounty < e2.bounty
-				end)
-			end
+				table.sort(factions)
+				for faction, entryNames in pairs(bestiaryData) do
+					table.sort(entryNames, function(firstName, lastName)
+						local e1, e2 = bestiaryEntries[ firstName ], bestiaryEntries[ lastName ]
+						return e1.bounty < e2.bounty
+					end)
+				end
 
-			local function entryBtnFunc(b)
-				surface.PlaySound("buttons/combine_button2.wav")
-				local entry = jcms.bestiary[ b.entryName ]
-				imageArea.entry = entry
-				imageArea.entryName = language.GetPhrase("#jcms.bestiary_" .. b.entryName)
-				imageArea.factionMat = Material("jcms/factions/" .. tostring(entry.faction) .. ".png")
-				imageArea.anim = 0
-				
-				descArea.name = language.GetPhrase("jcms.bestiary_" .. b.entryName)
-				descArea.jText = language.GetPhrase("jcms.bestiary_" .. b.entryName .. "_desc")
-				descArea.markup = nil
-
-				if type(entry.doModel) == "function" then
-					entry.doModel(model)
-				else
-					local entity = model:GetEntity()
-					if not IsValid(entity) then
-						model:SetModel(entry.mdl)
-						entity = model:GetEntity()
-					else
-						entity:SetModel(entry.mdl)
+				local function entryBtnFunc(b)
+					surface.PlaySound("buttons/combine_button2.wav")
+					local entry = bestiaryEntries[ b.entryName ]
+					local langKeyPrefix = entry.cutversion and "#jcms.bestiarycut_" or "#jcms.bestiary_" 
+					imageArea.entry = entry
+					imageArea.entryName = language.GetPhrase(langKeyPrefix .. b.entryName)
+					imageArea.factionMat = Material("jcms/factions/" .. tostring(entry.faction) .. ".png")
+					imageArea.anim = 0
+					
+					descArea.name = language.GetPhrase(langKeyPrefix .. b.entryName)
+					if entry.cutversion then
+						descArea.name = descArea.name .. " (" .. language.GetPhrase("jcms.beestiarycutversion"):format(entry.cutversion) ..")"
 					end
-					entity:SetModelScale(entry.scale or 1)
-					entity:SetSkin(entry.skin or 0)
-					if entry.matrix then
-						entity:EnableMatrix("RenderMultiply", entry.matrix)
-					else
-						entity:DisableMatrix("RenderMultiply")
-					end
-					model:SetColor(entry.color or color_white)
 
-					local idleSeq = entry.seq or 0
-					if idleSeq == 0 then
-						for i, sq in ipairs(entity:GetSequenceList()) do
-							if sq:lower():find("idle") then
-								idleSeq = i
-								break
+					descArea.jText = language.GetPhrase(langKeyPrefix .. b.entryName .. "_desc")
+					descArea.markup = nil
+
+					if type(entry.doModel) == "function" then
+						entry.doModel(model)
+					else
+						local entity = model:GetEntity()
+						if not IsValid(entity) then
+							model:SetModel(entry.mdl)
+							entity = model:GetEntity()
+						else
+							entity:SetModel(entry.mdl)
+						end
+						entity:SetModelScale(entry.scale or 1)
+						entity:SetSkin(entry.skin or 0)
+						if entry.matrix then
+							entity:EnableMatrix("RenderMultiply", entry.matrix)
+						else
+							entity:DisableMatrix("RenderMultiply")
+						end
+						model:SetColor(entry.color or color_white)
+
+						local idleSeq = entry.seq or 0
+						if idleSeq == 0 then
+							for i, sq in ipairs(entity:GetSequenceList()) do
+								if sq:lower():find("idle") then
+									idleSeq = i
+									break
+								end
+							end
+						end
+						entity:SetSequence(idleSeq)
+
+						for i=0, 31 do
+							local mat = entry.mats and entry.mats[i + 1] or ""
+							entity:SetSubMaterial(i, mat)
+						end
+						
+						entity:SetBodyGroups( string.rep("0", 32) )
+						if entry.bodygroups then
+							for bodygroupId, submodelId in pairs(entry.bodygroups) do
+								entity:SetBodygroup(bodygroupId, submodelId)
 							end
 						end
 					end
-					entity:SetSequence(idleSeq)
 
-					for i=0, 31 do
-						local mat = entry.mats and entry.mats[i + 1] or ""
-						entity:SetSubMaterial(i, mat)
-					end
-					
-					entity:SetBodyGroups( string.rep("0", 32) )
-					if entry.bodygroups then
-						for bodygroupId, submodelId in pairs(entry.bodygroups) do
-							entity:SetBodygroup(bodygroupId, submodelId)
+					model.PreDrawModel = function() if entry.preDrawModel then entry.preDrawModel(model:GetEntity()) end end
+					model.PostDrawModel = function() if entry.postDrawModel then entry.postDrawModel(model:GetEntity()) end end
+
+					model:SetFOV( entry.camfov or 38 )
+					model:SetLookAt(entry.camlookvector or model:GetEntity():WorldSpaceCenter())
+				end
+
+				for i, faction in ipairs(factions) do
+					local b = scrollArea:Add("DButton")
+					b:SetText("#jcms." .. faction)
+					b:Dock(TOP)
+					b:DockMargin(0, 12, 0, 4)
+					b:SetEnabled(false)
+					b.jFont = lowres and "jcms_small_bolder" or "jcms_medium"
+					b.Paint = jcms.paint_ButtonFilled
+
+					local entryNames = bestiaryData[ faction ]
+					for j, entryName in ipairs(entryNames) do
+						local entry = bestiaryEntries[ entryName ]
+						local langKeyPrefix = entry.cutversion and "#jcms.bestiarycut_" or "#jcms.bestiary_" 
+
+						local b = scrollArea:Add("DButton")
+						b:SetText(language.GetPhrase(langKeyPrefix .. entryName))
+						b:Dock(TOP)
+						b:DockMargin(0, 0, 0, 4)
+						b.entryName = entryName
+						b.DoClick = entryBtnFunc
+						b.Paint = jcms.paint_ButtonSmall
+						if lowres then
+							b.jFont = "DefaultSmall"
 						end
 					end
 				end
 
-				model.PreDrawModel = function() if entry.preDrawModel then entry.preDrawModel(model:GetEntity()) end end
-				model.PostDrawModel = function() if entry.postDrawModel then entry.postDrawModel(model:GetEntity()) end end
-
-				model:SetFOV( entry.camfov or 38 )
-				model:SetLookAt(entry.camlookvector or model:GetEntity():WorldSpaceCenter())
-			end
-
-			for i, faction in ipairs(factions) do
-				local b = scrollArea:Add("DButton")
-				b:SetText("#jcms." .. faction)
-				b:Dock(TOP)
-				b:DockMargin(0, 12, 0, 4)
-				b:SetEnabled(false)
-				b.jFont = lowres and "jcms_small_bolder" or "jcms_medium"
-				b.Paint = jcms.paint_ButtonFilled
-
-				local entryNames = bestiaryData[ faction ]
-				for j, entryName in ipairs(entryNames) do
-					local entry = jcms.bestiary[ entryName ]
-					local b = scrollArea:Add("DButton")
-					b:SetText(language.GetPhrase("jcms.bestiary_"..entryName))
-					b:Dock(TOP)
-					b:DockMargin(0, 0, 0, 4)
-					b.entryName = entryName
-					b.DoClick = entryBtnFunc
-					b.Paint = jcms.paint_ButtonSmall
-					if lowres then
-						b.jFont = "DefaultSmall"
-					end
+				if IsValid(scrollArea.VBar) then
+					scrollArea.VBar.Paint = BLANK_DRAW
+					scrollArea.VBar:SetHideButtons(true)
+					scrollArea.VBar.btnGrip.Paint = jcms.paint_ScrollGrip
 				end
 			end
 
-			if IsValid(scrollArea.VBar) then
-				scrollArea.VBar.Paint = BLANK_DRAW
-				scrollArea.VBar:SetHideButtons(true)
-				scrollArea.VBar.btnGrip.Paint = jcms.paint_ScrollGrip
+			buildBestiary(jcms.bestiary)
+			
+			function cutBtn:DoClick()
+				surface.PlaySound("buttons/button6.wav")
+				listPanel.isCut = not listPanel.isCut
+				cutBtn.hollow = not listPanel.isCut
+				for i, child in ipairs(scrollArea:GetCanvas():GetChildren()) do
+					child:Remove()
+				end
+				buildBestiary(listPanel.isCut and jcms.bestiarycut or jcms.bestiary)
 			end
 		end
 
@@ -2660,6 +2689,7 @@ jcms.offgame = jcms.offgame or NULL
 							local bar = catList:Add("#jcms.opt_commonsettings")
 							bar.Paint = jcms.paint_Category
 							bar.dontSubtractHeight = true
+							bar:SetExpanded(false)
 							local content = vgui.Create("DPanel", bar)
 							content:SetPaintBackground(false)
 							content:DockPadding(0, 0, 0, 16)
@@ -2691,26 +2721,6 @@ jcms.offgame = jcms.offgame or NULL
 							scale:SetMinMax(0, 2)
 							scale:SetConVar("jcms_friendlyfire_multiplier")
 							scale.Paint = jcms.paint_NumSlider
-							currentY = currentY + 24
-
-							local softcap = content:Add("DNumSlider")
-							softcap:SetText("#jcms.opt_softcap")
-							softcap:SetSize(contentSize - 48, 24)
-							softcap:SetPos(24, currentY)
-							softcap:SetMinMax(1, 100)
-							softcap:SetDecimals(0)
-							softcap:SetConVar("jcms_npc_softcap")
-							softcap.Paint = jcms.paint_NumSlider
-							local softcap_clarify = content:Add("DTextEntry")
-							softcap_clarify:SetPos(softcap:GetX() + 16, softcap:GetY() + softcap:GetTall() + 4)
-							softcap_clarify:SetSize(contentSize - 32 - softcap_clarify:GetX(), 84)
-							softcap_clarify:SetMultiline(true)
-							softcap_clarify:SetEditable(false)
-							softcap_clarify:SetFont("jcms_small")
-							softcap_clarify:SetPaintBackground(false)
-							softcap_clarify:SetTextColor(jcms.color_pulsing)
-							softcap_clarify.PaintOver = jcms.paintover_PanelClarify
-							softcap_clarify:SetText(language.GetPhrase("jcms.opt_softcap_desc1") .. "\n" .. language.GetPhrase("jcms.opt_softcap_desc2"))
 						end
 					-- }}}
 
@@ -2719,6 +2729,7 @@ jcms.offgame = jcms.offgame or NULL
 							local bar = catList:Add("#jcms.opt_pvpsettings")
 							bar.Paint = jcms.paint_Category
 							bar.dontSubtractHeight = true
+							bar:SetExpanded(false)
 							local content = vgui.Create("DPanel", bar)
 							content:SetPaintBackground(false)
 							content:DockPadding(0, 0, 0, 16)
@@ -2763,6 +2774,7 @@ jcms.offgame = jcms.offgame or NULL
 							local bar = catList:Add("#jcms.opt_difficultysettings")
 							bar.Paint = jcms.paint_Category
 							bar.dontSubtractHeight = true
+							bar:SetExpanded(false)
 							local content = vgui.Create("DPanel", bar)
 							content:SetPaintBackground(false)
 							content:DockPadding(0, 0, 0, 16)
@@ -2800,6 +2812,25 @@ jcms.offgame = jcms.offgame or NULL
 							warn:SetConVar("jcms_swarm_warning")
 							warn:SetDecimals(0)
 							warn.Paint = jcms.paint_NumSlider
+
+							local softcap = content:Add("DNumSlider")
+							softcap:SetText("#jcms.opt_softcap")
+							softcap:SetSize(contentSize - 48, 24)
+							softcap:SetPos(24, 24 + 150)
+							softcap:SetMinMax(1, 100)
+							softcap:SetDecimals(0)
+							softcap:SetConVar("jcms_npc_softcap")
+							softcap.Paint = jcms.paint_NumSlider
+							local softcap_clarify = content:Add("DTextEntry")
+							softcap_clarify:SetPos(softcap:GetX() + 16, softcap:GetY() + softcap:GetTall() + 4)
+							softcap_clarify:SetSize(contentSize - 32 - softcap_clarify:GetX(), 84)
+							softcap_clarify:SetMultiline(true)
+							softcap_clarify:SetEditable(false)
+							softcap_clarify:SetFont("jcms_small")
+							softcap_clarify:SetPaintBackground(false)
+							softcap_clarify:SetTextColor(jcms.color_pulsing)
+							softcap_clarify.PaintOver = jcms.paintover_PanelClarify
+							softcap_clarify:SetText(language.GetPhrase("jcms.opt_softcap_desc1") .. "\n" .. language.GetPhrase("jcms.opt_softcap_desc2"))
 						end
 					-- }}}
 
@@ -2808,6 +2839,7 @@ jcms.offgame = jcms.offgame or NULL
 							local bar = catList:Add("#jcms.opt_maps")
 							bar.Paint = jcms.paint_Category
 							bar.dontSubtractHeight = true
+							bar:SetExpanded(false)
 							local content = vgui.Create("DPanel", bar)
 							content:SetPaintBackground(false)
 							content:DockPadding(0, 0, 0, 16)
@@ -2843,12 +2875,13 @@ jcms.offgame = jcms.offgame or NULL
 							local bar = catList:Add("#jcms.opt_cashsettings")
 							bar.Paint = jcms.paint_Category
 							bar.dontSubtractHeight = true
+							bar:SetExpanded(false)
 							local content = vgui.Create("DPanel", bar)
 							content:SetPaintBackground(false)
 							content:DockPadding(0, 0, 0, 16)
 							bar:SetContents(content)
 
-							for i, n in ipairs { "start", "evac", "victory", "maxclerks" } do
+							for i, n in ipairs { "start_pvp", "start", "evac", "victory", "maxclerks" } do
 								jcms.offgame_CreateTextElement(content, 24, 12+(i-1)*28, contentSize - 48, 28, "#jcms.opt_cash_"..n, "jcms_cash_"..n)
 							end
 								
@@ -2867,6 +2900,7 @@ jcms.offgame = jcms.offgame or NULL
 							local bar = catList:Add("#jcms.opt_weaponprices")
 							bar.Paint = jcms.paint_Category
 							bar.dontSubtractHeight = true
+							bar:SetExpanded(false)
 							local content = vgui.Create("DPanel", bar)
 							content:SetPaintBackground(false)
 							content:DockPadding(0, 0, 0, 16)
@@ -3035,6 +3069,7 @@ jcms.offgame = jcms.offgame or NULL
 							local bar = catList:Add("#jcms.opt_orders")
 							bar.Paint = jcms.paint_Category
 							bar.dontSubtractHeight = true
+							bar:SetExpanded(false)
 							local content = vgui.Create("DPanel", bar)
 							content:SetPaintBackground(false)
 							content:DockPadding(0, 0, 0, 16)

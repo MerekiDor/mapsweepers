@@ -29,7 +29,7 @@ jcms.bestiary = {}
 	}
 
 	jcms.bestiary.antlion_drone = {
-		faction = "antlion", bounty = 15, health = 30,
+		faction = "antlion", bounty = 18, health = 30,
 		mdl = "models/antlion.mdl", camfov = 28
 	}
 
@@ -56,7 +56,7 @@ jcms.bestiary = {}
 	}
 
 	jcms.bestiary.antlion_waster = {
-		faction = "antlion", bounty = 5, health = 15,
+		faction = "antlion", bounty = 7, health = 15,
 		mdl = "models/antlion.mdl", scale = 0.63, color = Color(168, 125, 59), camfov = 28
 	}
 
@@ -95,7 +95,7 @@ jcms.bestiary = {}
 	}
 
 	jcms.bestiary.combine_scanner = {
-		faction = "combine", bounty = 15, health = 30,
+		faction = "combine", bounty = 20, health = 30,
 		mdl = "models/combine_scanner.mdl", camfov = 20
 	}
 
@@ -138,11 +138,6 @@ jcms.bestiary = {}
 		mdl = "models/combine_helicopter.mdl", scale = 0.3
 	}
 
-	jcms.bestiary.rebel_medic = {
-		faction = "rebel", bounty = 35, health = 40,
-		mdl = "models/humans/group03m/female_07.mdl", seq = 3, camfov = 30
-	}
-
 	jcms.bestiary.rebel_megacopter = {
 		faction = "rebel", bounty = 600, health = 2268,
 		mdl = "models/combine_helicopter.mdl", mats = { "models/jcms/ultracopter/body", "models/jcms/ultracopter/glass" }, scale = 0.3
@@ -151,11 +146,6 @@ jcms.bestiary = {}
 	jcms.bestiary.rebel_odessa = {
 		faction = "rebel", bounty = 50, health = 30,
 		mdl = "models/odessa.mdl", seq = 7, camfov = 30
-	}
-
-	jcms.bestiary.rebel_rgg = {
-		faction = "rebel", bounty = 25, health = 4,
-		mdl = "models/humans/group02/male_05.mdl", mats = { "models/shiny", "models/shiny", "models/shiny", "models/shiny", "models/shiny" }, seq = 14, camfov = 30, color = Color(195, 0, 255)
 	}
 
 	jcms.bestiary.rebel_vanguard = {
@@ -183,7 +173,7 @@ jcms.bestiary = {}
 	}
 
 	jcms.bestiary.zombie_combine = {
-		faction = "zombie", bounty = 40, health = 150,
+		faction = "zombie", bounty = 50, health = 150,
 		mdl = "models/zombie/zombie_soldier.mdl"
 	}
 
@@ -193,12 +183,12 @@ jcms.bestiary = {}
 	}
 
 	jcms.bestiary.zombie_fast = {
-		faction = "zombie", bounty = 28, health = 63,
+		faction = "zombie", bounty = 30, health = 63,
 		mdl = "models/zombie/fast.mdl", bodygroups = { [1] = 1 }, camfov = 30
 	}
 
 	jcms.bestiary.zombie_husk = {
-		faction = "zombie", bounty = 13, health = 75,
+		faction = "zombie", bounty = 15, health = 75,
 		mdl = "models/zombie/classic.mdl", bodygroups = { [1] = 1 }, camfov = 30
 	}
 
@@ -210,13 +200,6 @@ jcms.bestiary = {}
 	jcms.bestiary.zombie_poison = {
 		faction = "zombie", bounty = 35, health = 263,
 		mdl = "models/zombie/poison.mdl", bodygroups = { 1, 1, 1, 1 }, camfov = 30
-	}
-
-	local polypMatrix = Matrix()
-	polypMatrix:Rotate( Angle(0, 0, 180) )
-	jcms.bestiary.zombie_polyp = {
-		faction = "zombie", bounty = 50, health = 200,
-		mdl = "models/barnacle.mdl", seq = "chew_humanoid", camfov = 20, matrix = polypMatrix, camlookvector = Vector(0, 0, 18),
 	}
 
 	jcms.bestiary.zombie_spawner = {
@@ -235,6 +218,32 @@ jcms.bestiary = {}
 			render.SetColorModulation(1, 1, 1)
 			render.OverrideBlend( false )
 		end
+	}
+
+-- // }}}
+
+-- // Cut entries {{{
+
+	jcms.bestiarycut = {}
+
+	jcms.bestiarycut.rebel_rgg = {
+		cutversion = "v1.2",
+		faction = "rebel", bounty = 25, health = 4,
+		mdl = "models/humans/group02/male_05.mdl", mats = { "models/shiny", "models/shiny", "models/shiny", "models/shiny", "models/shiny" }, seq = 14, camfov = 30, color = Color(195, 0, 255)
+	}
+
+	jcms.bestiarycut.rebel_medic = {
+		cutversion = "v1.2",
+		faction = "rebel", bounty = 35, health = 40,
+		mdl = "models/humans/group03m/female_07.mdl", seq = 3, camfov = 30
+	}
+
+	local polypMatrix = Matrix()
+	polypMatrix:Rotate( Angle(0, 0, 180) )
+	jcms.bestiarycut.zombie_polyp = {
+		cutversion = "v1.2",
+		faction = "zombie", bounty = 50, health = 200,
+		mdl = "models/barnacle.mdl", seq = "chew_humanoid", camfov = 20, matrix = polypMatrix, camlookvector = Vector(0, 0, 18),
 	}
 
 -- // }}}

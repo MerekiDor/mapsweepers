@@ -527,7 +527,6 @@
 			if d.missionData.evacuating then
 				aggroChance = (aggroChance + 0.95)/2
 			end
-			print("SWARM AGGRO CHANCE", aggroChance)
 			
 			local totalPopulation = 0
 			for zoneId, population in pairs(d.zonePopulations) do

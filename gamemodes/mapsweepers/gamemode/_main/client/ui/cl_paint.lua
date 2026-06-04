@@ -212,8 +212,13 @@
 		local clr_dark = p:IsHovered() and jcms.color_dark_alt or jcms.color_dark
 
 		surface.SetDrawColor(clr)
-		drawFilledPolyButton(0, 0, w, h, math.min(8, w/8, h/8))
-		p:GetChild(0):SetImageColor(clr_dark)
+		if p.hollow then
+			drawHollowPolyButton(0, 0, w, h, math.min(8, w/8, h/8))
+			p:GetChild(0):SetImageColor(clr)
+		else
+			drawFilledPolyButton(0, 0, w, h, math.min(8, w/8, h/8))
+			p:GetChild(0):SetImageColor(clr_dark)
+		end
 		return true
 	end
 
