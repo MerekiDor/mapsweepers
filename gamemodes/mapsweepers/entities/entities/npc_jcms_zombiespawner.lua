@@ -94,7 +94,7 @@ if SERVER then
 
 		if dmg > 0 then
 			if bit.band( dmgInfo:GetDamageType(), DMG_BLAST ) > 0 then
-				dmgInfo:ScaleDamage(1.5)
+				dmgInfo:ScaleDamage(1.75)
 			end
 
 			self.jcms_flinchProgress = self.jcms_flinchProgress + dmg 
