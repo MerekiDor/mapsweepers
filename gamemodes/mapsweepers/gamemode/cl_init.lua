@@ -93,64 +93,76 @@ end)
 	-- It is licensed under SIL OPEN FONT LICENSE Version 1.1, and is copyrighted by IBM Corp.
 	-- The full text of the license can be read either in the LICENSE_OFL file, or here: https://openfontlicense.org/open-font-license-official-text/
 
+	local fontNames = {
+		light = "IBM Plex Sans Light",
+		regular = "IBM Plex Sans",
+		semibold = "IBM Plex Sans SemiBold"
+	}
+
+	if system.IsLinux() then
+		fontNames.light = "jcms_light.ttf"
+		fontNames.regular = "jcms_regular.ttf"
+		fontNames.semibold = "jcms_semibold.ttf"
+	end
+
 	surface.CreateFont("jcms_hud_superhuge", {
-		font = "IBM Plex Sans Light",
+		font = fontNames.light,
 		antialias = true,
 		extended = true,
 		size = 256
 	})
 
 	surface.CreateFont("jcms_hud_huge", {
-		font = "IBM Plex Sans Light",
+		font = fontNames.light,
 		antialias = true,
 		extended = true,
 		size = 128
 	})
 
 	surface.CreateFont("jcms_hud_big", {
-		font = "IBM Plex Sans",
+		font = fontNames.regular,
 		antialias = true,
 		extended = true,
 		size = 100
 	})
 
 	surface.CreateFont("jcms_hud_score", {
-		font = "IBM Plex Sans",
+		font = fontNames.regular,
 		antialias = true,
 		extended = true,
 		size = 85
 	})
 
 	surface.CreateFont("jcms_hud_medium", {
-		font = "IBM Plex Sans",
+		font = fontNames.regular,
 		antialias = true,
 		extended = true,
 		size = 64
 	})
 
 	surface.CreateFont("jcms_hud_small", {
-		font = "IBM Plex Sans SemiBold",
+		font = fontNames.semibold,
 		antialias = true,
 		extended = true,
 		size = 37
 	})
 
 	surface.CreateFont("jcms_big", {
-		font = "IBM Plex Sans Light",
+		font = fontNames.light,
 		antialias = true,
 		extended = true,
 		size = 32
 	})
 	
 	surface.CreateFont("jcms_medium", {
-		font = "IBM Plex Sans SemiBold",
+		font = fontNames.semibold,
 		antialias = true,
 		extended = true,
 		size = 24
 	})
 	
 	surface.CreateFont("jcms_title", {
-		font = "IBM Plex Sans SemiBold",
+		font = fontNames.semibold,
 		antialias = true,
 		extended = true,
 		size = 18
