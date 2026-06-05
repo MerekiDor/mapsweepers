@@ -187,6 +187,13 @@ if CLIENT then
 			jcms.fogStack_push(data)
 		end)
 
+		--ambient/atmosphere/captain_room.wav   --60 pitch
+		--ambient/levels/citadel/citadel_ambient_voices1.wav
+		--ambient/levels/citadel/citadel_drone_loop3.wav --60-80 (but it's really quiet)
+		self:EmitSound("ambient/atmosphere/captain_room.wav", 90, 70)
+
+		self.emitter = ParticleEmitter( self:WorldSpaceCenter(), false )
+
 		self:SetRenderBounds(Vector(-96,-96,0),Vector(96,96,512+64))
 	end
 
@@ -205,11 +212,35 @@ if CLIENT then
 			end
 		end
 
-		--Color mod
+		local selfPos = self:GetPos()
+		local distToPly = jcms.EyePos_lowAccuracy:Distance(selfPos)
 
-		--TODO: These seem to stack(?). Might want to separate this into a hook added/removed when the first/last are spawned and removed.
-		--local cSine = (1 + math.sin(CurTime()))/2
-		--jcms.colormod_Hold("zombiespewer", Color(64, 0, 0), 0.7 + cSine * math.random() * 0.1 , 1, 2)
+		-- // ScreenShake {{{
+			if distToPly < 1000 then
+				local intensity = Lerp(math.sqrt(distToPly/1000), 8, 0.5)
+				util.ScreenShake(selfPos, intensity, 40, 0.1, 0)
+			end
+		-- // }}}
+
+		-- // Particles {{{
+			--TODO: Move vectors out of this think if it's notably expensive. Idk yet because it doesn't run *that* often, but still somewhat often.
+			local part = self.emitter:Add( "particle/particle_noisesphere", self:WorldSpaceCenter() + VectorRand(-10, 10) + Vector(-0,-10,50))
+			part:SetStartSize(60)
+			part:SetEndSize(100)
+			part:SetDieTime(4)
+
+			part:SetStartAlpha(175)
+			part:SetEndAlpha(0)
+
+			part:SetColor( 70 + math.random(0,10), 0, 0 )
+
+			part:SetVelocity(Vector(0,0,175) + VectorRand(-40,40))
+
+			part:SetGravity(Vector(0,50, 0)) --"Wind" effect
+		-- // }}}
+
+		self:SetNextClientThink(CurTime() + 0.05)
+		return true
 	end
 
 	function ENT:DrawTranslucent()
@@ -221,30 +252,36 @@ if CLIENT then
 			hook.Remove("RenderScene", tostring(self))
 		-- // }}}
 
-		local ed = EffectData()
-		ed:SetRadius(250)
-		ed:SetOrigin(self:WorldSpaceCenter())
-		ed:SetScale(1)
-		ed:SetMagnitude(0.5)
-		ed:SetFlags(0)
-		util.Effect("jcms_bigblast", ed)
+		self.emitter:Finish()
+		self:StopSound("ambient/atmosphere/captain_room.wav")
 
-		for i=1, 6 do
-			local boneIndex = math.random(1, self:GetBoneCount()) -- 0 not included intentionally
-			local boneMatrix = self:GetBoneMatrix(boneIndex)
-			if boneMatrix then
-				local ed = EffectData()
-				ed:SetRadius(math.random(65, 128))
-				ed:SetOrigin(boneMatrix:GetTranslation())
-				ed:SetMagnitude(math.Rand(0.3, 0.5))
-				ed:SetScale(2)
-				ed:SetFlags(0)
-				util.Effect("jcms_bigblast", ed)
+
+		-- // FX {{{
+			local ed = EffectData()
+			ed:SetRadius(250)
+			ed:SetOrigin(self:WorldSpaceCenter())
+			ed:SetScale(1)
+			ed:SetMagnitude(0.5)
+			ed:SetFlags(0)
+			util.Effect("jcms_bigblast", ed)
+
+			for i=1, 6 do
+				local boneIndex = math.random(1, self:GetBoneCount()) -- 0 not included intentionally
+				local boneMatrix = self:GetBoneMatrix(boneIndex)
+				if boneMatrix then
+					local ed = EffectData()
+					ed:SetRadius(math.random(65, 128))
+					ed:SetOrigin(boneMatrix:GetTranslation())
+					ed:SetMagnitude(math.Rand(0.3, 0.5))
+					ed:SetScale(2)
+					ed:SetFlags(0)
+					util.Effect("jcms_bigblast", ed)
+				end
 			end
-		end
 
-		util.ScreenShake(self:GetPos(), 4, 60, 2, 500, false)
-		self:EmitSound("Explo.ww2bomb")
+			util.ScreenShake(self:GetPos(), 4, 60, 2, 500, false)
+			self:EmitSound("Explo.ww2bomb")
+		-- // }}}
 	end
 
 
