@@ -576,13 +576,13 @@
 		end
 	end
 	
-	function jcms.mission_GenerateEvacObjective()
+	function jcms.mission_GenerateEvacObjective(overrideGoToEvacMessage)
 		local d = jcms.director
 		
 		if jcms.util_IsPVP() then
 			local missionData = d.missionData
 			if missionData and not missionData.evacTip then
-				jcms.net_SendTip("all", true, "#jcms.gotoevac_pvp", 1)
+				jcms.net_SendTip("all", true, overrideGoToEvacMessage or "#jcms.gotoevac_pvp", 1)
 				missionData.evacTip = 0
 			end
 
@@ -620,7 +620,7 @@
 			end
 
 			if not missionData.evacTip then
-				jcms.net_SendTip("all", true, "#jcms.gotoevac", 1)
+				jcms.net_SendTip("all", true, overrideGoToEvacMessage or "#jcms.gotoevac", 1)
 				missionData.evacTip = 0
 			elseif (missionData.evacTip == 0) and evacChargePercent >= 1 then
 				jcms.net_SendTip("all", true, "#jcms.evaccharged", 1)

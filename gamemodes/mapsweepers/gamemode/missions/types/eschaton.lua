@@ -34,7 +34,7 @@ jcms.missions.eschaton = {
 	
 	generate = function(data, missionData)
 		jcms.mapgen_PlaceNaturals( jcms.mapgen_AdjustCountForMapSize(20) )
-
+		jcms.mapgen_SpreadPrefabs("eschaton_remains", math.max(20, jcms.mapgen_AdjustCountForMapSize(5)), 100, false)
 		
 		--Prefabs from all factions
 		for k, commander in pairs(jcms.npc_commanders) do 
@@ -46,7 +46,6 @@ jcms.missions.eschaton = {
 		local diffMult = math.sqrt(jcms.runprogress_GetDifficulty())
 		missionData.progress = 0
 		missionData.duration = 60*5 * diffMult --6 minutes baseline
-
 
 		-- // Evac Gen {{{
 			--Intent: Generate in partially covered areas, but not indoors or in super exposed ones
@@ -113,7 +112,7 @@ jcms.missions.eschaton = {
 				missionData.evacuating = true
 			end
 
-			return jcms.mission_GenerateEvacObjective()
+			return jcms.mission_GenerateEvacObjective("#jcms.gotoevac_eschaton")
 		end
 	end,
 	

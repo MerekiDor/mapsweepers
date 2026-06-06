@@ -335,7 +335,6 @@ local prefabs = jcms.prefabs
 			return pillar 
 		end
 	}
-
 -- // }}}
 
 -- // Other {{{
@@ -433,6 +432,53 @@ local prefabs = jcms.prefabs
 			mainframe:Spawn()
 
 			return mainframe
+		end
+	}
+
+	prefabs.eschaton_remains = {
+		check = function(area)
+			return area:GetSizeX() >= 100 and area:GetSizeY() >= 100 and area:IsFlat()
+		end,
+
+		stamp = function(area, center)
+			local v = jcms.mapgen_AreaPointAwayFromEdges(area, 48)
+
+			if math.random() < 0.4 then
+				-- Skeleton
+				local ragdoll = ents.Create("prop_ragdoll")
+				v.z = v.z + 20 + math.Rand(0, 10)
+
+				local models = {
+					"models/skeleton/skeleton_torso_noskins.mdl",
+					"models/skeleton/skeleton_torso3_noskins.mdl",
+					"models/skeleton/skeleton_whole_noskins.mdl",
+					"models/skeleton/skeleton_leg_l_noskins.mdl",
+					"models/skeleton/skeleton_torso2_noskins.mdl"
+				}
+
+				ragdoll:SetModel( models[ math.random(1, #models) ] )
+				ragdoll:SetPos(v)
+				ragdoll:SetAngles(AngleRand())
+				ragdoll:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+				ragdoll:Spawn()
+
+				local phys = ragdoll:GetPhysicsObject()
+				if IsValid(phys) then
+					phys:Wake()
+				end
+			else
+				-- Derelict drop pod
+				v.z = v.z - math.Rand(0, 20)
+
+				local prop = ents.Create("prop_physics")
+				prop:SetModel("models/props_combine/headcrabcannister01a.mdl")
+				prop:SetPos(v)
+				prop:SetAngles(Angle(90 + math.Rand(-3, 3) + math.Rand(-3, 3), math.Rand(0, 360), math.Rand(0, 360)))
+				prop:SetColor(Color(100, 10, 10))
+				prop:Spawn()
+				prop:PhysicsInitStatic(SOLID_VPHYSICS)
+
+			end
 		end
 	}
 -- // }}}
