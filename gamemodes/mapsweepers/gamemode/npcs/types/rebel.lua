@@ -1339,7 +1339,8 @@ jcms.npc_types.rebel_alyx = {
     swarmWeight = 0.6,
     swarmLimit = 3,
 
-	class = "npc_alyx",
+	--class = "npc_alyx", -- Fucking stupid ass game crashing bitch
+	class = "npc_citizen",
 	bounty = 75,
 
 	weapons = {
@@ -1347,12 +1348,11 @@ jcms.npc_types.rebel_alyx = {
 	},
 	
 	postSpawn = function(npc)
-		npc:SetMaxHealth(65)
+		npc:SetModel("models/alyx.mdl")
+		npc:SetMaxHealth(80)
 		npc:SetHealth(npc:GetMaxHealth())
 
 		npc.jcms_slowTurretReact = true
-
-		npc.jcms_alyxHealth = npc:GetMaxHealth()
 		npc.jcms_alyxActivation = CurTime() + 4
 
 		npc.jcms_dmgMult = 0.5
@@ -1361,36 +1361,21 @@ jcms.npc_types.rebel_alyx = {
 		npc:SetArrivalDistance(250)
 		
 		npc:GetActiveWeapon():SetSaveValue("m_fMaxRange1", 500)
-		npc:SetSaveValue("m_flDistTooFar", 250)
+		npc:SetSaveValue("m_flDistTooFar", 500)
 		npc.jcms_noSweeperShields = true
 
 		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
 		npc:SetCurrentWeaponProficiency( WEAPON_PROFICIENCY_POOR )
 	end,
 
-	takeDamage = function(npc, dmg) --Alyx self-heals and there's no way (that I've found in the documentation) to disable that. This is a work-around because that's awful.
+	takeDamage = function(npc, dmg)
 		if jcms.util_IsStunstick( dmg:GetInflictor() ) then
 			dmg:ScaleDamage(2)
 		end
 		
-		npc.jcms_alyxHealth = npc.jcms_alyxHealth - dmg:GetDamage()
-		if npc.jcms_alyxHealth < 0 and not npc.jcms_alyxDead then 
-			npc.jcms_alyxDead = true
-
-			dmg:SetDamage(npc:GetMaxHealth())
-			timer.Simple(0, function()
-				if IsValid(npc) then 
-					npc:TakeDamage(npc:GetMaxHealth())
-				end
-			end)
-			
-			local force = dmg:GetDamageForce()
-			force:Mul(100)
-
-			dmg:SetDamageForce(force)
-
-			npc:TakeDamageInfo(dmg)
-		end
+		local force = dmg:GetDamageForce()
+		force:Mul(50) -- keeping this as a fuck you
+		dmg:SetDamageForce(force)
 	end,
 	
 	think = function(npc, state)
@@ -1425,14 +1410,13 @@ jcms.npc_types.rebel_alyx = {
 					timer.Simple(0.9, function()
 						if IsValid(npc) and IsValid(hackTarget) and (hackTarget.SetHackedByRebels) and (npc:Health() > 0) then
 							-- This tended to crash the game.
-							--[[npc:EmitSound("AlyxEMP.Discharge")
+							npc:EmitSound("AlyxEMP.Discharge")
 							
-							local emptool = npc:GetInternalVariable("m_hEmpTool")
 							local ed = EffectData()
 							local angpos = npc:GetAttachment( npc:LookupAttachment("anim_attachment_LH") )
 							ed:SetStart(hackTarget:WorldSpaceCenter())
-							ed:SetOrigin(IsValid(emptool) and emptool:WorldSpaceCenter() or (angpos and angpos.Pos) or npc:WorldSpaceCenter())
-							util.Effect("jcms_tesla", ed)]]
+							ed:SetOrigin(angpos and angpos.Pos or npc:WorldSpaceCenter())
+							util.Effect("jcms_tesla", ed)
 
 							local ed = EffectData()
 							ed:SetEntity(hackTarget)

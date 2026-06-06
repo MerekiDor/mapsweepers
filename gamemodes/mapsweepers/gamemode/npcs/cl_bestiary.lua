@@ -119,7 +119,7 @@ jcms.bestiary = {}
 -- // Rebels {{{
 
 	jcms.bestiary.rebel_alyx = {
-		faction = "rebel", bounty = 75, health = 45,
+		faction = "rebel", bounty = 75, health = 80,
 		mdl = "models/alyx.mdl", camfov = 30, seq = 3
 	}
 
