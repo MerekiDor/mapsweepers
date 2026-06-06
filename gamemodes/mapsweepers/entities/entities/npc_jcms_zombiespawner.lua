@@ -137,15 +137,6 @@ if SERVER then
 
 	function ENT:Think()
 		local selfPos = self:GetPos()
-		local dist = math.huge
-		for i, ply in ipairs(jcms.GetAliveSweepers()) do  --Get Closest player dist.
-			local newDist = ply:GetPos():DistToSqr(selfPos) 
-			dist = ((newDist < dist) and newDist) or dist
-		end
-
-		if dist > 5000^2 then 
-			return --Disable if we're too far.
-		end
 
 		local selfTbl = self:GetTable()
 		if selfTbl.nextSpawn < CurTime() and not self.dying then
@@ -190,13 +181,45 @@ if SERVER then
 						ball.Spawner = self
 
 						if firePos then
-							local diff = firePos - self:GetPos()
-							local len = diff:Length()
+							-- // Random Offset
+							if IsValid(enemy) and not IsValid(enemy:GetNWEntity("jcms_vehicle")) and not IsValid(enemy:GetGroundEntity()) then --No offset if in a vehicle or standing on one
+								local maxOffset = 650
 
-							diff.z = math.sqrt(len) + 1000
-							diff.x = diff.x / 3 + math.Rand(-32, 32)
-							diff.y = diff.y / 3 + math.Rand(-32, 32)
-							ball:GetPhysicsObject():SetVelocity(diff)
+								local offsX, offsY = math.random(), math.random() 	--Random 0-1
+								offsX, offsY = math.sqrt(offsX), math.sqrt(offsY) 	--Bias us towards 1
+								offsX, offsY = offsX * maxOffset, offsY * maxOffset --Range to 0-maxOffset
+								offsX = offsX * (math.random() < 0.5 and 1 or -1)	--Random sign
+								offsY = offsY * (math.random() < 0.5 and 1 or -1)	--Random sign
+
+								firePos:Add(Vector(offsX, offsY, 0)) 
+							elseif IsValid(enemy) then --We do still have an enemy but it's something we want to hit accurately
+								
+								local curPos = enemy:WorldSpaceCenter()
+								local posDelta = curPos - firePos --More reliable than :GetVelocity() (and we don't need to care if we're in a vehicle or not)
+								firePos = curPos --Update our position to match their current for better accuracy
+
+								--This could be done way more accurately, but I'm not too concerned about that yet.
+								firePos:Add(posDelta * 2)
+							end
+
+							-- Velocity Calc
+								local selfPos = self:GetPos()
+								local g = physenv.GetGravity().z
+
+								local dir = firePos - selfPos
+								dir.z = 0
+								local groundLen = dir:Length()
+
+								dir:Normalize()
+								local height = firePos.z - selfPos.z
+								
+								local vertVel = 1000 + math.sqrt(groundLen) + height/2
+								
+								local groundVel = (groundLen * g) / ( -vertVel - math.sqrt( vertVel^2 + (2 * g * height)) )
+							-- // }}}
+							
+							local final = (dir * groundVel) + Vector(0,0,vertVel) 
+							ball:GetPhysicsObject():SetVelocity(final)
 						else
 							local a = math.random() * math.pi * 2
 							local cos, sin = math.cos(a), math.sin(a)

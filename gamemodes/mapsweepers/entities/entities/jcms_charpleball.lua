@@ -166,11 +166,24 @@ if SERVER then
 	end
 
 	function ENT:PhysicsCollide(colData, physObj)
-		if colData.HitNormal:Dot(jcms.vectorUp) < -0.3 then
+		if colData.HitNormal:Dot(jcms.vectorUp) < -0.3 or IsValid(colData.HitEntity) then
 			local hitEntity = colData.HitEntity
 
-			if hitEntity ~= game.GetWorld() and IsValid(hitEntity) and hitEntity:IsNPC() then
-				return
+			if IsValid(hitEntity) then
+				if hitEntity:IsNPC() then
+					return
+				end
+
+				if not hitEntity:IsPlayer() then
+					local dmgInfo = DamageInfo() 
+					dmgInfo:SetDamage(250)
+					dmgInfo:SetAttacker(self)
+					dmgInfo:SetInflictor(self)
+					dmgInfo:SetDamageType(DMG_CRUSH)
+					dmgInfo:SetReportedPosition(self:GetPos())
+					dmgInfo:SetDamagePosition(colData.HitPos)
+					hitEntity:TakeDamageInfo(dmgInfo)
+				end
 			end
 
 			timer.Simple(0, function() --Stop complaining
