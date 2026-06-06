@@ -156,8 +156,6 @@ if SERVER then
 
 		self.nextExpansion = CurTime() + 10 + #ents.FindByClass("npc_jcms_zombiecreep") + math.Rand(0, 10) --30
 		self:SetPos(self:GetPos() + Vector(0,0,1)) --Explosives don't work right without this
-
-		--TODO: Give us some bullseyes so that explosives clear us easier
 	end
 
 	function ENT:Think()
@@ -216,7 +214,6 @@ if CLIENT then
 	--We need 2 extra offset versions to deal with issues caused by the nearZ clip plane
 
 	local vecCellSize = Vector(cellWidth, cellWidth, cellHeight)
-
 	function ENT:Initialize()
 		local cell = jcms.zombieCreep_GetCell( self:GetPos() )
 		if jcms.zombieCreepCells[cell] then	return end --Occupied, we're about to be deleted
@@ -226,6 +223,7 @@ if CLIENT then
 		jcms.zombieCreep_OccupyCell(self.jcms_zombieCreep_cell)
 
 		hook.Call("jcms_ZombieCreep_RebuildMesh")
+		
 	end
 
 	function ENT:OnRemove()
@@ -235,90 +233,34 @@ if CLIENT then
 		hook.Call("jcms_ZombieCreep_RebuildMesh")
 	end
 
-	--Checking every frame for THIS many entities is too expensive, and we don't need to be super accurate with when we change visibility, so using nodraw every 0.25s is better
+	
+	--Checking every frame for THIS many entities is too expensive, and we don't need to be super accurate with when we change visibility, so this is better
+	--NOTE: SetNoDraw doesn't work properly, which is why we're doing this. It starts getting reset by server every frame under some circumstances (Idk which exactly but if you let them spread with host_timescale 15 it'll trigger eventually)
 	function ENT:Think()
-		self:SetNoDraw(2000^2 < jcms.EyePos_lowAccuracy:DistToSqr(self:WorldSpaceCenter()) )
+		--Replace our draw function based on whether we're close enough or not
+		if 2000^2 < jcms.EyePos_lowAccuracy:DistToSqr(self:WorldSpaceCenter()) then 
+			self.RenderGroup = RENDERGROUP_OTHER
+		else
+			self.RenderGroup = RENDERGROUP_OPAQUE
+		end
 		
 		self:SetNextClientThink(CurTime() + 0.25)
 		return true
 	end
 
-	--Calculate a list of boxes for zombiecreep using greedy meshing
-	hook.Add("jcms_ZombieCreep_RebuildMesh", "jcms_ZombieCreep_RebuildMesh", function()
-		jcms.zombieCreepBoxes = {} --Clear, we're about to rebuild.
 
-		local i = jcms.zombieCreepMinCell
-		local meshedCells = {}
 
-		local debugSafety = 999999
+	hook.Add( "PlayerFootstep", "jcms_ZombieCreep_Footstep", function( ply, pos, foot, sound, volume, rf )
+		local cell = jcms.zombieCreep_GetCell( pos )
+		if not jcms.zombieCreepCells[cell] then return end
 
-		while i <= jcms.zombieCreepMaxCell and debugSafety > 0 do
-			debugSafety = debugSafety - 1
-
-			if jcms.zombieCreepCells[i] and not meshedCells[i] then --Hit something
-				local chunkStart = i --Cell our box starts at
-				local chunkEnd
-
-				-- X Expansion {{{
-					--Get the end of the current row
-					local curRowEnd = (chunkStart - (chunkStart % rowLength)) + rowLength --Floor to start of current row, then add row length. Flooring done wackily because Glua removes //
-
-					--NOTE: "x" and "y" are still just indices, not coordinates. I'm using them to indicate direction of travel.
-					local xEnd = chunkStart
-					for x=i+1, curRowEnd do --Expand until hitting empty, end of row, or another mesh.
-						if not jcms.zombieCreepCells[x] or meshedCells[x] then
-							break
-						end
-
-						meshedCells[x] = true
-						xEnd = x
-					end
-
-					local xSpan = xEnd - chunkStart
-				-- // }}}
-
-				-- Y Expansion {{{
-					local curLayerEnd = (chunkStart - (chunkStart % layerLength)) + layerLength
-
-					--NOTE: "x" and "y" are still just indices, not coordinates. I'm using them to indicate direction of travel.
-					local yEnd = xEnd
-					for y=i+rowLength, curLayerEnd, rowLength do --Iterate by y, starting on the next row.
-						local hit = false
-						for x=y, y+xSpan do --Iterate to the edge of the x selection
-							if not jcms.zombieCreepCells[x] or meshedCells[x] then
-								hit = true
-								break
-							end
-						end
-						
-						if hit then break end
-
-						for x=y, y+xSpan do --Go back through and mark all of them as meshed
-							meshedCells[x] = true
-						end
-						yEnd = y+xSpan --This row's clear
-					end
-				
-					chunkEnd = yEnd
-				-- // }}}
-
-				--We're not going to bother with z, as creep mostly expands horizontally, and vertical meshes will in 99% of cases be small, so expanding up might even make us less efficient.
-
-				local offs = Vector(15, 15, 15) --Z fighting prevention
-				local offs2 = Vector(5,5,5) --NearZ clip issue prevention
-				--Calculate our mins / maxes for the box
-				local mins, maxs = jcms.zombieCreep_GetCellPos(chunkStart) - offs, jcms.zombieCreep_GetCellPos(chunkEnd) + vecCellSize + offs
-
-				-- normal mins/maxes, inner mins/maxes, outermins/maxes
-				table.insert(jcms.zombieCreepBoxes, {mins, maxs, mins - offs2, maxs + offs2, mins + offs2, maxs - offs2})
-
-				--We still have to check after our mesh's last x, but we can skip a few cells we've already looked at.
-				i = xEnd + 1
-			else
-				i = i + 1
-			end
+		if foot == 0 then 	--Left
+			ply:EmitSound("Mud.StepLeft")
+		else				--Right
+			ply:EmitSound("Mud.StepRight")
 		end
-	end)
+	end )
+
 
 	jcms.zombieCreep_Material = CreateMaterial("jcms_zombieCreep_flesh", "LightmappedGeneric", {
 		["$basetexture"] = "models/flesh",
@@ -326,58 +268,137 @@ if CLIENT then
 		--["$noclamp"] = "1"
 		--["$vertexalpha"] = "1",
 	})
+
 	local rt = GetRenderTarget("jcms_ZombieCreep_WorldRT", ScrW(), ScrH())
 	local drawing = false
-	local zCreepBoxCol = Color(255, 0, 0, 0)
-	hook.Add("PreDrawOpaqueRenderables", "jcms_ZombieCreep_Render", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
-		if bDrawingDepth or bDrawingSkybox or isDraw3DSkyBox or render.GetRenderTarget() or drawing then return end
 
-		render.SetStencilEnable(true)
-		render.ClearStencil()
-		render.SetStencilTestMask(255)
-		render.SetStencilWriteMask(255)
+	-- // Box Rendering {{{
+		--Calculate a list of boxes for zombiecreep using greedy meshing
+		hook.Add("jcms_ZombieCreep_RebuildMesh", "jcms_ZombieCreep_RebuildMesh", function()
+			jcms.zombieCreepBoxes = {} --Clear, we're about to rebuild.
 
-		render.SetStencilCompareFunction(STENCIL_ALWAYS)
-		render.SetStencilPassOperation(STENCIL_INCRSAT)
-		render.SetStencilFailOperation(STENCIL_KEEP)
-		render.SetStencilZFailOperation(STENCIL_KEEP)
-		render.SetStencilReferenceValue(1)
+			local i = jcms.zombieCreepMinCell
+			local meshedCells = {}
 
-		local eyePos = EyePos()
+			local debugSafety = 999999
 
-		render.SetColorMaterial()
-		for i, box in ipairs(jcms.zombieCreepBoxes) do 
-			local mins = box[1]
-			local maxs = box[2]
-			if  eyePos:WithinAABox( mins, maxs ) then 
-				local iMins, iMaxs = box[3], box[4]
-				render.SetStencilPassOperation(STENCIL_INCRSAT)
-				render.PerformFullScreenStencilOperation()
+			while i <= jcms.zombieCreepMaxCell and debugSafety > 0 do
+				debugSafety = debugSafety - 1
 
-				render.SetStencilPassOperation(STENCIL_DECRSAT)
-				render.DrawBox(jcms.vectorOrigin, angle_zero, iMaxs, iMins, zCreepBoxCol)
-			else
-				local oMins, oMaxs = box[5], box[6]
-				render.SetStencilPassOperation(STENCIL_INCRSAT)
-				render.DrawBox(jcms.vectorOrigin, angle_zero, oMins, oMaxs, zCreepBoxCol)
-				
-				render.SetStencilPassOperation(STENCIL_DECRSAT)
-				render.DrawBox(jcms.vectorOrigin, angle_zero, oMaxs, oMins, zCreepBoxCol)
+				if jcms.zombieCreepCells[i] and not meshedCells[i] then --Hit something
+					local chunkStart = i --Cell our box starts at
+					local chunkEnd
+
+					-- X Expansion {{{
+						--Get the end of the current row
+						local curRowEnd = (chunkStart - (chunkStart % rowLength)) + rowLength --Floor to start of current row, then add row length. Flooring done wackily because Glua removes //
+
+						--NOTE: "x" and "y" are still just indices, not coordinates. I'm using them to indicate direction of travel.
+						local xEnd = chunkStart
+						for x=i+1, curRowEnd do --Expand until hitting empty, end of row, or another mesh.
+							if not jcms.zombieCreepCells[x] or meshedCells[x] then
+								break
+							end
+
+							meshedCells[x] = true
+							xEnd = x
+						end
+
+						local xSpan = xEnd - chunkStart
+					-- // }}}
+
+					-- Y Expansion {{{
+						local curLayerEnd = (chunkStart - (chunkStart % layerLength)) + layerLength
+
+						--NOTE: "x" and "y" are still just indices, not coordinates. I'm using them to indicate direction of travel.
+						local yEnd = xEnd
+						for y=i+rowLength, curLayerEnd, rowLength do --Iterate by y, starting on the next row.
+							local hit = false
+							for x=y, y+xSpan do --Iterate to the edge of the x selection
+								if not jcms.zombieCreepCells[x] or meshedCells[x] then
+									hit = true
+									break
+								end
+							end
+							
+							if hit then break end
+
+							for x=y, y+xSpan do --Go back through and mark all of them as meshed
+								meshedCells[x] = true
+							end
+							yEnd = y+xSpan --This row's clear
+						end
+					
+						chunkEnd = yEnd
+					-- // }}}
+
+					--We're not going to bother with z, as creep mostly expands horizontally, and vertical meshes will in 99% of cases be small, so expanding up might even make us less efficient.
+
+					local offs = Vector(15, 15, 15) --Z fighting prevention
+					local offs2 = Vector(5,5,5) --NearZ clip issue prevention
+					--Calculate our mins / maxes for the box
+					local mins, maxs = jcms.zombieCreep_GetCellPos(chunkStart) - offs, jcms.zombieCreep_GetCellPos(chunkEnd) + vecCellSize + offs
+
+					-- normal mins/maxes, inner mins/maxes, outermins/maxes
+					table.insert(jcms.zombieCreepBoxes, {mins, maxs, mins - offs2, maxs + offs2, mins + offs2, maxs - offs2})
+
+					--We still have to check after our mesh's last x, but we can skip a few cells we've already looked at.
+					i = xEnd + 1
+				else
+					i = i + 1
+				end
 			end
-		end
+		end)
 
-		
-		render.SetStencilReferenceValue(1)
-		render.SetStencilCompareFunction(STENCIL_LESSEQUAL)
-		render.DrawTextureToScreen( rt )
+		local zCreepBoxCol = Color(255, 0, 0, 0)
+		hook.Add("PreDrawOpaqueRenderables", "jcms_ZombieCreep_Render", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
+			if bDrawingDepth or bDrawingSkybox or isDraw3DSkyBox or render.GetRenderTarget() or drawing then return end
 
-		render.SetStencilEnable( false )
-		render.ClearStencil()
-	end)
+			render.SetStencilEnable(true)
+			render.ClearStencil()
+			render.SetStencilTestMask(255)
+			render.SetStencilWriteMask(255)
 
+			render.SetStencilCompareFunction(STENCIL_ALWAYS)
+			render.SetStencilPassOperation(STENCIL_INCRSAT)
+			render.SetStencilFailOperation(STENCIL_KEEP)
+			render.SetStencilZFailOperation(STENCIL_KEEP)
+			render.SetStencilReferenceValue(1)
+
+			local eyePos = EyePos()
+
+			render.SetColorMaterial()
+			for i, box in ipairs(jcms.zombieCreepBoxes) do 
+				local mins = box[1]
+				local maxs = box[2]
+				if  eyePos:WithinAABox( mins, maxs ) then 
+					local iMins, iMaxs = box[3], box[4]
+					render.SetStencilPassOperation(STENCIL_INCRSAT)
+					render.PerformFullScreenStencilOperation()
+
+					render.SetStencilPassOperation(STENCIL_DECRSAT)
+					render.DrawBox(jcms.vectorOrigin, angle_zero, iMaxs, iMins, zCreepBoxCol)
+				else
+					local oMins, oMaxs = box[5], box[6]
+					render.SetStencilPassOperation(STENCIL_INCRSAT)
+					render.DrawBox(jcms.vectorOrigin, angle_zero, oMins, oMaxs, zCreepBoxCol)
+					
+					render.SetStencilPassOperation(STENCIL_DECRSAT)
+					render.DrawBox(jcms.vectorOrigin, angle_zero, oMaxs, oMins, zCreepBoxCol)
+				end
+			end
+
+			
+			render.SetStencilReferenceValue(1)
+			render.SetStencilCompareFunction(STENCIL_LESSEQUAL)
+			render.DrawTextureToScreen( rt )
+
+			render.SetStencilEnable( false )
+			render.ClearStencil()
+		end)
+	-- // }}}
 
 	-- // World Render {{{	
-	
 		hook.Add("RenderScene", "jcms_DrawZombieCreep", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
 			if drawing then return end
 
