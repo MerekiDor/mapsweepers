@@ -22,7 +22,7 @@
 
 jcms.missions.datadownload = {
 	faction = "combine",
-	pvpAllowed = true,
+	pvpAllowed = false,
 
 	generate = function(data, missionData)
 		missionData.uploadsRequired = jcms.util_IsPVP() and 3 or 1
@@ -33,7 +33,8 @@ jcms.missions.datadownload = {
 			missionData.defenseCompleted = false
 			missionData.defenseAttempts = 0
 			missionData.defenseProgress = 0
-			missionData.powerMultiplier = 0
+			missionData.lastPillarCount = 0
+			missionData.totalIncome = 0
 		-- }}}
 
 		-- Finding preliminary area for the computer {{{
@@ -347,7 +348,6 @@ jcms.missions.datadownload = {
 		end
 		missionData.phase = phase
 
-
 		if phase == 1 then
 			local objectives = {}
 			if jcms.util_IsPVP() then
@@ -365,7 +365,7 @@ jcms.missions.datadownload = {
 				table.insert(objectives, { type = "completedownloads", completed = false, progress = missionData.uploadsCompleted, total = missionData.uploadsRequired })
 			end
 
-			table.insert(objectives, { type = "uploadingatspeed", format = { missionData.powerMultiplier }, progress = missionData.defenseProgress*100, total = 100, percent = true })
+			table.insert(objectives, { type = "uploadingatspeed", format = { jcms.util_CashFormat(missionData.totalIncome) }, progress = missionData.defenseProgress*100, total = 100, percent = true })
 
 			if #missionData.pillars <= 5 then
 				for i, pillar in ipairs(missionData.pillars) do 
@@ -430,7 +430,8 @@ jcms.missions.datadownload = {
 
 		if md.defenseCompleted then
 			md.defenseProgress = 1
-			md.powerMultiplier = 0
+			md.lastPillarCount = 0
+			md.totalIncome = 0
 		else
 			if md.defenseOngoing then
 				pillarsShouldBeActive = true
@@ -453,37 +454,41 @@ jcms.missions.datadownload = {
 					totalPillars = totalPillars + 1
 					if not pillar:GetIsDisrupted() then 
 						activePillars = activePillars + 1 
-
-						for i, ply in player.Iterator() do 
-							jcms.giveCash(ply, 10)
-						end
 					end
 				end
+
+				local totalIncome = activePillars * 10
+				for i, ply in player.Iterator() do 
+					jcms.giveCash(ply, totalIncome)
+				end
+
+				md.totalIncome = totalIncome
+				local totalIncomeFormatted = jcms.util_CashFormat(totalIncome)
 
 				if activePillars > 0 then
 					--5 Minutes at max power, scaling with difficulty
 					--Fewer pillars exponentially slows it.
 
-					local progressPower = 1 --(activePillars / totalPillars)^2
+					local pillarFraction = math.Clamp(activePillars / totalPillars, 0, 1)
 
-					if md.powerMultiplier ~= 0 and md.powerMultiplier ~= progressPower then
-						if progressPower < md.powerMultiplier then
+					if md.lastPillarCount ~= 0 and md.lastPillarCount ~= activePillars then
+						if activePillars < md.lastPillarCount then
 							-- Lost power
-							jcms.net_SendTip("all", true, "#jcms.datadownload_destroyed", progressPower)
+							jcms.net_SendTip("all", true, "#jcms.datadownload_destroyed", pillarFraction, totalIncomeFormatted)
 						else
 							-- Gained power (pillars repaired)
-							if progressPower >= 1 then
-								jcms.net_SendTip("all", true, "#jcms.datadownload_allrepaired", math.min(1, progressPower))
+							if activePillars >= totalPillars then
+								jcms.net_SendTip("all", true, "#jcms.datadownload_allrepaired", pillarFraction, totalIncomeFormatted)
 							else
-								jcms.net_SendTip("all", true, "#jcms.datadownload_repaired", progressPower)
+								jcms.net_SendTip("all", true, "#jcms.datadownload_repaired", pillarFraction, totalIncomeFormatted)
 							end
 						end
 					end
 					
-					md.powerMultiplier = progressPower
+					md.lastPillarCount = activePillars
 
 					local scalar = (#d.npcs > 10) and jcms.runprogress_GetDifficulty() or 0.5
-					progressPower = progressPower * 1/((60*4) * (scalar^(3/4)) ) * (jcms.util_IsPVP() and 3.25 or 1)
+					local progressPower = 1/((60*4) * (scalar^(3/4)) ) * (jcms.util_IsPVP() and 3.25 or 1)
 
 					md.defenseProgress = math.Clamp(md.defenseProgress + progressPower, 0, 1)
 					md.timeEstimate = math.ceil( (1 - md.defenseProgress) / progressPower )
@@ -533,7 +538,8 @@ jcms.missions.datadownload = {
 					end
 				end
 			else
-				md.powerMultiplier = 0
+				md.lastPillarCount = 0
+				md.totalIncome = 0
 			end
 
 			for i, pillar in ipairs(md.pillars) do 
@@ -547,10 +553,28 @@ jcms.missions.datadownload = {
 		for i, computer in ipairs(md.computers) do
 			if IsValid(computer) then
 				if computer:GetNWString("jcms_terminal_modeData") == "upload" and not md.defenseOngoing then
+					local pvpTeam = computer:GetNWInt("jcms_pvpTeam", -1)
+
 					-- Resetting
 					if md.defenseProgress < 1 then
 						if not(downloadSucceeded) then
-							jcms.net_SendTip("all", true, "#jcms.datadownload_failed", tonumber(md.defenseProgress) or 0)
+							local sameTeam, notSameTeam = {}, {}
+							for j, otherPly in ipairs(jcms.GetAliveSweepers()) do
+								if jcms.team_pvpSameTeam_optimised(pvpTeam, otherPly:GetNWInt("jcms_pvpTeam", -1)) then
+									table.insert(sameTeam, ply)
+								else
+									table.insert(notSameTeam, ply)
+								end
+							end
+
+							if #sameTeam > 0 then
+								jcms.net_SendTip(sameTeam, true, "#jcms.datadownload_failed", tonumber(md.defenseProgress) or 0)
+							end
+
+							if #notSameTeam > 0 then
+								jcms.net_SendTip(notSameTeam, true, "#jcms.datadownload_failed_enemy", tonumber(md.defenseProgress) or 0)
+							end
+
 							if jcms.util_IsPVP() then --Resets in PvP
 								md.defenseProgress = 0
 							end
@@ -563,7 +587,6 @@ jcms.missions.datadownload = {
 						computer:SetNWString("jcms_terminal_modeData", "done")
 					end
 					
-					local pvpTeam = computer:GetNWInt("jcms_pvpTeam", -1)
 					if not(pvpTeam == -1) and downloadSucceeded and not pvpRespawnGiven then
 						jcms.director_PvpObjectiveCompletedTeam(pvpTeam, computer:GetPos(), true)
 						pvpRespawnGiven = true 

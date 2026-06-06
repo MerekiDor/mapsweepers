@@ -155,7 +155,6 @@ if SERVER then
 					util.Effect("TeslaHitBoxes", ed)
 				end
 				
-
 				self:SetIsDisrupted(true)
 			end
 		else
@@ -168,7 +167,7 @@ if CLIENT then
 	ENT.mat_elec = Material("sprites/physbeama")
 	ENT.mat_flare = Material("sprites/orangeflare1_gmod")
 	ENT.mat_lamp = Material("effects/lamp_beam.vmt")
-	ENT.mat_cloud = CreateMaterial("jcms_downloadpillar_cloud___", "UnlitGeneric", {
+	ENT.mat_cloud = CreateMaterial("jcms_downloadpillar_cloud", "UnlitGeneric", {
 		["$basetexture"] = "models/props_combine/cit_cloud003",
 		["$nofog"] = 1,
 		["$additive"] = 1
@@ -189,7 +188,8 @@ if CLIENT then
 	ENT.healthbarRT = GetRenderTarget("jcms_downloadpillarhealthbar_rt", 8, 200)
 	ENT.healthbarRTMat = CreateMaterial("jcms_downloadpillarhealthbar", "VertexLitGeneric", {
 		["$basetexture"] = ENT.healthbarRT:GetName(),
-		["$pointsamplemagfilter"] = 1
+		["$pointsamplemagfilter"] = 1,
+		["$selfillum"] = 1
 	})
 
 	ENT.downNormal = Vector(0, 0, -1)

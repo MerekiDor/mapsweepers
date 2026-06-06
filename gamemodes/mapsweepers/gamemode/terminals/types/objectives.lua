@@ -494,7 +494,7 @@ if CLIENT then
 			local str3b = "#jcms.datadownloadcomputer_flavour1b"
 			local str4a = "#jcms.datadownloadcomputer_flavour2a"
 			local str5 = "#jcms.datadownloadcomputer_flavour2b"
-			local str6 = language.GetPhrase("jcms.datadownloadcomputer_fee"):format( jcms.util_CashFormat(initCost) )
+			--local str6 = language.GetPhrase("jcms.datadownloadcomputer_fee"):format( jcms.util_CashFormat(initCost) )
 
 			surface.SetDrawColor(color_bg)
 			surface.DrawRect(w/2, h/2, w/2, 4)
@@ -548,8 +548,8 @@ if CLIENT then
 						jcms.hud_DrawStripedRect(bx, by, bw, bh, 64)
 					end
 
-					draw.SimpleText("#jcms.confirm", "jcms_hud_big", bx + bw/2, by + bh/2 - 16, color_fg, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-					draw.SimpleText(str6, "jcms_hud_small", bx + bw/2, by + bh/2 + 16, canAfford and green or color_accent, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+					draw.SimpleText("#jcms.confirm", "jcms_hud_big", bx + bw/2, by + bh/2, color_fg, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+					--draw.SimpleText(str6, "jcms_hud_small", bx + bw/2, by + bh/2 + 16, canAfford and green or color_accent, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 				render.OverrideBlend(false)
 			cam.PopModelMatrix()
 

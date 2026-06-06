@@ -23,7 +23,7 @@
 
 -- // Missions {{{
 
-	-- Mission tags: 'hacking', 'infighting', 'timer', 'extraorders', 'rarebosses', 'killsrequired', 'naturalhazard'
+	-- Mission tags: 'altincome', 'bossmission', 'extraorders', 'hacking', 'infighting', 'killsrequired', 'naturalhazard', 'nobounty', 'rarebosses', 'timer'
 
 	jcms.missions = {
 		thumperreactivation = {
@@ -33,7 +33,7 @@
 
 		miningoperations = {
 			faction = "antlion",
-			tags = { "extraorders" }
+			tags = { "extraorders", "altincome" }
 		},
 
 		thumpersabotage = {
@@ -43,7 +43,7 @@
 
 		datadownload = {
 			faction = "combine",
-			tags = {}
+			tags = { "nobounty", "altincome" }
 		},
 
 		mainframe = {
