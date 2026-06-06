@@ -1486,7 +1486,7 @@ jcms.npc_types.rebel_dog = { --TODO: Some sort of damage feedback. Maybe just gi
 	
 	portalScale = 3,
 	
-	hullType = HULL_LARGE
+	hullSize = HULL_LARGE
 }
 
 jcms.npc_types.rebel_vortigaunt = {

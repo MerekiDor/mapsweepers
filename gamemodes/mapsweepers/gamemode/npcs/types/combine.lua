@@ -329,7 +329,7 @@ jcms.npc_types.combine_hunter = {
 
 	proficiency = WEAPON_PROFICIENCY_VERY_GOOD,
 
-	hullType = HULL_MEDIUM_TALL
+	hullSize = HULL_MEDIUM_TALL
 }
 
 jcms.npc_types.combine_gunship = {
