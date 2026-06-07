@@ -414,6 +414,13 @@ jcms.missions.datadownload = {
 		local md = d.missionData
 		md.timeEstimate = 0
 
+		--Make sure people always have at least 1J so they can order a recall beacon (hacky way to get around 0-value call-ins being impossible).
+		for i, ply in ipairs(team.GetPlayers(1)) do 
+			if ply:GetNWInt("jcms_cash", -1) < 1 then
+				jcms.giveCash(ply, 1)
+			end
+		end
+
 		if md.phase ~= 2 and not md.evacuating then --No waves until we start the defense
 			d.swarmNext = jcms.director_GetMissionTime() + 2
 		end
@@ -606,6 +613,11 @@ jcms.missions.datadownload = {
 		return missionData.evacuating and 1 or 0 --((missionData.phase == 2 and not missionData.evacuating) and 0) or 1
 	end,
 	
+	getRecallPoint = function(d, missionData)
+		local comp =  missionData.computers[1]
+		return comp:GetPos() + comp:GetAngles():Forward() * 50
+	end,
+	
 	swarmCalcCost = function(director, baseCost)
 		local missionData = director.missionData
 		
@@ -615,36 +627,6 @@ jcms.missions.datadownload = {
 
 		return 0
 	end,
-
-	--[[
-	swarmCalcCost = function(director, baseCost)
-		local md = director.missionData
-		
-		if not md.evacuating then
-			local phase = md.phase
-			
-			if phase == 2 then
-				return baseCost > 0 and baseCost + 4 or 0 -- More shit during the defense phase
-			end
-		end
-
-		return baseCost
-	end,
-
-	swarmCalcDanger = function(d, swarmCost)
-		local phase = d.missionData.phase
-		if phase == 2 then
-			return math.max(d.swarmDanger, jcms.NPC_DANGER_STRONG) -- Always strongs during defense
-		end
-	end,--]]
-
-	--[[
-	swarmCalcBossCount = function(d, swarmCost)
-		if d.missionData.phase == 1 then
-			return 0 -- No bosses during preparation phase
-		end
-	end,--]]
-
 	
 	npcTypeQueueCheck = function(d, swarmCost, dangerCap, npcType, npcData, basePassesCheck)
 		local weightMul
@@ -663,5 +645,34 @@ jcms.missions.datadownload = {
 		else
 			return basePassesCheck
 		end
-	end
+	end,
+	
+	orders = { --mission-specific call-ins
+		dd_rb = {
+			category = jcms.SPAWNCAT_MISSION,
+			cost = 1,
+			cooldown = 1,
+			slotPos = 1,
+			argparser = "respawn_beacon", 
+
+			func = function(ply, pos, angle)
+				local beacon = ents.Create("jcms_recallbeacon")
+				beacon:SetPos(pos)
+				beacon:SetAngles(angle)
+				beacon:Spawn()
+				
+				local ed = EffectData()
+				ed:SetColor(jcms.util_GetColorIntegerPvP(ply))
+				ed:SetFlags(0)
+				ed:SetEntity(beacon)
+				util.Effect("jcms_spawneffect", ed)
+				
+				beacon:EmitSound("npc/roller/blade_cut.wav", 75, 100)
+
+				if CPPI then
+					beacon:CPPISetOwner( game.GetWorld() )
+				end
+			end
+		}
+	}
 }

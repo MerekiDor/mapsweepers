@@ -194,6 +194,13 @@
 			return 1
 		end
 
+		function jcms.director_GetRecallPoint()
+			local d = jcms.director
+			if d and d.missionType and jcms.missions[d.missionType] and jcms.missions[d.missionType].calcBountyMul then 
+				return jcms.missions[d.missionType].getRecallPoint(d, d.missionData)
+			end
+		end
+
 		function jcms.director_IsSuddenDeath()
 			return jcms.director and jcms.director.suddenDeathTime and jcms.director_GetMissionTime() > jcms.director.suddenDeathTime
 		end
