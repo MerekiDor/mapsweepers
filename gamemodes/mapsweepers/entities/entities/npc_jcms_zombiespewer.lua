@@ -187,6 +187,9 @@ if CLIENT then
 			jcms.fogStack_push(data)
 		end)
 
+		
+		hook.Add("PostDrawTranslucentRenderables", "jcms_ZombieSpewerEyes", jcms.zombieSpewer_DrawEyes)
+
 		--ambient/atmosphere/captain_room.wav   --60 pitch
 		--ambient/levels/citadel/citadel_ambient_voices1.wav
 		--ambient/levels/citadel/citadel_drone_loop3.wav --60-80 (but it's really quiet)
@@ -195,6 +198,7 @@ if CLIENT then
 		self.emitter = ParticleEmitter( self:WorldSpaceCenter(), false )
 
 		self:SetRenderBounds(Vector(-96,-96,0),Vector(96,96,512+64))
+
 	end
 
 	function ENT:Think()
@@ -224,7 +228,7 @@ if CLIENT then
 
 		-- // Particles {{{
 			--TODO: Move vectors out of this think if it's notably expensive. Idk yet because it doesn't run *that* often, but still somewhat often.
-			local part = self.emitter:Add( "particle/particle_noisesphere", self:WorldSpaceCenter() + VectorRand(-10, 10) + Vector(-0,-10,50))
+			local part = self.emitter:Add( "particle/particle_noisesphere", self:WorldSpaceCenter() + VectorRand(-10, 10) + Vector(-0,-5,50))
 			part:SetStartSize(60)
 			part:SetEndSize(100)
 			part:SetDieTime(4)
@@ -243,18 +247,17 @@ if CLIENT then
 		return true
 	end
 
-	function ENT:DrawTranslucent()
-		self:DrawModel()
-	end
-
 	function ENT:OnRemove()
 		-- // Fog Cleanup {{{
 			hook.Remove("RenderScene", tostring(self))
 		-- // }}}
 
+		if #ents.FindByClass("npc_jcms_zombiespewer") <= 1 then
+			hook.Remove("PostDrawTranslucentRenderables", "jcms_ZombieSpewerEyes")
+		end
+
 		self.emitter:Finish()
 		self:StopSound("ambient/atmosphere/captain_room.wav")
-
 
 		-- // FX {{{
 			local ed = EffectData()
@@ -286,11 +289,11 @@ if CLIENT then
 
 
 	--TODO: Needs to be adjusted when visual pass is done
-	hook.Add("PostDrawTranslucentRenderables", "jcms_ZombieSpewerEyes", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
+	function jcms.zombieSpewer_DrawEyes(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
 		render.MaterialOverride(jcms.zombieSpawnerEyeMat)
 			for i, ent in ipairs(ents.FindByClass("npc_jcms_zombiespewer")) do 
 				ent:DrawModel()
 			end
 		render.MaterialOverride()
-	end)
+	end
 end

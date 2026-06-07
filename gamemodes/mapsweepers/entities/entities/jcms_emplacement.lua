@@ -294,7 +294,7 @@ if CLIENT then
 		if not v then return end
 		local eyeDist = jcms.EyePos_lowAccuracy:DistToSqr(v)
 
-		if eyeDist < 250000 then
+		if eyeDist < 250000 then --500^2
 			local heat = self:GetHeat()
 
 			local ol = 5
@@ -339,14 +339,16 @@ if CLIENT then
 	end
 
 	function ENT:Think()
-		local ang = self.manAngleCached
-		local angReal = self.manAngleCachedReal
+		local selfTbl = self:GetTable()
 
-		local man = self:GetMan()
+		local ang = selfTbl.manAngleCached
+		local angReal = selfTbl.manAngleCachedReal
+
+		local man = selfTbl:GetMan()
 		if IsValid(man) then
-			if not self.previousManMode then
+			if not selfTbl.previousManMode then
 				self:EmitSound("ambient/machines/combine_terminal_idle4.wav", 75, 180)
-				self.previousManMode = true
+				selfTbl.previousManMode = true
 			end
 
 			local W = 5
@@ -354,9 +356,9 @@ if CLIENT then
 			ea:Sub(self:GetAngles())
 			ang:SetUnpacked(0, weighedAngleApproach(ang[2], ea.y, W), weighedAngleApproach(ang[3],-ea.p,W))
 		else
-			if self.previousManMode then
+			if selfTbl.previousManMode then
 				self:EmitSound("npc/turret_floor/die.wav", 75, 200)
-				self.previousManMode = false
+				selfTbl.previousManMode = false
 			end
 
 			local W = 14
@@ -366,35 +368,35 @@ if CLIENT then
 		angReal:SetUnpacked(-ang.r, ang.y, 0)
 		angReal:Add(self:GetAngles())
 
-		if self:GetFiring() then
-			if not self.sfxFiring then
-				self.sfxFiring = CreateSound(self, "jcms_emplacement_fire")
-				self.sfxFiring:Play()
+		if selfTbl:GetFiring() then
+			if not selfTbl.sfxFiring then
+				selfTbl.sfxFiring = CreateSound(self, "jcms_emplacement_fire")
+				selfTbl.sfxFiring:Play()
 			end
 		else
-			if self.sfxFiring then
+			if selfTbl.sfxFiring then
 				self:EmitSound("jcms_emplacement_fire_end")
-				self.sfxFiring:Stop()
-				self.sfxFiring = nil
+				selfTbl.sfxFiring:Stop()
+				selfTbl.sfxFiring = nil
 			end
 		end
 
 		local heatSoundThreshold = 0.44
-		if self:GetHeat() > heatSoundThreshold then
-			local frac = math.TimeFraction(heatSoundThreshold, 1, self:GetHeat())
-			if not self.sfxHeat then
-				self.sfxHeat = CreateSound(self, "ambient/gas/steam2.wav")
-				self.sfxHeat:PlayEx(0, 153)
+		if selfTbl:GetHeat() > heatSoundThreshold then
+			local frac = math.TimeFraction(heatSoundThreshold, 1, selfTbl:GetHeat())
+			if not selfTbl.sfxHeat then
+				selfTbl.sfxHeat = CreateSound(self, "ambient/gas/steam2.wav")
+				selfTbl.sfxHeat:PlayEx(0, 153)
 			else
-				self.sfxHeat:ChangeVolume(frac, 0.01)
-				self.sfxHeat:ChangePitch(Lerp(frac, 153, 164), 0.01)
+				selfTbl.sfxHeat:ChangeVolume(frac, 0.01)
+				selfTbl.sfxHeat:ChangePitch(Lerp(frac, 153, 164), 0.01)
 			end
-		elseif self.sfxHeat then
-			self.sfxHeat:Stop()
-			self.sfxHeat = nil
+		elseif selfTbl.sfxHeat then
+			selfTbl.sfxHeat:Stop()
+			selfTbl.sfxHeat = nil
 		end
 
-		self:ManipulateBoneAngles(1, self.manAngleCached)
+		self:ManipulateBoneAngles(1, selfTbl.manAngleCached)
 	end
 
 	function ENT:DrawHUDCenter()

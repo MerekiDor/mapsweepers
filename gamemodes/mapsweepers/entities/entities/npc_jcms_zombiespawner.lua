@@ -246,6 +246,10 @@ end
 if CLIENT then
 	jcms.zombieSpawnerEyeMat = Material("models/jcms/zombiespawner/eyes")
 
+	function ENT:Initialize()
+		hook.Add("PostDrawTranslucentRenderables", "jcms_ZombieSpawnerEyes", jcms.zombieSpawner_DrawEyes)
+	end
+
 	function ENT:Think()
 		-- Burst in bloody particles.
 		if FrameTime() > 0 and math.random() < 0.23 and self:GetSequenceName( self:GetSequence() ) == "death" then
@@ -263,6 +267,11 @@ if CLIENT then
 	end
 
 	function ENT:OnRemove()
+		--Clean up render hooks if we're no longer present
+		if #ents.FindByClass("npc_jcms_zombiespawner") <= 1 then
+			hook.Remove("PostDrawTranslucentRenderables", "jcms_ZombieSpawnerEyes")
+		end
+
 		local ed = EffectData()
 		ed:SetRadius(250)
 		ed:SetOrigin(self:WorldSpaceCenter())
@@ -293,8 +302,7 @@ if CLIENT then
 		self:DrawModel()
 	end
 
-	
-	hook.Add("PostDrawTranslucentRenderables", "jcms_ZombieSpawnerEyes", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
+	function jcms.zombieSpawner_DrawEyes(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
 		if bDrawingDepth or bDrawingSkybox or isDraw3DSkybox then return end
 		
 		render.MaterialOverride(jcms.zombieSpawnerEyeMat)
@@ -302,5 +310,5 @@ if CLIENT then
 				ent:DrawModel()
 			end
 		render.MaterialOverride()
-	end)
+	end
 end

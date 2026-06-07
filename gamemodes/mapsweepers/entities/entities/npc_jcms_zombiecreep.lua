@@ -224,6 +224,8 @@ if CLIENT then
 
 		hook.Call("jcms_ZombieCreep_RebuildMesh")
 		
+		hook.Add("RenderScene", "jcms_DrawZombieCreep", jcms.zombieCreep_DrawWorld)
+		hook.Add("PreDrawOpaqueRenderables", "jcms_ZombieCreep_Render", jcms.ZombieCreep_Render)
 	end
 
 	function ENT:OnRemove()
@@ -231,6 +233,13 @@ if CLIENT then
 
 		jcms.zombieCrep_ClearCell(self.jcms_zombieCreep_cell)
 		hook.Call("jcms_ZombieCreep_RebuildMesh")
+
+		
+		--Clean up expensive render hooks if we're no longer present
+		if #ents.FindByClass("npc_jcms_zombiecreep") <= 1 then
+			hook.Remove("RenderScene", "jcms_DrawZombieCreep")
+			hook.Remove("PreDrawOpaqueRenderables", "jcms_ZombieCreep_Render")
+		end
 	end
 
 	
@@ -351,7 +360,7 @@ if CLIENT then
 		end)
 
 		local zCreepBoxCol = Color(255, 0, 0, 0)
-		hook.Add("PreDrawOpaqueRenderables", "jcms_ZombieCreep_Render", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
+		function jcms.ZombieCreep_Render(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
 			if bDrawingDepth or bDrawingSkybox or isDraw3DSkyBox or render.GetRenderTarget() or drawing then return end
 
 			render.SetStencilEnable(true)
@@ -395,14 +404,13 @@ if CLIENT then
 
 			render.SetStencilEnable( false )
 			render.ClearStencil()
-		end)
+		end
 	-- // }}}
 
-	-- // World Render {{{	
-		hook.Add("RenderScene", "jcms_DrawZombieCreep", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
+	-- // World Render {{{
+		function jcms.zombieCreep_DrawWorld()
 			if drawing then return end
 
-			--local debugStart = SysTime()
 			render.PushRenderTarget(rt)
 			render.WorldMaterialOverride(jcms.zombieCreep_Material)
 				drawing = true
@@ -422,13 +430,7 @@ if CLIENT then
 
 			render.WorldMaterialOverride()
 			render.PopRenderTarget()
-
-			
-			--print((SysTime() - debugStart) * 1000)
-
-			--render.DrawTextureToScreen( rt )
-			--return true	
-		end)
+		end
 
 		hook.Add("PreDrawTranslucentRenderables", "0jcms_worldRender_Suppress", function()
 			if drawing then return true end

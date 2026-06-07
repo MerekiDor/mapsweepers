@@ -418,6 +418,9 @@ if CLIENT then
 		self:DrawModel()
 	end
 
+
+	--This enemy isn't used any more so just commenting this out is easier than properly setting it up to add/remove
+	--[[
 	hook.Add("PostDrawTranslucentRenderables", "jcms_ZombiePolypEyes", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
 		if bDrawingDepth or bDrawingSkybox or isDraw3DSkybox then return end
 		
@@ -426,5 +429,5 @@ if CLIENT then
 				ent:DrawModel()
 			end
 		render.MaterialOverride()
-	end)
+	end)--]]
 end
