@@ -413,6 +413,7 @@ if CLIENT then
 
 			render.PushRenderTarget(rt)
 			render.WorldMaterialOverride(jcms.zombieCreep_Material)
+			render.BrushMaterialOverride(jcms.zombieCreep_Material)
 				drawing = true
 
 				render.SuppressEngineLighting( true )
@@ -428,6 +429,7 @@ if CLIENT then
 				drawing = false
 				render.SuppressEngineLighting( false )
 
+			render.BrushMaterialOverride()
 			render.WorldMaterialOverride()
 			render.PopRenderTarget()
 		end
