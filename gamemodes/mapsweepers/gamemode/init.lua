@@ -727,7 +727,9 @@ AddCSLuaFile "_main/client/cl_addoncompatibility.lua"
 
 	hook.Add("PlayerFootstep", "jcms_Footsteps", function(ply, pos, foot, sound, volume, rf)
 		local data = jcms.class_GetData(ply)
-		
+
+		hook.Run("jcms_PlayerFootsteps", ply, pos, foot, sound, volume, rf ) --return true blocks other calls of this hook so I need this to be able to do other stuff - J
+
 		if data then
 			local wl = ply:WaterLevel()
 			local postfix = data.footstepSfxNoPostfix and "" or (foot == 0 and "Left" or "Right")

@@ -95,6 +95,20 @@ ENT.RenderGroup = RENDERGROUP_OPAQUE
 	end)
 -- // }}}
 
+
+--Footsteps
+hook.Add( "jcms_PlayerFootsteps", "0jcms_ZombieCreep_Footstep", function( ply, pos, foot, sound, volume, rf )
+	local cell = jcms.zombieCreep_GetCell( pos )
+	if not jcms.zombieCreepCells[cell] then return end
+
+	if foot == 0 then 	--Left
+		ply:EmitSound("Mud.StepLeft")
+	else				--Right
+		ply:EmitSound("Mud.StepRight")
+	end
+end )
+
+
 if SERVER then
 	jcms.zombieCreepCell_LastDestroyed = jcms.zombieCreepCell_LastDestroyed or {} --Tracking last removal, used to stop instant refilling.
 
@@ -256,20 +270,6 @@ if CLIENT then
 		self:SetNextClientThink(CurTime() + 0.25)
 		return true
 	end
-
-
-
-	hook.Add( "PlayerFootstep", "jcms_ZombieCreep_Footstep", function( ply, pos, foot, sound, volume, rf )
-		local cell = jcms.zombieCreep_GetCell( pos )
-		if not jcms.zombieCreepCells[cell] then return end
-
-		if foot == 0 then 	--Left
-			ply:EmitSound("Mud.StepLeft")
-		else				--Right
-			ply:EmitSound("Mud.StepRight")
-		end
-	end )
-
 
 	jcms.zombieCreep_Material = CreateMaterial("jcms_zombieCreep_flesh", "LightmappedGeneric", {
 		["$basetexture"] = "models/flesh",
