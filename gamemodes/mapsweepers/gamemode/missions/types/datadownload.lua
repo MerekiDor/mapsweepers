@@ -493,7 +493,7 @@ jcms.missions.datadownload = {
 				end
 
 				--Give cash for each active pillar
-				local totalIncome = activePillars * 10
+				local totalIncome = activePillars * 15
 				for i, ply in player.Iterator() do 
 					jcms.giveCash(ply, totalIncome)
 				end
