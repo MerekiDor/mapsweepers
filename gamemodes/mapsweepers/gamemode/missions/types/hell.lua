@@ -95,8 +95,13 @@ jcms.missions.hell = {
 		end
 	end,
 	
+
 	npcTypeQueueCheck = function(director, swarmCost, dangerCap, npcType, npcData, basePassesCheck)
-		return (npcData.danger <= dangerCap) and (not npcData.check or npcData.check(director))
+		local npcTypeBlacklist = {
+			["zombie_spewer"] = true,
+			["zombie_creeper"] = true,
+		}
+		return (npcData.danger <= dangerCap) and (not npcData.check or npcData.check(director)) and not npcTypeBlacklist[npcType]
 	end,
 	
 	swarmCalcCost = function(director, baseCost)
