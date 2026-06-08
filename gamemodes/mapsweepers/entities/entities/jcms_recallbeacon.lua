@@ -26,8 +26,9 @@ ENT.PrintName = "Recall Beacon"
 ENT.Author = "Octantis Addons"
 ENT.Category = "Map Sweepers"
 ENT.Spawnable = false
+ENT.RenderGroup = RENDERGROUP_BOTH
 
-ENT.ChargeTime = 2
+ENT.ChargeTime = 5
 
 --TODO: Only allow one per player.
 
@@ -41,7 +42,7 @@ if SERVER then
 		self:SetCustomCollisionCheck(true)
 		
 		self:SetModel("models/jcms/jcorp_jumppad.mdl")
-		--TODO: Diff material
+		self:SetMaterial("models/jcms/jcorp_jumppad_evac")
 		self:PhysicsInitStatic(SOLID_VPHYSICS)
 		
 		--Charging
@@ -118,6 +119,60 @@ if SERVER then
 	end
 end
 
-if CLIENT then 
-	--TODO:
+if CLIENT then
+	ENT.mat_ring = Material "trails/electric.vmt"
+
+	function ENT:Initialize()
+		self.soundCharge = CreateSound(self, "ambient/machines/combine_shield_touch_loop1.wav")
+		self.soundCharge:PlayEx(1, 60)
+
+		self.lastChargeState = false
+	end
+
+	function ENT:Think()
+		-- // Charging/Idle sound {{{
+			if self:GetIsCharging() then
+				--Charge up
+				if not self.lastChargeState then  
+					self.soundCharge:ChangePitch( 250, self.ChargeTime )
+				end
+				self.lastChargeState = true
+			else
+				--Back to idle
+				if self.lastChargeState then  
+					self.soundCharge:ChangePitch( 60, 0.25 )
+				end
+				self.lastChargeState = false
+			end
+		-- // }}}
+	end
+
+
+	function ENT:DrawTranslucent() --Stolen from evac - J
+		local vUp = self:GetAngles():Up()
+		local pos = self:WorldSpaceCenter()
+		pos:Add(vUp)
+		local time = CurTime()
+		
+		render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
+			for i=1, 3 do
+				local frac = (time*0.75 + i/3)%1
+				local frac2 = 1 - (1-frac)^3
+				
+				local size = 20 - frac*4
+				render.SetMaterial(self.mat_ring)
+				
+				local color = Color(Lerp(frac2, 255, 0), Lerp(frac2, 255, 100), 255, frac<0.15 and frac/0.15*255 or Lerp(frac*frac, 255, 0))
+				local ringSegments = 24
+
+				render.StartBeam(ringSegments)
+				for j=1, ringSegments do
+					local a = (j-1) / (ringSegments - 1) * math.pi * 2
+					local ringoffset = Vector( math.cos(a) * size, math.sin(a) * size, frac*32 )
+					render.AddBeam(pos + ringoffset, 12, a / (math.pi * 2) + time - i * 0.3, color)
+				end
+				render.EndBeam()
+			end
+		render.OverrideBlend( false )
+	end
 end

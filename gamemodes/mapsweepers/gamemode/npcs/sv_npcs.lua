@@ -513,15 +513,14 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 		local function iterateEnts(entList) 
 			for i, oent in ipairs(entList) do 
 				local oentRelFunc = oent.AddEntityRelationship
-				
-				if entRelFunc or oentRelFunc then
-					--local same = jcms.team_SameTeam(ent, oent)
-					local same = jcms.team_SameTeam_optimised(entJCorp, entNPC, ent, oent)
-					if oentRelFunc then
-						oentRelFunc(oent, ent, same and D_LI or D_HT, same and 1 or 0)
-					else
-						entRelFunc(ent, oent, same and D_LI or D_HT, same and 1 or 0)
-					end
+				local same = (entRelFunc or oentRelFunc) and jcms.team_SameTeam_optimised(entJCorp, entNPC, ent, oent)
+
+				if oentRelFunc then
+					oentRelFunc(oent, ent, same and D_LI or D_HT, same and 1 or 0)
+				end
+	
+				if entRelFunc then
+					entRelFunc(ent, oent, same and D_LI or D_HT, same and 1 or 0)
 				end
 			end
 		end

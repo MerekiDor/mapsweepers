@@ -198,11 +198,10 @@ if CLIENT then
 		self.emitter = ParticleEmitter( self:WorldSpaceCenter(), false )
 
 		self:SetRenderBounds(Vector(-96,-96,0),Vector(96,96,512+64))
-
 	end
 
 	function ENT:Think()
-		-- Burst in bloody particles.
+		-- Burst into bloody particles.
 		if FrameTime() > 0 and math.random() < 0.23 and self:GetSequenceName( self:GetSequence() ) == "death" then
 			local boneIndex = math.random(1, self:GetBoneCount()) -- 0 not included intentionally
 			local boneMatrix = self:GetBoneMatrix(boneIndex)

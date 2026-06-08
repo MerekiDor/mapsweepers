@@ -421,20 +421,21 @@ jcms.missions.datadownload = {
 			end
 		end
 
-		if md.phase ~= 2 and not md.evacuating then --No waves until we start the defense
+		--No waves until we start the defense
+		if md.phase ~= 2 and not md.evacuating then
 			d.swarmNext = jcms.director_GetMissionTime() + 2
 		end
 		
-		local pillarsShouldBeActive = false
-		local downloadSucceeded = false
-		
-		for i=#md.pillars, 1, -1 do --Clean up invalid / destroyed pillars
+		--Clean up invalid / destroyed pillars
+		for i=#md.pillars, 1, -1 do
 			local pillar = md.pillars[i]
 			if not IsValid(pillar) then
 				table.remove(md.pillars, i)
 			end
 		end
 
+		local pillarsShouldBeActive = false
+		local downloadSucceeded = false
 		if md.defenseCompleted then
 			md.defenseProgress = 1
 			md.lastPillarCount = 0
@@ -443,18 +444,45 @@ jcms.missions.datadownload = {
 			if md.defenseOngoing then
 				pillarsShouldBeActive = true
 
+				--Swarm Accel
 				if #d.npcs < 30 then 
 					d.swarmNext = (d.swarmNext or jcms.director_GetMissionTime()) - 1
 				end
 
+				--NPCs Target Pillars
 				for i, npc in ipairs(d.npcs) do
-					if not IsValid(npc) or not npc.GetEnemy or IsValid(npc:GetEnemy()) then continue end
-					
-					local target = md.pillars[math.random(#md.pillars)]
-					npc:SetEnemy(target)
-					npc:UpdateEnemyMemory(target, target:GetPos())
+					if not IsValid(npc) or not npc.GetEnemy then continue end
+
+					--Prioritise hunting pillars instead of players
+					local enemy = npc:GetEnemy()
+					local shouldReassign = true
+					if IsValid(enemy) and enemy:IsPlayer() and CurTime() - npc:GetEnemyLastTimeSeen() < 10 then
+						shouldReassign = false
+					end
+
+					if shouldReassign then
+						--Find Closest pillar
+						local npcPos = npc:GetPos()
+						local nearest = NULL
+						local nearestDist = math.huge
+						for i, pillar in ipairs(md.pillars) do 
+							local dist = pillar:GetPos():DistToSqr(npcPos)
+							if dist < nearestDist then
+								nearest = pillar
+								nearestDist = dist
+							end
+						end
+
+						--Attack it
+						if IsValid(nearest) then
+							local choice = nearest.bullseyes[math.random(#nearest.bullseyes)]
+							npc:SetEnemy(choice)
+							npc:UpdateEnemyMemory(choice, choice:GetPos())
+						end
+					end
 				end
 
+				--Count active Pillars 
 				local totalPillars = 0
 				local activePillars = 0
 				for i, pillar in ipairs(md.pillars) do 
@@ -464,6 +492,7 @@ jcms.missions.datadownload = {
 					end
 				end
 
+				--Give cash for each active pillar
 				local totalIncome = activePillars * 10
 				for i, ply in player.Iterator() do 
 					jcms.giveCash(ply, totalIncome)
@@ -472,10 +501,9 @@ jcms.missions.datadownload = {
 				md.totalIncome = totalIncome
 				local totalIncomeFormatted = jcms.util_CashFormat(totalIncome)
 
+				--Are we ongoing or not
 				if activePillars > 0 then
-					--5 Minutes at max power, scaling with difficulty
-					--Fewer pillars exponentially slows it.
-
+					--4 Minutes at max power, scaling with difficulty
 					local pillarFraction = math.Clamp(activePillars / totalPillars, 0, 1)
 
 					if md.lastPillarCount ~= 0 and md.lastPillarCount ~= activePillars then
@@ -494,7 +522,7 @@ jcms.missions.datadownload = {
 					
 					md.lastPillarCount = activePillars
 
-					local scalar = (#d.npcs > 10) and jcms.runprogress_GetDifficulty() or 0.5
+					local scalar = (#d.npcs > 15) and jcms.runprogress_GetDifficulty() or 0.5
 					local progressPower = 1/((60*4) * (scalar^(3/4)) ) * (jcms.util_IsPVP() and 3.25 or 1)
 
 					md.defenseProgress = math.Clamp(md.defenseProgress + progressPower, 0, 1)
@@ -615,7 +643,7 @@ jcms.missions.datadownload = {
 	
 	getRecallPoint = function(d, missionData)
 		local comp =  missionData.computers[1]
-		return comp:GetPos() + comp:GetAngles():Forward() * 50
+		return comp:GetPos() + comp:GetAngles():Forward() * 35
 	end,
 	
 	swarmCalcCost = function(director, baseCost)
@@ -651,7 +679,7 @@ jcms.missions.datadownload = {
 		dd_rb = {
 			category = jcms.SPAWNCAT_MISSION,
 			cost = 1,
-			cooldown = 1,
+			cooldown = 90,
 			slotPos = 1,
 			argparser = "respawn_beacon", 
 
