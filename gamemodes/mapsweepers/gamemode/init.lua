@@ -650,6 +650,7 @@ AddCSLuaFile "_main/client/cl_addoncompatibility.lua"
 		end
 	end)
 
+	--[[
 	hook.Add("PlayerPostThink", "jcms_IdleAnnouncer", function(ply)
 		if jcms.director and (not jcms.director.gameover) and jcms.team_JCorp_player(ply) and ply:Alive() and ply:GetObserverMode() == OBS_MODE_NONE then
 			local pos = ply:GetPos()
@@ -666,7 +667,7 @@ AddCSLuaFile "_main/client/cl_addoncompatibility.lua"
 				ply.jcms_idleSince = time + math.random() * 5
 			end
 		end
-	end)
+	end)--]]
 
 	hook.Add("PlayerPostThink", "jcms_PlayerMenuThink", function(ply)
 		if (ply:GetObserverMode() == OBS_MODE_FIXED or ply:GetObserverMode() == OBS_MODE_CHASE) then
