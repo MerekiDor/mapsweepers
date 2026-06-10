@@ -48,6 +48,10 @@ if SERVER then
 		self:PhysicsInitBox( Vector(-56,-56,0),Vector(56,56,512) )
 		self:SetMoveType(MOVETYPE_NONE)
 
+		timer.Simple(0.1, function() --We get reset to (-3.250000 -3.250000 0.000000)	(3.250000 3.250000 18.000000) sometimes during missions somehow?
+			self:SetCollisionBounds(Vector(-56,-56,0),Vector(56,56,512))
+		end)
+
 		self:SetMaxHealth(1250)
 		self:SetHealth(1250)
 
