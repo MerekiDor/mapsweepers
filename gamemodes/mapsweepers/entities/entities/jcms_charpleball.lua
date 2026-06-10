@@ -35,8 +35,8 @@ function ENT:Initialize()
 		self:AddEFlags(EFL_DONTBLOCKLOS)
 		self:SetMaterial("models/charple/charple3_sheet")
 
-		self:SetMaxHealth(150)
-		self:SetHealth(150)
+		self:SetMaxHealth(100)
+		self:SetHealth(100)
 		self:SetBloodColor(BLOOD_COLOR_ANTLION_WORKER)
 
 		local phys = self:GetPhysicsObject()

@@ -76,6 +76,7 @@ if SERVER then
 
 		self.nextSpeak = CurTime() + 20 + math.Rand(0, 20)
 		--self.nextSpeak = CurTime() + 10
+		self:SetPos(self:GetPos() + Vector(0,0,1)) 
 	end
 
 	function ENT:Think()

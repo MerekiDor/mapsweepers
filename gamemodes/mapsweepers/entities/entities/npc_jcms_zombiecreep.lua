@@ -190,16 +190,16 @@ if SERVER then
 			local expansionTime = (5 / selfTbl.scaleSpeed) + (#ents.FindByClass("npc_jcms_zombiecreep") / selfTbl.scaleSpeed) ^ (1/4)
 			selfTbl.nextExpansion = cTime + expansionTime
 
-			--Stop expanding if we're too close to the player. Having creep intrude *into* your nest is annoying, and serves no gameplay purpose.
-			local nearest, dist = jcms.GetNearestSweeper(self:WorldSpaceCenter())
-			if dist < 1250 then return end
-
 			--Spawn another creeper at the first available cell.
 			for cell, pos in pairs(selfTbl.expansionPoints) do 
 				--Not occupied, >20s since it was last cleared.
-				if not jcms.zombieCreepCells[cell] and (jcms.zombieCreepCell_LastDestroyed[cell] or 0) + 20 < cTime then 
-					jcms.npc_Spawn("zombie_creep", pos)
-					break
+				if not jcms.zombieCreepCells[cell] and (jcms.zombieCreepCell_LastDestroyed[cell] or 0) + 40 < cTime then 
+					--Stop expanding if we're too close to the player. Having creep intrude *into* your nest is annoying, and serves no gameplay purpose.
+					local nearest, dist = jcms.GetNearestSweeper(pos)
+					if dist > 1000 then
+						jcms.npc_Spawn("zombie_creep", pos)
+						break
+					end
 				end
 			end
 		end
@@ -228,6 +228,7 @@ if SERVER then
 
 		if self:Health() <= 0 then 
 			self:Remove()
+			hook.Call("OnNPCKilled", GAMEMODE, self, dmgInfo:GetAttacker(), dmgInfo:GetInflictor())
 		end
 	end
 end

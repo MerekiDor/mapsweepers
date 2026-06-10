@@ -542,6 +542,8 @@ jcms.npc_types.zombie_creep = {
 
 	anonymous = true, --Don't contribute to the softcap / director.
 	isStatic = true,
+
+	airUnit = true,
 	
 	check = function() return false end --Stop us from spawning naturally
 }
@@ -654,7 +656,7 @@ jcms.npc_types.zombie_fast = {
 		local enemy = npc:GetEnemy()
 
 		--Leap at dropships
-		if npc:IsOnGround() and IsValid(enemy) and IsValid(enemy:GetNWEntity("jcms_vehicle")) then
+		if npc:IsOnGround() and IsValid(enemy) and IsValid(enemy:GetNWEntity("jcms_vehicle")) and npc:Visible(enemy:GetNWEntity("jcms_vehicle")) then
 			local npcPos = npc:GetPos()
 			local enemyPos = enemy:GetPos()
 
@@ -1184,7 +1186,7 @@ jcms.npc_types.zombie_charple = {
 			local enemy = npc:GetEnemy()
 
 			--Leap at dropships
-			if npc:IsOnGround() and IsValid(enemy) and IsValid(enemy:GetNWEntity("jcms_vehicle")) then
+			if npc:IsOnGround() and IsValid(enemy) and IsValid(enemy:GetNWEntity("jcms_vehicle")) and npc:Visible(enemy:GetNWEntity("jcms_vehicle")) then
 				local npcPos = npc:GetPos()
 				local enemyPos = enemy:GetPos()
 
