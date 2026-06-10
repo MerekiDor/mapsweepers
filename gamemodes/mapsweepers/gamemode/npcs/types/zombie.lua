@@ -646,6 +646,38 @@ jcms.npc_types.zombie_fast = {
 		npc:SetHealth(hp)
 
 		npc.jcms_dmgMult = 4
+
+		npc.jcms_dropshipLeaped = false
+	end,
+
+	think = function(npc)
+		local enemy = npc:GetEnemy()
+
+		--Leap at dropships
+		if npc:IsOnGround() and IsValid(enemy) and IsValid(enemy:GetNWEntity("jcms_vehicle")) then
+			local npcPos = npc:GetPos()
+			local enemyPos = enemy:GetPos()
+
+			--We're beyond our usual max height
+			local height = enemyPos.z - npcPos.z
+			if height > 128 and height < 850 then
+				npc:SetSchedule(SCHED_RANGE_ATTACK1)
+				npc.jcms_dropshipLeaped = true
+
+				--Give us extra vertical velocity to clear the gap
+				timer.Simple(0.1, function()
+					if not IsValid(npc) then return end
+
+					--This adds velocity rather than setting it
+					npc:SetVelocity(Vector(0,0,height))
+				end)
+			end
+		end
+				
+		--We seem to get stuck in the leaping state even after we've landed, this fixes that
+		if npc.jcms_dropshipLeaped and npc:GetCurrentSchedule() == 181 then
+			npc:SetSchedule(SCHED_CHASE_ENEMY)
+		end
 	end
 }
 
@@ -1145,6 +1177,36 @@ jcms.npc_types.zombie_charple = {
 				else
 					npc:TakeDamage(npc:GetMaxHealth())
 				end
+			end
+		-- // }}}
+
+		-- // Fast Zombie Dropship leaping behaviour
+			local enemy = npc:GetEnemy()
+
+			--Leap at dropships
+			if npc:IsOnGround() and IsValid(enemy) and IsValid(enemy:GetNWEntity("jcms_vehicle")) then
+				local npcPos = npc:GetPos()
+				local enemyPos = enemy:GetPos()
+
+				--We're beyond our usual max height
+				local height = enemyPos.z - npcPos.z
+				if height > 128 and height < 850 then
+					npc:SetSchedule(SCHED_RANGE_ATTACK1)
+					npc.jcms_dropshipLeaped = true
+
+					--Give us extra vertical velocity to clear the gap
+					timer.Simple(0.1, function()
+						if not IsValid(npc) then return end
+
+						--This adds velocity rather than setting it
+						npc:SetVelocity(Vector(0,0,height))
+					end)
+				end
+			end
+					
+			--We seem to get stuck in the leaping state even after we've landed, this fixes that
+			if npc.jcms_dropshipLeaped and npc:GetCurrentSchedule() == 181 then
+				npc:SetSchedule(SCHED_CHASE_ENEMY)
 			end
 		-- // }}}
 	end,

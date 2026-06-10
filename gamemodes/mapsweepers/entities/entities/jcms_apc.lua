@@ -76,13 +76,22 @@ function ENT:Initialize()
 
 		self.delayedForces = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 
+		local selfPos = self:WorldSpaceCenter()
+		local selfAng = self:GetAngles()
+
+		self.jcms_bullseyes = {}
 		for x=1, 3 do
 			for y=1, 2 do
 				local bs = ents.Create("jcms_bullseye")
 				bs:SetParent(self)
-				bs:SetPos(Vector(-200+100*x, -80+(y-1)*160, 4))
+				bs:SetPos(selfPos + Vector(-200+100*x, -80+(y-1)*160, -25))
 				bs.DamageTarget = self
 				bs:Spawn()
+
+				bs:AddFlags(FL_NOTARGET)
+				bs:SetModel("models/hunter/plates/plate.mdl") --These can get in the way of entering the APC and this is basically only for zombies/ants, so smaller is better.
+
+				table.insert(self.jcms_bullseyes, bs)
 			end
 		end
 
@@ -299,8 +308,9 @@ if SERVER then
 		local shieldOn = self:GetShieldActive()
 
 		if data.HitEntity:IsNPC() then
+			local shieldMul = shieldOn and 2 or 1
 			local dmgInfo = DamageInfo()
-			dmgInfo:SetDamage(speed/10 + (IsValid(self:GetDriver()) and 5 or 0))
+			dmgInfo:SetDamage( (speed/8 + (IsValid(self:GetDriver()) and 10 or 0)) * shieldMul )
 			dmgInfo:SetAttacker(self:GetDriver() or self)
 			dmgInfo:SetInflictor(self)
 			dmgInfo:SetDamageType(bit.bor(DMG_CRUSH, DMG_VEHICLE))
@@ -605,6 +615,10 @@ if SERVER then
 			self.driver:SetEyeAngles(ea)
 
 			self.driver = nil
+
+			for i, bullseye in ipairs(self.jcms_bullseyes) do 
+				bullseye:AddFlags(FL_NOTARGET)
+			end
 		end
 		
 		if IsValid(ply) and ply:IsPlayer() and ply:GetNWEntity("jcms_vehicle") == NULL then
@@ -615,6 +629,10 @@ if SERVER then
 			ply:SetNWEntity("jcms_vehicle", self)
 			ply:SetEyeAngles(self:GetAngles())
 			ply:SetMoveType( MOVETYPE_NOCLIP )
+
+			for i, bullseye in ipairs(self.jcms_bullseyes) do 
+				bullseye:RemoveFlags(FL_NOTARGET)
+			end
 		end
 	end
 	
