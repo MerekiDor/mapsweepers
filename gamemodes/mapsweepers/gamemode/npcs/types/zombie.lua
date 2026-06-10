@@ -134,7 +134,7 @@ jcms.npc_commanders["zombie"] = {
 			--""Resource"" used to accelerate hordes, depeletes as timer is sped up, and is replenished w/ a delay after being fully depleted.
 			if c.nextHorde < CurTime() then 
 				c.hordeScore = 120
-				PrintMessage( HUD_PRINTTALK, "[Zombies] Horde Accel resumed" )
+				--PrintMessage( HUD_PRINTTALK, "[Zombies] Horde Accel resumed" )
 			end
 
 			if c.hordeScore > 0 then
@@ -154,9 +154,9 @@ jcms.npc_commanders["zombie"] = {
 
 				c.nextHorde = CurTime() + 150 -- New horde starts 2,5 minutes (150s) after last horde accel is exhausted
 
-				if c.hordeScore <= 0 then --DEBUG
+				--[[if c.hordeScore <= 0 then --DEBUG
 					PrintMessage( HUD_PRINTTALK, "[Zombies] Horde Accel ended" )
-				end
+				end--]]
 			end
 		-- // }}}
 
@@ -325,7 +325,11 @@ jcms.npc_commanders["zombie"] = {
 		--Faction prefabs
 		local count = math.ceil(jcms.mapgen_AdjustCountForMapSize( 4 ) * jcms.runprogress_GetDifficulty())
 		jcms.mapgen_PlaceFactionPrefabs(count, "zombie")
-	end
+	end,
+
+	--Zombies are so extreme / weird in their playstyle that our existing forms of difficulty scaling don't really play nice with them.
+	--In testing evac consistently became insurmountably overwhelming with the default cooldown reduction, to the extent it accounted for almost 100% of deaths
+	evacCooldownOverride = 1.1,
 }
 
 jcms.npc_types.zombie_explodingcrab = {
@@ -379,13 +383,27 @@ jcms.npc_types.zombie_explodingcrab = {
 	end,
 
 	damageEffect = function(npc, target, dmgInfo)
-		local ed = EffectData()
-		ed:SetMagnitude(1.8)
-		ed:SetOrigin(npc:GetPos())
-		ed:SetRadius(64)
-		ed:SetFlags(5)
-		ed:SetColor( jcms.util_ColorIntegerFast(128, 255, 64) )
-		util.Effect("jcms_blast", ed)
+		--Sudden/unexpected death prevention
+		if target:IsPlayer() and target:Armor() <= 0 then
+			local targHP = target:Health()
+			local dmg = dmgInfo:GetDamage()
+
+			--If we're above 30 we should go to 5, otherwise die
+			local cap = math.max(targHP - 5, 30) 
+			dmgInfo:SetDamage(math.min(cap, dmg))
+
+		end
+
+		-- Explosion FX {{{
+			local ed = EffectData()
+			ed:SetMagnitude(1.8)
+			ed:SetOrigin(npc:GetPos())
+			ed:SetRadius(64)
+			ed:SetFlags(5)
+			ed:SetColor( jcms.util_ColorIntegerFast(128, 255, 64) )
+			util.Effect("jcms_blast", ed)
+		-- // }}}
+
 		npc:Remove()
 	end,
 
@@ -534,7 +552,7 @@ jcms.npc_types.zombie_creeper = {
 
 	danger = jcms.NPC_DANGER_STRONG,
     cost = 0.05,
-    swarmWeight = 0.1,
+    swarmWeight = 0.2,
 	swarmLimit = 4,
 
 	class = "npc_jcms_creeper",
@@ -575,6 +593,29 @@ jcms.npc_types.zombie_husk = {
 			totalRand = math.max(totalRand - rand, 0)
 			npc:ManipulateBoneAngles(i, AngleRand(-rand, rand), true)
 		end
+
+		
+		local timerName = "jcms_zombieHusk_fastThink" .. tostring(npc:EntIndex())
+		timer.Create(timerName, 0.05, 0, function()
+			if not IsValid(npc) then
+				timer.Remove(timerName)
+				return
+			end
+			
+			local enemy = npc:GetEnemy()
+			if not IsValid(enemy) then return end
+
+
+			local sched = npc:GetCurrentSchedule()
+			if npc:WorldSpaceCenter():DistToSqr(enemy:WorldSpaceCenter()) < 70^2 then
+				if not(sched == 140) then 
+					npc:SetSchedule(SCHED_MELEE_ATTACK1)
+				else
+					npc:SetPlaybackRate(1.2)
+				end
+			end
+		end)
+		
 	end,
 
 	takeDamage = function(npc, dmg)
@@ -628,8 +669,6 @@ jcms.npc_types.zombie_crawler = {
 		npc.jcms_DontCollideWithNPCs = true
 		npc:SetCustomCollisionCheck(true)
 	end
-
-	--TODO: THESE GUYS SHOULD LEAP
 }
 
 jcms.npc_types.zombie_poison = {
@@ -883,6 +922,17 @@ jcms.npc_types.zombie_combine = {
 
 	damageEffect = function(npc, target, dmgInfo)
 		if dmgInfo:IsDamageType( DMG_BLAST, DMG_BLAST_SURFACE ) then 
+			--Sudden/unexpected death prevention
+			if target:IsPlayer() and target:Armor() <= 0 then
+				local targHP = target:Health()
+				local dmg = dmgInfo:GetDamage()
+				
+				--If we're above 30 we should go to 5, otherwise die
+				local cap = math.max(targHP - 5, 30)
+				dmgInfo:SetDamage(math.min(cap, dmg))
+				--NOTE: It seems like some sort of scaling might take place after this? It reports correct amounts (i.e. capping dmg against a 40hp player to 35) but then deals substantially less than 35.
+			end
+
 			return --Don't buff grenade damage
 		end
 

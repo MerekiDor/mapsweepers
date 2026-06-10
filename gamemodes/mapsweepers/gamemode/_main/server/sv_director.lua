@@ -1664,7 +1664,11 @@
 						swarmCost = swarmCost + 4
 					end
 					
-					cooldown = cooldown / 1.6
+					local cooldownDiv = 1.6
+					if d.commander and d.commander.evacCooldownOverride then
+						cooldownDiv = d.commander.evacCooldownOverride
+					end
+					cooldown = cooldown / cooldownDiv
 				end
 
 				

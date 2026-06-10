@@ -162,7 +162,7 @@ jcms.missions.infestation = {
 			EmitSound( "ambient/levels/labs/teleport_mechanism_windup3.wav", vector_origin, 0, CHAN_STATIC, 1, 140, 0, 100, 0, filter )
 
 			md.storming = true
-			md.stormEnd = CurTime() + (90 * md.stormMult)
+			md.stormEnd = CurTime() + (75 * md.stormMult)
 			md.nextStorm = md.stormEnd + 180
 			
 			md.stormController:SetEnabled(true)

@@ -204,52 +204,77 @@ if SERVER then
 						ply.sentinel_teleportSound:Stop()
 						ply.sentinel_isTeleporting = false
 
+						--Don't teleport us if we're near a friendly building.
 						for i, ent in ipairs(ents.FindInSphere(ply:WorldSpaceCenter(), 200)) do
 							if ent.SentinelAnchor and (not ent.GetHackedByRebels or not ent:GetHackedByRebels()) then 
-								return --Don't teleport us if we're near a friendly building.
+								return
 							end
 						end
 
-						if IsValid(ply:GetNWEntity("jcms_vehicle", NULL)) then return end -- Don't teleport us out of vehicles
+						--Don't teleport us out of vehicles
+						if IsValid(ply:GetNWEntity("jcms_vehicle", NULL)) then return end 
 
-						local zoneList = jcms.mapgen_ZoneList()
-						local zoneDict = jcms.mapgen_ZoneDict()
-						
-						-- todo: Re-use the teleport-in effect
-						local d = jcms.director
-						local plyArea = d.playerAreas[ply]
-						local plyZoneId = zoneDict[plyArea]
-						local plyZone = zoneList[plyZoneId]
-						
-						if not plyZone or jcms.mapdata.zoneSizes[plyZoneId] < 5000^2 then
-							plyZone = zoneList[jcms.mapdata.largestZone]
-						end
-
-						if not plyZone then return end --This is stupid but I guess people are willing to play on maps made of tiny rooms.
-
-
-						local plyMins, plyMaxs = ply:GetHull()
-						--local zOff = Vector(0,0, plyMaxs.z + 5)
-						local zOff2 = Vector(0,0,5)
-
-						local awayAreas = jcms.director_GetAreasAwayFrom(plyZone, {ply:GetPos()}, 1500, math.huge)
-
-						local weightedAreas = {}
-						for i, area in ipairs(awayAreas) do
-							local centre = area:GetCenter()
-							local tr = util.TraceEntityHull({
-								start = centre + zOff2,
-								endpos = centre + zOff2
-							}, ply)
-
-							if not tr.Hit then --Make sure we won't get stuck at target dest
-								--Equal chance to go to any point in zone, regadless of nav density.
-								weightedAreas[area] = math.sqrt(area:GetSizeX() * area:GetSizeY())
-							end
-						end
+						-- // Zone Selection + Failsafes {{{
+							local zoneList = jcms.mapgen_ZoneList()
+							local zoneDict = jcms.mapgen_ZoneDict()
 							
-						--TODO: fall-back for if we have no valid areas in zone?
-						local chosenArea = jcms.util_ChooseByWeight(weightedAreas)
+							-- todo: Re-use the teleport-in effect
+							local d = jcms.director
+							local plyArea = d.playerAreas[ply]
+							local plyZoneId = zoneDict[plyArea]
+							local plyZone = zoneList[plyZoneId]
+							
+							if not plyZone or jcms.mapdata.zoneSizes[plyZoneId] < 5000^2 then
+								plyZone = zoneList[jcms.mapdata.largestZone]
+							end
+
+							if not plyZone then return end --This is stupid but I guess people are willing to play on maps made of tiny rooms.
+						-- // }}}
+
+
+						-- // Selecting a Destination {{{
+							local plyMins, plyMaxs = ply:GetHull()
+							--local zOff = Vector(0,0, plyMaxs.z + 5)
+							local zOff2 = Vector(0,0,5)
+
+							local awayAreas = jcms.director_GetAreasAwayFrom(plyZone, {ply:GetPos()}, 1500, math.huge)
+
+							--Get anchor points
+							local anchorVectors = {}
+							for i, ent in ipairs(ents.FindByClass("jcms_*")) do 
+								if ent.jcms_sentinelAnchor then 
+									table.insert(anchorVectors, ent:GetPos())
+								end
+							end
+							
+							local nearAnchorAreas = jcms.director_GetAreasAwayFrom(awayAreas, anchorVectors, 100, 1000)
+
+							--Weighted random / validity checks
+							local function getWeightedAreas( areasToCheck )
+								local weightedAreas = {}
+								for i, area in ipairs(areasToCheck) do
+									local centre = area:GetCenter()
+									local tr = util.TraceEntityHull({
+										start = centre + zOff2,
+										endpos = centre + zOff2
+									}, ply)
+	
+									if not tr.Hit then --Make sure we won't get stuck at target dest
+										--Equal chance to go to any point in zone, regadless of nav density.
+										weightedAreas[area] = math.sqrt(area:GetSizeX() * area:GetSizeY())
+									end
+								end
+								return weightedAreas
+							end
+
+							--Try to teleport near an anchor first, random teleport otherwise.
+							local weightedAreas = getWeightedAreas(nearAnchorAreas)
+							if table.Count(weightedAreas) == 0 then 
+								weightedAreas = getWeightedAreas(awayAreas)
+							end
+
+							local chosenArea = jcms.util_ChooseByWeight(weightedAreas)
+						-- // }}}
 
 						local pos = IsValid(chosenArea) and chosenArea:GetCenter() or ply:GetPos()
 

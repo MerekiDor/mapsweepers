@@ -91,7 +91,7 @@ ENT.RenderGroup = RENDERGROUP_OPAQUE
 		if not jcms.zombieCreepCells[cell] then return end
 		if not ply:IsOnGround() then return end
 
-		mv:SetMaxClientSpeed(135)
+		mv:SetMaxClientSpeed(100)
 	end)
 -- // }}}
 
@@ -133,43 +133,53 @@ if SERVER then
 
 		self.jcms_ignoreStraggling = true
 	
-		local cell = jcms.zombieCreep_GetCell( self:GetPos() )
-		if jcms.zombieCreepCells[cell] then							--We're in an occupied cell, don't want to double up, get rid of us.
-			self:Remove()
-			return
-		end
-		--Set our cell and occupy it.
-		self.jcms_zombieCreep_cell = cell
-		jcms.zombieCreep_OccupyCell(self.jcms_zombieCreep_cell)
-
-		-- // Expansion Cell detection {{{
-			local ourArea = navmesh.GetNearestNavArea(self:GetPos())
-			if not IsValid(ourArea) then self:Remove() return end --We're somewhere invalid, panic. 
-			local selfZone = jcms.mapgen_ZoneDict()[ourArea]
-			if not selfZone then self:Remove() return end --We're somewhere invalid, panic. 
-
-			local selfZoneTbl = jcms.mapgen_ZoneList()[selfZone]
-			if not selfZoneTbl then self:Remove() return end
-
-			local nearbyAreas = jcms.director_GetAreasAwayFrom(selfZoneTbl, {self:GetPos()}, 0, cellWidth * 1.5)
-			local adjacentCellDict = {}
-
-			table.Shuffle(nearbyAreas)
-			for i, area in ipairs(nearbyAreas) do
-				if area:IsPotentiallyVisible( ourArea ) then --Stops us going through walls/rooves
-					local areaCentre = area:GetCenter()
-					local cell = jcms.zombieCreep_GetCell(areaCentre)
-					adjacentCellDict[cell] = areaCentre
-				end
+		-- // Cell & Expansion
+			local cell = jcms.zombieCreep_GetCell( self:GetPos() )
+			if jcms.zombieCreepCells[cell] then							--We're in an occupied cell, don't want to double up, get rid of us.
+				self:Remove()
+				return
 			end
+			--Set our cell and occupy it.
+			self.jcms_zombieCreep_cell = cell
+			jcms.zombieCreep_OccupyCell(self.jcms_zombieCreep_cell)
 
-			--TODO: More than one point per navarea (big ones cause problems)
-			self.expansionPoints = adjacentCellDict
-			self.expansionPoints[self.jcms_zombieCreep_cell] = nil --Ignore our own cell (optimisation)
+			-- // Expansion Cell detection {{{
+				local ourArea = navmesh.GetNearestNavArea(self:GetPos())
+				if not IsValid(ourArea) then self:Remove() return end --We're somewhere invalid, panic. 
+				local selfZone = jcms.mapgen_ZoneDict()[ourArea]
+				if not selfZone then self:Remove() return end --We're somewhere invalid, panic. 
+
+				local selfZoneTbl = jcms.mapgen_ZoneList()[selfZone]
+				if not selfZoneTbl then self:Remove() return end
+
+				local nearbyAreas = jcms.director_GetAreasAwayFrom(selfZoneTbl, {self:GetPos()}, 0, cellWidth * 1.5)
+				local adjacentCellDict = {}
+
+				table.Shuffle(nearbyAreas)
+				for i, area in ipairs(nearbyAreas) do
+					if area:IsPotentiallyVisible( ourArea ) then --Stops us going through walls/rooves
+						local areaCentre = area:GetCenter()
+						local cell = jcms.zombieCreep_GetCell(areaCentre)
+						adjacentCellDict[cell] = areaCentre
+					end
+				end
+
+				--TODO: More than one point per navarea (big ones cause problems)
+				self.expansionPoints = adjacentCellDict
+				self.expansionPoints[self.jcms_zombieCreep_cell] = nil --Ignore our own cell (optimisation)
+			-- // }}}
+
+			self.nextExpansion = CurTime() + 10 + #ents.FindByClass("npc_jcms_zombiecreep") + math.Rand(0, 10) --30
+			self:SetPos(self:GetPos() + Vector(0,0,1)) --Explosives don't work right without this
 		-- // }}}
 
-		self.nextExpansion = CurTime() + 10 + #ents.FindByClass("npc_jcms_zombiecreep") + math.Rand(0, 10) --30
-		self:SetPos(self:GetPos() + Vector(0,0,1)) --Explosives don't work right without this
+		--Scale rate
+		--NOTE: I literally just copy pasted this from polyps so it might not be fully appropriate for our context - J
+		local areaMult, volMult, densityMult, avgSizeMult = jcms.mapgen_GetMapSizeMultiplier()
+		local sizeMult = math.min(areaMult, volMult)
+		local densityMult = avgSizeMult / densityMult
+
+		self.scaleSpeed = sizeMult * densityMult
 	end
 
 	function ENT:Think()
@@ -177,7 +187,7 @@ if SERVER then
 		local cTime = CurTime()
 
 		if selfTbl.nextExpansion < cTime then
-			local expansionTime = 5 * math.sqrt(#ents.FindByClass("npc_jcms_zombiecreep"))
+			local expansionTime = (5 / selfTbl.scaleSpeed) + (#ents.FindByClass("npc_jcms_zombiecreep") / selfTbl.scaleSpeed) ^ (1/4)
 			selfTbl.nextExpansion = cTime + expansionTime
 
 			--Stop expanding if we're too close to the player. Having creep intrude *into* your nest is annoying, and serves no gameplay purpose.
@@ -194,7 +204,7 @@ if SERVER then
 			end
 		end
 
-		self:NextThink(cTime + 1) --Slower update rate, default of 10 times per second is extreme for what we're doing.
+		self:NextThink(cTime + 2) --Slower update rate, default of 10 times per second is extreme for what we're doing.
 	end
 
 	function ENT:OnRemove()

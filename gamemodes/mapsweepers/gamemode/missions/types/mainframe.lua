@@ -567,8 +567,13 @@ jcms.missions.mainframe = {
 					if npcData.faction == "any" then
 						return true
 					else
+						local npcTypeBlacklist = {
+							["zombie_spewer"] = true,
+							["zombie_creeper"] = true,
+						}
+
 						if (math.random() < zombieRatio) and missionData.completedTracks[1] then
-							return npcData.faction == "zombie"
+							return npcData.faction == "zombie" and not npcTypeBlacklist[npcType]
 						else
 							return npcData.faction == "rebel"
 						end
