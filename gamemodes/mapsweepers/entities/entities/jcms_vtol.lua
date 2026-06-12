@@ -481,16 +481,35 @@ if SERVER then
 			self.jcms_destroyed = true
 			self:SetIsWorking(false)
 			
-			self:SetDriver()
 			
 			self.soundCrashed = CreateSound(self, "ambient/gas/steam2.wav")
 			self.soundCrashed:PlayEx(75, 90)
 			
+			local driver = self:GetDriver()
+			local fallBackExitPos
+			if IsValid(driver) then
+				fallBackExitPos = self:GetExitPos()
+			end
+
 			timer.Simple(0, function()
 				if IsValid(self) then
 					self:SetPos(LerpVector(0.6, self:GetPos(), data.HitPos))
 					self:PhysicsInitStatic(SOLID_VPHYSICS)
-					self:StopMotionController()
+					self:StopMotionController()	
+					self:SetDriver()
+				else
+					--Failsafe (Could risk getting stuck driving a non-existent vehicle otherwise). 
+					--Would be way better if this was a standardised function but I guess we can do that whenever vehicles are given a proper base entity.
+					if IsValid(driver) and driver:IsPlayer() then
+						driver:SetMoveType(MOVETYPE_WALK)
+						driver:DrawViewModel(true)
+						driver:DrawWorldModel(true)
+						driver:SetNoDraw(false)
+						driver:SetNWEntity("jcms_vehicle", NULL)
+						
+						driver:SetPos(fallBackExitPos)
+						driver.noFallDamage = true
+					end
 				end
 			end)
 		elseif data.Speed > 10 then
@@ -512,6 +531,12 @@ if SERVER then
 			else
 				self:EmitSound("ATV_impact_medium")
 			end
+		end
+	end
+	
+	function ENT:Touch( otherEnt )
+		if otherEnt:IsPlayer() and otherEnt:GetGroundEntity() == self then
+			otherEnt.noFallDamage = true
 		end
 	end
 	

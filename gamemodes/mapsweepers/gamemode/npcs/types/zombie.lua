@@ -667,17 +667,18 @@ jcms.npc_types.zombie_fast = {
 				npc.jcms_dropshipLeaped = true
 
 				--Give us extra vertical velocity to clear the gap
-				timer.Simple(0.1, function()
+				timer.Simple(0.25, function()
 					if not IsValid(npc) then return end
 
 					--This adds velocity rather than setting it
-					npc:SetVelocity(Vector(0,0,height))
+					npc:SetVelocity(Vector(0,0,height + 128 + math.Rand(-100, 100)))
 				end)
 			end
 		end
 				
 		--We seem to get stuck in the leaping state even after we've landed, this fixes that
-		if npc.jcms_dropshipLeaped and npc:GetCurrentSchedule() == 181 then
+		local curSched = npc:GetCurrentSchedule()
+		if npc.jcms_dropshipLeaped and (curSched == 181 or curSched == 183) then
 			npc:SetSchedule(SCHED_CHASE_ENEMY)
 		end
 	end
@@ -1183,8 +1184,8 @@ jcms.npc_types.zombie_charple = {
 		-- // }}}
 
 		-- // Fast Zombie Dropship leaping behaviour
+		
 			local enemy = npc:GetEnemy()
-
 			--Leap at dropships
 			if npc:IsOnGround() and IsValid(enemy) and IsValid(enemy:GetNWEntity("jcms_vehicle")) and npc:Visible(enemy:GetNWEntity("jcms_vehicle")) then
 				local npcPos = npc:GetPos()
@@ -1197,17 +1198,18 @@ jcms.npc_types.zombie_charple = {
 					npc.jcms_dropshipLeaped = true
 
 					--Give us extra vertical velocity to clear the gap
-					timer.Simple(0.1, function()
+					timer.Simple(0.25, function()
 						if not IsValid(npc) then return end
 
 						--This adds velocity rather than setting it
-						npc:SetVelocity(Vector(0,0,height))
+						npc:SetVelocity(Vector(0,0,height + 128 + math.Rand(-100, 100)))
 					end)
 				end
 			end
 					
 			--We seem to get stuck in the leaping state even after we've landed, this fixes that
-			if npc.jcms_dropshipLeaped and npc:GetCurrentSchedule() == 181 then
+			local curSched = npc:GetCurrentSchedule()
+			if npc.jcms_dropshipLeaped and (curSched == 181 or curSched == 183) then
 				npc:SetSchedule(SCHED_CHASE_ENEMY)
 			end
 		-- // }}}

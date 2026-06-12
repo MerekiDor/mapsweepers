@@ -27,6 +27,13 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 	local inflictor = dmg:GetInflictor()
 	local dmgType = dmg:GetDamageType()
 
+	--Damage immunity (completely suppress dmg). Used by poison headcrabs for their 0.1s grace
+	ent.jcms_damageImmunityEnd = ent.jcms_damageImmunityEnd or 0
+	if ent.jcms_damageImmunityEnd > CurTime() then 
+		dmg:ScaleDamage(0)
+		return true
+	end
+
 	if ent:IsNPC() then
 		ent.jcms_lastDamageType = dmgType
 	end
@@ -200,6 +207,13 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 			local hp = ent:Health()
 			if ent:IsPlayer() then
 				dmg:SetDamage( math.min(hp-5, dmg:GetDamage()) )
+
+				--Sudden death prevention
+				if ent:Health() > 20 then
+					ent.jcms_damageImmunityEnd = math.max(ent.jcms_damageImmunityEnd, CurTime() + 0.1)
+					--Human reaction times range from 100-200ms (ish). One perceptual cycle is something like 70ms (on the high end, it can be lower). 
+					--100ms of delay gives you at least a bit of time to respond if you notice just before it hits, and ensures you at least *perceive* what happened before you die. 
+				end
 			else
 				dmg:SetDamage(math.min(math.max(0, hp-1), 15))
 			end
