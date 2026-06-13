@@ -187,6 +187,11 @@ jcms.bestiary = {}
 		mdl = "models/zombie/fast.mdl", bodygroups = { [1] = 1 }, camfov = 30
 	}
 
+	jcms.bestiary.zombie_crawler = {
+		faction = "zombie", bounty = 18, health = 63,
+		mdl = "models/zombie/fast_torso.mdl", bodygroups = { [1] = 1 }, camfov = 30
+	}
+
 	jcms.bestiary.zombie_husk = {
 		faction = "zombie", bounty = 15, health = 75,
 		mdl = "models/zombie/classic.mdl", bodygroups = { [1] = 1 }, camfov = 30
@@ -203,8 +208,13 @@ jcms.bestiary = {}
 	}
 
 	jcms.bestiary.zombie_spawner = {
-		faction = "zombie", bounty = 350, health = 750,
+		faction = "zombie", bounty = 350, health = 900,
 		mdl = "models/jcms/zombiespawner.mdl", scale = 0.5,
+	}
+
+	jcms.bestiary.zombie_spewer = {
+		faction = "zombie", bounty = 350, health = 1250,
+		mdl = "models/props_wasteland/antlionhill.mdl", scale = 0.15,
 	}
 
 	jcms.bestiary.zombie_spirit = {
