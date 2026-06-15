@@ -129,6 +129,7 @@ AddCSLuaFile "_main/sh_statistics.lua"
 AddCSLuaFile "_main/client/cl_codex.lua"
 AddCSLuaFile "npcs/cl_bestiary.lua"
 AddCSLuaFile "_main/client/cl_addoncompatibility.lua"
+AddCSLuaFile "_main/client/cl_bulletshields.lua"
 
 -- // Sounds {{{
 

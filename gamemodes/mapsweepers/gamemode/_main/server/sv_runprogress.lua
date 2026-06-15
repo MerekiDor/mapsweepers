@@ -182,6 +182,26 @@ function jcms.runprogress_SetLastMission()
 end
 
 
+-- /// Dedicated server resetting {{{
+	if game.IsDedicated() then 
+		hook.Add("PlayerDisconnected", "jcms_RunProgress_TrackServerEmpty", function( ply ) 
+			if player.GetCount() + player.GetCountConnecting() <= 1 then --last player leaving 
+				--Might as well store it in runprogress so it gets saved / cleared with it.
+				jcms.runprogress.lastPlayerLeaveTime = os.time()
+			end
+		end)
+
+		hook.Add("PlayerInitialSpawn", "jcms_RunProgress_CheckShouldResetOnJoin", function(ply)
+			if player.GetCount() == 1 and jcms.runprogress.lastPlayerLeaveTime then --We're the only player & there was a previous session all players left
+				if os.time() - jcms.runprogress.lastPlayerLeaveTime > 1.5 * 60*60 then --1.5hr of empty server to reset
+					jcms.runprogress_Reset()
+				end
+				jcms.runprogress.lastPlayerLeaveTime = nil --Basically resets our timer. Won't Check again until next player leaves.
+			end
+		end)
+	end
+-- // }}}
+
 do -- Saving / Loading
 	local runProgFile = "mapsweepers/server/runprogress_" .. (game.SinglePlayer() and "solo" or "multiplayer") .. ".dat"
 	hook.Add("InitPostEntity", "jcms_RestorePreviousRun", function()

@@ -55,7 +55,7 @@ if SERVER then
 		["mafium"] = {
 			color = Color(207, 183, 45),
 			material = "models/jcms/ore/mafium",
-			value = 1,
+			value = 2,
 
 			proxMin = 150,
 			proxMax = 1500,
@@ -65,7 +65,14 @@ if SERVER then
 					if bit.band(dmgInfo:GetDamageType(), bit.bor(DMG_BLAST,DMG_BLAST_SURFACE)) ~= 0 then
 						dmgInfo:ScaleDamage(0)
 					end
-				end
+				end,
+			-- // }}}
+
+			-- // Vein {{{
+				veinTakeDamage = function(ent, dmgInfo, takenDmg, damageAmount) --Damage Resistance
+					dmgInfo:ScaleDamage(0.25)
+					return takenDmg * 0.25, damageAmount * 0.25 --Awful naming
+				end,
 			-- // }}}
 		},
 
@@ -461,18 +468,26 @@ if SERVER then
 			local damageTaken = 0
 			local damageAmount = dmg:GetDamage()
 			local doPickSound = false
+
 			if jcms.util_IsStunstick(inflictor) then
-				self.OreDamageAccum = self.OreDamageAccum + damageAmount
 				damageTaken = damageAmount
 				doPickSound = true
 			elseif bit.band(dmg:GetDamageType(), DMG_BLAST) > 0 then
-				self.OreDamageAccum = self.OreDamageAccum + damageAmount^0.9 + 37
 				damageTaken = damageAmount + 5
 			end
-
+			
 			if self.VeinTakeDamage then 
-				self:VeinTakeDamage(dmg, damageTaken)
+				local dmgTakenOverride, dmgAmountOverride = self:VeinTakeDamage(dmg, damageTaken, damageAmount)
+				damageTaken = dmgTakenOverride or damageTaken
+				damageAmount = dmgAmountOverride or damageAmount
 			end
+
+			if jcms.util_IsStunstick(inflictor) then
+				self.OreDamageAccum = self.OreDamageAccum + damageAmount
+			elseif bit.band(dmg:GetDamageType(), DMG_BLAST) > 0 then 
+				self.OreDamageAccum = self.OreDamageAccum + damageAmount^0.9 + 37
+			end
+
 
 			local didBreakSound = false
 			self:SetHealth( math.min( self:Health() - damageTaken, self:Health() ) ) 

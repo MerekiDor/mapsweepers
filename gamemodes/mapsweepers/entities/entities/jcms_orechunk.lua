@@ -90,6 +90,7 @@ if SERVER then
 		end
 
 		self:SetWorth( jcms.ore_GetValue(self:GetOreName(), mass) )
+		self.jcms_reconBlastImmune = true
 	end
 
 	function ENT:OnRemove()

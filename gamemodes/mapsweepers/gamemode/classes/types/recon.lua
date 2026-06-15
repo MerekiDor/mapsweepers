@@ -120,12 +120,12 @@ function class.SetupMove(ply, mv, cmd)
 					dmg:SetDamage(30)
 
 					for i, target in ipairs( ents.FindInSphere(pos, 175) ) do
-						if not jcms.team_SameTeam(ply, target) and target.TakeDamageInfo then
+						if not jcms.team_SameTeam(ply, target) and target.TakeDamageInfo and not target.jcms_reconBlastImmune then
 							target:TakeDamageInfo(dmg)
 						end
 					end
 					if IsValid(tr.Entity) then
-						if not jcms.team_SameTeam(ply, tr.Entity) and tr.Entity.TakeDamageInfo then --An extra 25 dmg if we are on top of it.
+						if not jcms.team_SameTeam(ply, tr.Entity) and tr.Entity.TakeDamageInfo and not tr.Entity.jcms_reconBlastImmune then --An extra 25 dmg if we are on top of it.
 							dmg:SetDamage(25)
 							tr.Entity:TakeDamageInfo(dmg)
 							local metalMats = {
