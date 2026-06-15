@@ -1142,23 +1142,63 @@ local nmt = FindMetaTable("NPC")
 
 -- Util {{{
 
-	function jcms.util_ToMeters(len, format)
-		local n = math.Round(len * 0.019048295452779)
-		if format then
-			return n .. " m"
-		else
-			return n
+	-- // Math {{{
+		function jcms.util_ToMeters(len, format)
+			local n = math.Round(len * 0.019048295452779)
+			if format then
+				return n .. " m"
+			else
+				return n
+			end
 		end
-	end
 
-	function jcms.util_ToFeet(len, format)
-		local n = math.Round(len / 16)
-		if format then
-			return n .. " ft"
-		else
-			return n
+		function jcms.util_ToFeet(len, format)
+			local n = math.Round(len / 16)
+			if format then
+				return n .. " ft"
+			else
+				return n
+			end
 		end
-	end
+		
+		function jcms.util_AddAngles(ang1, ang2) --TODO: Not super efficient as it creates 2 matrix objects.
+			local mat = Matrix()
+			mat:SetAngles(ang1)
+			
+			local mat2 = Matrix()
+			mat2:SetAngles(ang2)
+
+			mat:Mul(mat2)
+			return mat:GetAngles()
+		end
+
+		function jcms.util_PlaneOffsFromPointNormal(point, normal) --'point' is a point on the plane, return 
+			local n1, n2, n3 = normal:Unpack()
+			local x, y, z = point:Unpack() 
+
+			--n1x + n2y + n3z = d
+			return n1*x + n2*y + n3*z
+		end
+
+		function jcms.util_ClosestPointOnPlane(normal, d, point) --d is the offset of the plane, i.e. the one in:   n1x + n2y + n3z = d
+			--closestPoint = point + normal * @
+			--c1*n1 + c2*n2 + c3*n3 = d
+			
+			--line through closest point:
+			--@n + p
+			--(@n1 + p1)n1 + (@n2 + p2)n2 + (@n3 + p3)n3 = d
+			--@n1^2 + p2n1 + ..etc
+			--@ = (d - (p1n1 + p2n2 + p3n3)/(n1^2 + n2^2 + n3^2) )
+
+			local px, py, pz = point:Unpack()
+			local n1, n2, n3 = normal:Unpack()
+
+			local dist = (d - (n1*px + n2*py + n3*pz) ) / (n1^2 + n2^2 + n3^2)
+			
+			return point + (normal * dist)
+		end
+	-- // }}}
+
 
 	function jcms.util_ReverseTable(t) -- Doesn't copy the table unlike table.Reverse
 		local len = #t
@@ -1541,17 +1581,6 @@ local nmt = FindMetaTable("NPC")
 
 	function jcms.util_IsPVPAllowed()
 		return (jcms.cvar_pvpallowed:GetInt() ~= 0) and (player.GetCount() >= jcms.cvar_pvpminplayers:GetInt())
-	end
-
-	function jcms.util_AddAngles(ang1, ang2) --TODO: Not super efficient as it creates 2 matrix objects.
-		local mat = Matrix()
-		mat:SetAngles(ang1)
-		
-		local mat2 = Matrix()
-		mat2:SetAngles(ang2)
-
-		mat:Mul(mat2)
-		return mat:GetAngles()
 	end
 
 	function jcms.util_GetLargestPvpTeamCount()

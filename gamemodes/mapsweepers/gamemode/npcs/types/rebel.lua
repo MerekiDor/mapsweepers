@@ -706,14 +706,13 @@ jcms.npc_types.rebel_fighter = {
 	preSpawn = function(npc)
 		npc:SetKeyValue("citizentype", "3")
 
-		npc.jcms_rebel_carrierVariant = math.random() < 0.15
+		npc.jcms_rebel_carrierVariant = math.random() < 0.125
 		if not npc.jcms_rebel_carrierVariant then --Medic model
 			npc:SetKeyValue("spawnflags", bit.bor(npc:GetKeyValues().spawnflags, 131072))
 		end
 	end,
 	
 	postSpawn = function(npc)
-		
 		if npc.jcms_rebel_carrierVariant then --Ammo carrier
 			local backpack = ents.Create("jcms_decorator")
 			backpack:SetModel("models/items/boxmrounds.mdl")
@@ -724,6 +723,18 @@ jcms.npc_types.rebel_fighter = {
 			npc.jcms_rebel_carrierBackpack = backpack
 		else --Healer
 			npc:Fire("SetMedicOn") 
+			
+			--This needs to run faster than once per second because the timing needs to feel consistent.
+			local timerName = "jcms_rebelFighter_fastThink" .. tostring(npc:EntIndex())
+			timer.Create(timerName, 0.05, 0, function()
+				if not IsValid(npc) then
+					timer.Remove(timerName)
+					return
+				end
+				
+				-- HEAL SCHED 166
+				npc:SetCondition(npc:ConditionID( "COND_CIT_PLAYERHEALREQUEST" )) --77
+			end)
 		end
 
 		local wep = npc:GetActiveWeapon()
@@ -793,9 +804,6 @@ jcms.npc_types.rebel_fighter = {
 			end
 		-- }}}
 		--]]
-
-		-- HEAL SCHED 166
-		npc:SetCondition(npc:ConditionID( "COND_CIT_PLAYERHEALREQUEST" )) --77
 	end,
 
 	takeDamage = function(npc, dmgInfo) --Ammo drop for the carrier variant
@@ -1040,6 +1048,8 @@ jcms.npc_types.rebel_vanguard = {
 		npc:CapabilitiesRemove( CAP_ANIMATEDFACE )
 
 		npc.jcms_nextIdleLine = CurTime() + math.random(10, 35)
+
+		npc:SetCurrentWeaponProficiency(WEAPON_PROFICIENCY_POOR)
 	end,
 
 	think = function(npc)
@@ -1349,7 +1359,7 @@ jcms.npc_types.rebel_alyx = {
 	
 	postSpawn = function(npc)
 		npc:SetModel("models/alyx.mdl")
-		npc:SetMaxHealth(80)
+		npc:SetMaxHealth(60)
 		npc:SetHealth(npc:GetMaxHealth())
 
 		npc.jcms_slowTurretReact = true
@@ -1439,8 +1449,11 @@ jcms.npc_types.rebel_alyx = {
 								hackTarget:SetTurretAlert(0)
 							end
 
-							if hackTarget:GetNWInt("jcms_sweeperShield_max", -1) > 0 then
-								hackTarget:SetNWInt("jcms_sweeperShield_colour", jcms.factions_GetColorInteger("rebel"))
+							local maxShield = hackTarget:GetNWInt("jcms_sweeperShield_max", -1)
+							if maxShield > 0 then
+								local colInt = jcms.factions_GetColorInteger("rebel")
+								hackTarget:SetNWInt("jcms_sweeperShield_colour", colInt)
+								jcms.net_SendSweeperShieldMark(hackTarget, maxShield, colInt) --Force an update clientside.
 							end
 							
 							if hackTarget:IsNPC() then

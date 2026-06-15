@@ -39,6 +39,7 @@ end
 function ENT:Initialize()
 	self:SetModel("models/weapons/w_eq_fraggrenade_thrown.mdl")
 	self:PhysicsInit(SOLID_VPHYSICS)
+	self:GetPhysicsObject():SetDragCoefficient( 0 )
 
 	if SERVER then
 		util.SpriteTrail(self, 0, Color(255, 180, 20), true, 4, 0, 2, 1, "trails/laser")
@@ -60,6 +61,7 @@ if SERVER then
 	function ENT:Use(activator)
 		if IsValid(activator) and activator:IsPlayer() and jcms.team_JCorp_player(activator) then
 			activator:PickupObject(self)
+			self:GetPhysicsObject():SetDragCoefficient( 0 )
 
 			self:SetExpiresAt( math.max( self:GetExpiresAt(), CurTime() + 1.5 ) )
 		end
@@ -122,6 +124,12 @@ if SERVER then
 
 		self:EmitSound("ambient/fire/ignite.wav", 100, 103, 1)
 
+	end
+
+	function ENT:PhysicsCollide(colData, collider)
+		if not self:IsPlayerHolding() then
+			self:GetPhysicsObject():SetDragCoefficient( 200 )
+		end
 	end
 end
 

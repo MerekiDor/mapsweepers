@@ -649,6 +649,14 @@ if SERVER then
 			if IsValid(inflictor) and jcms.util_IsStunstick(inflictor) and jcms.team_JCorp(attacker) then --Repairs
 				if self:GetHackedByRebels() then 
 					jcms.util_UnHack(self, attacker)
+					
+					local maxShield = self:GetNWInt("jcms_sweeperShield_max", -1)
+					if maxShield > 0 then
+						local colInt = jcms.util_ColorInteger(Color(255, 0, 0))
+
+						self:SetNWInt("jcms_sweeperShield_colour", colInt)
+						jcms.net_SendSweeperShieldMark(self, maxShield, colInt) --Force an update clientside
+					end
 				end
 
 				jcms.util_PerformRepairs(self, attacker)
