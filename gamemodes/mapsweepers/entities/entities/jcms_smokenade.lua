@@ -51,6 +51,7 @@ if SERVER then
 		ed:SetNormal(self:GetAngles():Up())
 		ed:SetRadius(350)
 		ed:SetFlags(3)
+		ed:SetColor(jcms.util_ColorInteger(Color(200, 200, 200, 255)))
 		util.Effect("jcms_blast", ed)
 		self:Remove()
 		

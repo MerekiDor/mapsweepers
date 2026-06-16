@@ -1249,6 +1249,7 @@ jcms.npc_types.zombie_charple = {
 					ed:SetNormal(ent:GetAngles():Up())
 					ed:SetRadius(65)
 					ed:SetFlags(3)
+					ed:SetColor(jcms.util_ColorInteger(Color(25,25,25)))
 					util.Effect("jcms_blast", ed)
 
 					if jcms.smokeScreens then

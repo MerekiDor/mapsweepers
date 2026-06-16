@@ -119,8 +119,6 @@ if SERVER then
 		end)
 
 		if self.jcms_upgradeLevel > 0 then 
-			--TODO: Black smoke, not grey
-			--TODO: SFX
 			--self:EmitSound("weapons/flaregun/fire.wav", 90, 60)
 
 			local nearest, dist = jcms.GetNearestSweeper(self:GetPos())
@@ -132,6 +130,7 @@ if SERVER then
 			ed:SetNormal(self:GetAngles():Up())
 			ed:SetRadius(150*self.jcms_upgradeLevel)
 			ed:SetFlags(3)
+			ed:SetColor(jcms.util_ColorInteger(Color(25,25,25)))
 			util.Effect("jcms_blast", ed)
 
 			if jcms.smokeScreens then

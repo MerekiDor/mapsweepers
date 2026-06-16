@@ -66,8 +66,10 @@ function EFFECT:Init( data )
 		self.color = jcms.util_ColorFromInteger(data:GetColor())
 		self.color_aux = Color( self.color.r, self.color.g, self.color.b )
 	elseif self.blasttype == 3 then
-		self.color = Color(200, 200, 200, 255)
-		self.color_aux = Color(200, 200, 200, 255)
+		self.color = jcms.util_ColorFromInteger(data:GetColor())
+		self.color_aux = Color(self.color.r, self.color.g, self.color.b)
+		--self.color = Color(200, 200, 200, 255)
+		--self.color_aux = Color(200, 200, 200, 255)
 	else
 		self.color = Color(255, 255, 255, 255)
 		self.color_ring = Color(255, 255, 255, 255)
@@ -236,7 +238,8 @@ function EFFECT:Render()
 		local distFrac = ep:DistToSqr(self.pos) / (self.size + 64)^2
 		if distFrac < 1 then
 			cam.Start2D()
-				surface.SetDrawColor(180, 180, 180, math.sqrt(Lerp(math.min(1, distFrac*2), 1, 0))*self.color.a)
+				local r, g, b = self.color:Unpack()
+				surface.SetDrawColor(r, g, b, math.sqrt(Lerp(math.min(1, distFrac*2), 1, 0))*self.color.a)
 				surface.DrawRect(-4, -4, ScrW()+8, ScrH()+8)
 			cam.End2D()
 		end

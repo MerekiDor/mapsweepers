@@ -567,6 +567,7 @@
 							ed:SetRadius(350)
 							ed:SetFlags(3)
 							util.Effect("jcms_blast", ed)
+							ed:SetColor(jcms.util_ColorInteger(Color(200, 200, 200, 255)))
 							
 							if jcms.smokeScreens then
 								table.insert(jcms.smokeScreens, { pos = bomb:WorldSpaceCenter(), rad = 340, expires = CurTime() + 19 }) 
