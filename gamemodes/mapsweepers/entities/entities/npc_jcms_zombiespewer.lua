@@ -29,21 +29,19 @@ ENT.Spawnable = false
 ENT.RenderGroup = RENDERGROUP_BOTH
 ENT.AutomaticFrameAdvance = true
 
---[[ TODO:
-	Swap fogdist to foglevel (or something like that) define ranges in ENT. table, use foglevel to also scale colormod intensity
---]]
-
-function ENT:SetupDataTables()
-	self:NetworkVar("Float", 0, "FogDist")
-end
+jcms.zombieSpewer_FogDistValues = {
+	[0] = 4000, --For smoothing, this one doesn't actually show up/effect rangecap
+	[1] = 3000,
+	[2] = 1750,
+	[3] = 1000
+}
 
 if SERVER then 
 	function ENT:Initialize()
 		self:SetModel("models/props_wasteland/antlionhill.mdl")
-		--self:SetMaterial("models/barnacle/roots")
-		self:SetModelScale(0.5)
+		--TODO: Material (or model if mereki does that)
 
-		--TODO: Slightly depress so we're not elevated above the ground
+		self:SetModelScale(0.5)
 		
 		self:PhysicsInitBox( Vector(-56,-56,0),Vector(56,56,512) )
 		self:SetMoveType(MOVETYPE_NONE)
@@ -52,8 +50,8 @@ if SERVER then
 			self:SetCollisionBounds(Vector(-56,-56,0),Vector(56,56,512))
 		end)
 
-		self:SetMaxHealth(1250)
-		self:SetHealth(1250)
+		self:SetMaxHealth(1150)
+		self:SetHealth(1150)
 
 		self.jcms_flinchProgress = 0
 		self.jcms_ignoreStraggling = true
@@ -102,16 +100,11 @@ if SERVER then
 
 	function ENT:UpdateRangeCap()
 		local spewCount = #ents.FindByClass("npc_jcms_zombiespewer")
-		local spewValues = {
-			[1] = 3000,
-			[2] = 1750,
-			[3] = 1000
-		}
 
-		local dist = spewValues[spewCount] or math.huge
+		local dist = jcms.zombieSpewer_FogDistValues[spewCount] or math.huge
 
+		--TODO: Delay?
 		jcms.rangeCap_SetSource(self, dist)
-		self:SetFogDist(dist) --TODO: LERP clientside.
 	end
 
 	function ENT:OnTakeDamage(dmgInfo)
@@ -122,7 +115,7 @@ if SERVER then
 		end
 
 		if dmg > 0 then
-			if bit.band( dmgInfo:GetDamageType(), DMG_BLAST ) > 0 then
+			if bit.band( dmgInfo:GetDamageType(), bit.bor(DMG_BLAST,DMG_BLAST_SURFACE) ) > 0 then
 				dmgInfo:ScaleDamage(2)
 			end
 
@@ -180,18 +173,52 @@ hook.Add("jcms_Spewer_UpdateRangeCap", "jcms_Spewer_UpdateRangeCap", function()
 end)
 
 if CLIENT then
-	function ENT:Initialize()
-		hook.Add("RenderScene", tostring(self), function()
+	--ENT.FogChangeRate = 10
+	local fogDistChangeRate = 500
+	local fogDensityChangeRate = 0.5
+	
+	jcms.zombieSpewer_currentFogDist = jcms.zombieSpewer_currentFogDist or jcms.zombieSpewer_FogDistValues[0]
+	jcms.zombieSpewer_currentFogDensity = jcms.zombieSpewer_currentFogDensity or 0
+
+	hook.Add("RenderScene", "jcms_ZombieSpewer_Fog", function()
+		local dt = FrameTime()
+
+		--NOTE: This ONLY (probably) works because we have transmit-always on.
+		local spewCount = #ents.FindByClass("npc_jcms_zombiespewer")
+
+		local desiredDensity = math.min(spewCount, 1) --0 if there aren't any.
+		local desiredDist = jcms.zombieSpewer_FogDistValues[spewCount] or jcms.zombieSpewer_FogDistValues[#jcms.zombieSpewer_FogDistValues]
+
+
+		do --Smooth movement towards desired dist
+			local diff = desiredDist - jcms.zombieSpewer_currentFogDist
+			local change = math.Clamp(diff, -fogDistChangeRate * dt, fogDistChangeRate * dt)
+			jcms.zombieSpewer_currentFogDist = jcms.zombieSpewer_currentFogDist + change
+		end 
+
+		do	--Smooth movement towards desired density
+			local diff = desiredDensity - jcms.zombieSpewer_currentFogDensity
+			local change = math.Clamp(diff, -fogDensityChangeRate * dt, fogDensityChangeRate * dt)
+			jcms.zombieSpewer_currentFogDensity = jcms.zombieSpewer_currentFogDensity + change
+
+		end
+
+		if jcms.zombieSpewer_currentFogDensity > 0 then
 			local data = {}
 			data.fogCol = Color(50, 0, 0)
-			data.fogMaxDensity = 1
+			data.fogMaxDensity = jcms.zombieSpewer_currentFogDensity
 			data.fogMode = MATERIAL_FOG_LINEAR
 			data.fogStart = -2500
-			data.fogEnd = self:GetFogDist()
+			data.fogEnd = jcms.zombieSpewer_currentFogDist
 			
 			jcms.fogStack_push(data)
-		end)
+		end
+	end)
 
+
+	function ENT:Initialize()
+		jcms.colormod_Add(Color(50,0,0), 0.6, 0, 0.1, 0, 1)
+		util.ScreenShake(EyePos(), 10, 40, 1.75, 100)
 		
 		hook.Add("PostDrawTranslucentRenderables", "jcms_ZombieSpewerEyes", jcms.zombieSpewer_DrawEyes)
 
@@ -252,10 +279,6 @@ if CLIENT then
 	end
 
 	function ENT:OnRemove()
-		-- // Fog Cleanup {{{
-			hook.Remove("RenderScene", tostring(self))
-		-- // }}}
-
 		if #ents.FindByClass("npc_jcms_zombiespewer") <= 1 then
 			hook.Remove("PostDrawTranslucentRenderables", "jcms_ZombieSpewerEyes")
 		end

@@ -93,7 +93,7 @@ if SERVER then
 		end
 
 		if dmg > 0 then
-			if bit.band( dmgInfo:GetDamageType(), DMG_BLAST ) > 0 then
+			if bit.band( dmgInfo:GetDamageType(), bit.bor(DMG_BLAST,DMG_BLAST_SURFACE) ) > 0 then
 				dmgInfo:ScaleDamage(1.75)
 			end
 
