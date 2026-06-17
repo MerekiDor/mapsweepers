@@ -67,7 +67,8 @@ if SERVER then
 	ENT.BurstForce = 1400
 
 	function ENT:Initialize()
-		self:SetModel("models/zombie/classic.mdl")
+		self:SetModel("models/jcms/boomer.mdl")
+		self:SetBodygroup(1, 1)
 
 		self:SetHullType(HULL_HUMAN)
 		self:SetHullSizeNormal()
@@ -272,52 +273,6 @@ if CLIENT then
 		self:ManipulateBoneAngles(10, Angle(0,12.5,0))
 	end
 
-	function ENT:OnRemove()
-		if IsValid(self.csmodel) then
-			self.csmodel:Remove()
-		end
-
-		if IsValid(self.csmodelhead) then 
-			self.csmodelhead:Remove()
-		end
-	end
-
-	function ENT:GetCSModel()
-		if not IsValid(self.csmodel) then
-			self.csmodel = ClientsideModel("models/player/zombie_soldier.mdl")
-			self.csmodel:SetParent(self)
-			self.csmodel:AddEffects(EF_BONEMERGE)
-			self.csmodel:SetNoDraw(true)
-		end
-
-		return self.csmodel
-	end
-
-	function ENT:GetCSHeadModel()
-		if not IsValid(self.csmodelhead) then
-			self.csmodelhead = ClientsideModel("models/Zombie/Fast.mdl")
-			self.csmodelhead:SetParent(self)
-			self.csmodelhead:AddEffects(EF_BONEMERGE)
-			self.csmodelhead:SetNoDraw(true)
-
-			self.csmodelhead:SetMaterial("models/jcms/explosiveheadcrab/body")
-
-			for i=1, self:GetBoneCount(), 1 do
-				self.csmodelhead:ManipulateBoneScale( i-1, vector_origin)
-			end
-			self.csmodelhead:SetBodygroup( 1,1 )
-
-			for i=40, 51, 1 do 
-				self.csmodelhead:ManipulateBoneScale( i, jcms.vectorOne)
-			end
-			
-			self.csmodelhead:ManipulateBoneAngles( 40, Angle(-24, 3.3, 21.8) )
-			self.csmodelhead:ManipulateBonePosition( 40, -Vector(-0.9, -4.3, 3) )
-		end
-
-		return self.csmodelhead
-	end
-
 	function ENT:Think()
 		if self:GetIsExploding() and FrameTime() > 0 then
 			if not self.didSound then
@@ -330,15 +285,9 @@ if CLIENT then
 			local vscale = Vector(sc, sc, sc)
 
 			local span = frac * 10
-			local mdl = self:GetCSModel()
 			for i=1, self:GetBoneCount() do
-				mdl:ManipulateBoneScale(i, vscale)
+				self:ManipulateBoneScale(i, vscale)
 				self:ManipulateBoneAngles(i, AngleRand(-5*sc, 5*sc))
-			end
-
-			headmdl = self:GetCSHeadModel()
-			for i=40, 51, 1 do 
-				headmdl:ManipulateBoneScale( i, vscale)
 			end
 
 			if math.random() < frac^2 then
@@ -367,12 +316,6 @@ if CLIENT then
 	function ENT:Draw()
 		local selfTbl = self:GetTable()
 
-		local mdl = selfTbl.GetCSModel(self)
-		mdl:SetParent(self) --todo: Still not quite a full solution but prevents invisible boomers. This may leave the ent behind / is inefficient (though the impact is minimal)
-
-		local headmdl = selfTbl.GetCSHeadModel(self)
-		headmdl:SetParent(self)
-
 		if selfTbl:GetIsExploding() then
 			local frac = math.Clamp((2.5 - selfTbl:GetExplodeTime() + CurTime())/2.5, 0, 1)
 			render.SetColorModulation(3 + frac*5, 2 + (frac^2)*4, 1)
@@ -384,8 +327,7 @@ if CLIENT then
 			render.SetColorModulation(3, 2, 1)
 		end
 
-		mdl:DrawModel()
-		headmdl:DrawModel()
+		self:DrawModel()
 
 		render.SetColorModulation(1, 1, 1)
 	end

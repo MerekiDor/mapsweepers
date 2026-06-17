@@ -164,7 +164,7 @@ jcms.bestiary = {}
 
 	jcms.bestiary.zombie_boomer = {
 		faction = "zombie", bounty = 25, health = 37,
-		mdl = "models/player/zombie_soldier.mdl", seq = 5, color = Color(200, 255, 200), camfov = 30
+		mdl = "models/jcms/boomer.mdl", bodygroups = { [1] = 1, [2] = 1 }, seq = 1, color = Color(200, 255, 200), camfov = 30
 	}
 
 	jcms.bestiary.zombie_charple = {
