@@ -109,6 +109,9 @@ ENT.RenderGroup = RENDERGROUP_OPAQUE
 jcms.zombieCreep_cellGroundPoints = jcms.zombieCreep_cellGroundPoints or {}
 jcms.zombieCreep_cellDepths = jcms.zombieCreep_cellDepths or {}
 hook.Add("MapSweepers_MapAnalysisDone", "jcms_ZombieCreep_CalcCellData", function()
+	local areaDepths = {}
+	local areaDepthCounts = {}
+
 	for i, area in ipairs(jcms.mapdata.validAreas) do 
 		-- // Get area AABB {{{
 			local minx, miny, minz = math.huge, math.huge, math.huge
@@ -152,8 +155,18 @@ hook.Add("MapSweepers_MapAnalysisDone", "jcms_ZombieCreep_CalcCellData", functio
 
 					jcms.zombieCreep_cellGroundPoints[cell] = jcms.zombieCreep_cellGroundPoints[cell] or {}
 					table.insert(jcms.zombieCreep_cellGroundPoints[cell], olCentre)
+
+					areaDepths[cell] = areaDepths[cell] or 0
+					areaDepthCounts[cell] = areaDepthCounts[cell] or 0
+
+					areaDepths[cell] = areaDepths[cell] + (jcms.mapdata.areaDepths[area] or 0)
+					areaDepthCounts[cell] = areaDepthCounts[cell] + 1
 				end
 			end
+		end
+
+		for cell, total in pairs(areaDepths) do 
+			jcms.zombieCreep_cellDepths[cell] = total / areaDepthCounts[cell]
 		end
 	end
 end)
@@ -252,7 +265,7 @@ if SERVER then
 			selfTbl.nextExpansion = cTime + expansionTime--]]
 
 			local depth = jcms.zombieCreep_cellDepths[self.jcms_zombieCreep_cell] or 0
-			local expansionTime = (10 / (self.scaleSpeed * (depth+1))) 
+			local expansionTime = (17.5 / (self.scaleSpeed * (depth+1))) 
 			selfTbl.nextExpansion = cTime + expansionTime
 
 
