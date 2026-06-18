@@ -40,18 +40,27 @@ ENT.RenderGroup = RENDERGROUP_OPAQUE
 		local layerLength = rowLength^2 --How many for a single z layer?
 		local totalLength = layerLength * math.ceil(32768 / cellHeight) --Max index of the table
 	-- // }}}
+	local vecCellSize = Vector(cellWidth, cellWidth, cellHeight)
 	
 	--Optimisation - tracking the start/end so we don't have to check a ton of empty spots each rebuild.
 	jcms.zombieCreepMinCell = jcms.zombieCreepMinCell or totalLength
 	jcms.zombieCreepMaxCell = jcms.zombieCreepMaxCell or 1
 
 	-- // Getters {{{
-		function jcms.zombieCreep_GetCell( pos )
-			local xIndex = math.floor((pos.x + 16384) / cellWidth, 0)
-			local yIndex = math.floor((pos.y + 16384) / cellWidth, 0)
-			local zIndex = math.floor((pos.z + 16384) / cellHeight, 0)
+		function jcms.zombieCreep_GetCellIndices(pos)
+			--Convert world space xyz to array space xyz
+			return math.floor((pos.x + 16384) / cellWidth, 0), math.floor((pos.y + 16384) / cellWidth, 0), math.floor((pos.z + 16384) / cellHeight, 0)
+		end
 
-			return xIndex + (rowLength * yIndex) + (layerLength * zIndex)
+		function jcms.zombieCreep_GetCellByIndices(x, y, z)
+			--Convert 3D xyz to 1D array index
+			return x + (rowLength * y) + (layerLength * z)
+		end
+
+		function jcms.zombieCreep_GetCell( pos )
+			--The contents of these two functions used to be in this one, I guess this is just shorthand for them now.
+			local xIndex, yIndex, zIndex = jcms.zombieCreep_GetCellIndices(pos)
+			return jcms.zombieCreep_GetCellByIndices(xIndex, yIndex, zIndex)  --xIndex + (rowLength * yIndex) + (layerLength * zIndex)
 		end
 
 		function jcms.zombieCreep_GetCellPos( cell )
@@ -94,6 +103,60 @@ ENT.RenderGroup = RENDERGROUP_OPAQUE
 		mv:SetMaxClientSpeed(100)
 	end)
 -- // }}}
+
+--Calculate Cell expansion
+--jcms.zombieCreep_cellAreas = jcms.zombieCreep_cellAreas or {}
+jcms.zombieCreep_cellGroundPoints = jcms.zombieCreep_cellGroundPoints or {}
+jcms.zombieCreep_cellDepths = jcms.zombieCreep_cellDepths or {}
+hook.Add("MapSweepers_MapAnalysisDone", "jcms_ZombieCreep_CalcCellData", function()
+	for i, area in ipairs(jcms.mapdata.validAreas) do 
+		-- // Get area AABB {{{
+			local minx, miny, minz = math.huge, math.huge, math.huge
+			local maxx, maxy, maxz = -math.huge, -math.huge, -math.huge
+			for i=1, 4, 1 do 
+				local corner = area:GetCorner(i-1) 
+
+				--mins
+				minx = math.min(minx, corner.x)
+				miny = math.min(miny, corner.y)
+				minz = math.min(minz, corner.z)
+
+				--maxs
+				maxx = math.max(maxx, corner.x)
+				maxy = math.max(maxy, corner.y)
+				maxz = math.max(maxz, corner.z)
+			end
+		-- // }}}
+
+		local cellMinX, cellMinY, cellMinZ = jcms.zombieCreep_GetCellIndices(Vector(minx, miny, minz)) --TODO: Optimise
+		local cellMaxX, cellMaxY, cellMaxZ = jcms.zombieCreep_GetCellIndices(Vector(maxx, maxy, maxz))
+
+		--Iterate every cell within our bounds and add ground-points at the centre of each overlap.
+		for x=cellMinX, cellMaxX do
+			for y=cellMinY, cellMaxY do
+				for z=cellMinZ, cellMaxZ do 
+					local cell = jcms.zombieCreep_GetCellByIndices(x,y,z)
+					local cellStart = jcms.zombieCreep_GetCellPos(cell)
+					local cellEnd = cellStart + vecCellSize
+
+					--Overlap Mins/Maxs
+					local olMinx, olMiny, olMinz = math.max(minx, cellStart.x), math.max(miny, cellStart.y), math.max(minz, cellStart.z)
+					local olMaxx, olMaxy, olMaxz = math.min(maxx, cellEnd.x), math.min(maxy, cellEnd.y), math.min(maxz, cellEnd.z)
+
+					--Middle of our overlap & snap to ground
+					local olCentre = Vector((olMinx+olMaxx)/2, (olMiny+olMaxy)/2, (olMinz+olMaxz)/2)
+					olCentre.z = area:GetZ(olCentre)
+
+					--TODO: This shouldn't happen.
+					if not( jcms.zombieCreep_GetCell(olCentre) == cell ) then continue end
+
+					jcms.zombieCreep_cellGroundPoints[cell] = jcms.zombieCreep_cellGroundPoints[cell] or {}
+					table.insert(jcms.zombieCreep_cellGroundPoints[cell], olCentre)
+				end
+			end
+		end
+	end
+end)
 
 
 --Footsteps
@@ -139,37 +202,34 @@ if SERVER then
 				self:Remove()
 				return
 			end
+
+			if not jcms.zombieCreep_cellGroundPoints[cell] then
+				self:Remove()
+				return
+			end
+			
 			--Set our cell and occupy it.
 			self.jcms_zombieCreep_cell = cell
 			jcms.zombieCreep_OccupyCell(self.jcms_zombieCreep_cell)
 
-			-- // Expansion Cell detection {{{
-				local ourArea = navmesh.GetNearestNavArea(self:GetPos())
-				if not IsValid(ourArea) then self:Remove() return end --We're somewhere invalid, panic. 
-				local selfZone = jcms.mapgen_ZoneDict()[ourArea]
-				if not selfZone then self:Remove() return end --We're somewhere invalid, panic. 
-
-				local selfZoneTbl = jcms.mapgen_ZoneList()[selfZone]
-				if not selfZoneTbl then self:Remove() return end
-
-				local nearbyAreas = jcms.director_GetAreasAwayFrom(selfZoneTbl, {self:GetPos()}, 0, cellWidth * 1.5)
-				local adjacentCellDict = {}
-
-				table.Shuffle(nearbyAreas)
-				for i, area in ipairs(nearbyAreas) do
-					if area:IsPotentiallyVisible( ourArea ) then --Stops us going through walls/rooves
-						local areaCentre = area:GetCenter()
-						local cell = jcms.zombieCreep_GetCell(areaCentre)
-						adjacentCellDict[cell] = areaCentre
-					end
-				end
-
-				--TODO: More than one point per navarea (big ones cause problems)
-				self.expansionPoints = adjacentCellDict
-				self.expansionPoints[self.jcms_zombieCreep_cell] = nil --Ignore our own cell (optimisation)
+			-- // Expansion Cells {{{
+				self.adjacentCells = {}
+				local x,y,z = jcms.zombieCreep_GetCellIndices( self:GetPos() )
+				
+				--x
+				table.insert(self.adjacentCells, jcms.zombieCreep_GetCellByIndices(x-1,y,z))
+				table.insert(self.adjacentCells, jcms.zombieCreep_GetCellByIndices(x+1,y,z))
+				
+				--y
+				table.insert(self.adjacentCells, jcms.zombieCreep_GetCellByIndices(x,y-1,z))
+				table.insert(self.adjacentCells, jcms.zombieCreep_GetCellByIndices(x,y+1,z))
+				
+				--z
+				table.insert(self.adjacentCells, jcms.zombieCreep_GetCellByIndices(x,y,z-1))
+				table.insert(self.adjacentCells, jcms.zombieCreep_GetCellByIndices(x,y,z+1))
 			-- // }}}
 
-			self.nextExpansion = CurTime() + 10 + #ents.FindByClass("npc_jcms_zombiecreep") + math.Rand(0, 10) --30
+			self.nextExpansion = CurTime() + 10 + math.Rand(0, 10) /// ((jcms.zombieCreep_cellDepths[cell] or 0) + 1 )
 			self:SetPos(self:GetPos() + Vector(0,0,1)) --Explosives don't work right without this
 		-- // }}}
 
@@ -187,17 +247,28 @@ if SERVER then
 		local cTime = CurTime()
 
 		if selfTbl.nextExpansion < cTime then
+			--[[
 			local expansionTime = (5 / selfTbl.scaleSpeed) + (#ents.FindByClass("npc_jcms_zombiecreep") / selfTbl.scaleSpeed) ^ (1/4)
+			selfTbl.nextExpansion = cTime + expansionTime--]]
+
+			local depth = jcms.zombieCreep_cellDepths[self.jcms_zombieCreep_cell] or 0
+			local expansionTime = (10 / (self.scaleSpeed * (depth+1))) 
 			selfTbl.nextExpansion = cTime + expansionTime
 
-			--Spawn another creeper at the first available cell.
-			for cell, pos in pairs(selfTbl.expansionPoints) do 
-				--Not occupied, >20s since it was last cleared.
-				if not jcms.zombieCreepCells[cell] and (jcms.zombieCreepCell_LastDestroyed[cell] or 0) + 40 < cTime then 
+
+			table.Shuffle(self.adjacentCells)
+			for i, cell in ipairs(self.adjacentCells) do 
+				local cellPoints = jcms.zombieCreep_cellGroundPoints[cell]
+				if not cellPoints or #cellPoints == 0 then continue end --Nowhere to put us
+
+				--Not occupied, >30s since it was last cleared.
+				if not jcms.zombieCreepCells[cell] and (jcms.zombieCreepCell_LastDestroyed[cell] or 0) + 30 < cTime then 
+
 					--Stop expanding if we're too close to the player. Having creep intrude *into* your nest is annoying, and serves no gameplay purpose.
-					local nearest, dist = jcms.GetNearestSweeper(pos)
+					local cellPos = jcms.zombieCreep_GetCellPos( cell )
+					local nearest, dist = jcms.GetNearestSweeper(cellPos)
 					if dist > 1000 then
-						jcms.npc_Spawn("zombie_creep", pos)
+						jcms.npc_Spawn("zombie_creep", cellPoints[math.random(#cellPoints)])
 						break
 					end
 				end
@@ -238,7 +309,6 @@ if CLIENT then
 	jcms.zombieCreepBoxes = jcms.zombieCreepBoxes or {}
 	--We need 2 extra offset versions to deal with issues caused by the nearZ clip plane
 
-	local vecCellSize = Vector(cellWidth, cellWidth, cellHeight)
 	function ENT:Initialize()
 		local cell = jcms.zombieCreep_GetCell( self:GetPos() )
 		if jcms.zombieCreepCells[cell] then	return end --Occupied, we're about to be deleted
