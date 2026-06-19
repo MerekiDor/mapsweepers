@@ -264,7 +264,7 @@ jcms.missions.datadownload = {
 				for i, pillar in ipairs(pillars) do
 					pillar:SetLabelSymbol( getSymbol(i, #pillars) )
 					
-					local health = 500 --TODO: We *could* make this reduce based on difficulty.
+					local health = 500
 					pillar:SetMaxHealth(health)
 					pillar:SetHealth(health)
 				end

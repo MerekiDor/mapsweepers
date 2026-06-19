@@ -86,7 +86,6 @@ if SERVER then
 
 			local ed = EffectData()
 			ed:SetEntity(charple)
-			--TODO: Fire's used to distinguish upgraded ones rn but it'd be better if it was just black smoke eminating from them.
 			ed:SetScale( (charple.jcms_upgradeLevel >=2 and 0) or math.random() * 0.5 + 0.5 )
 			ed:SetStart( jcms.vectorOrigin )
 			util.Effect("jcms_burningcharacter", ed)

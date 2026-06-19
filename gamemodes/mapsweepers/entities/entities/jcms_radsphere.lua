@@ -191,7 +191,7 @@ if CLIENT then
 				if ember.t > ember.tout then	--Die
 					ember.inited = false
 				else
-					ember.oldpos:Set( ember.pos )	--TODO: Just use Vector:Set if you're  copying (it takes a Vector, no need to unpack)
+					ember.oldpos:Set( ember.pos )
 
 					--Advance us by velocity
 					local vx, vy, vz = ember.vel:Unpack()

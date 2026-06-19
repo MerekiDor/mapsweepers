@@ -189,8 +189,6 @@ bspReader = bspReader or {} --Likely to use this in other addons, don't want to 
 		bspReader.pvsDataRead = true
 	end
 
-	--TODO: Verify that I've read everything correctly. Entity:GetBrushPlane( number id ) might be useful for this?
-	--Otherwise would be kinda difficult to check since this is just a bunch of planes.
 	function bspReader.readBrushData(brush_contents) --Probably more memory intensive due to subtables, so only read what we need.
 		if bspReader.brushDataRead and bspReader.brushDataRead[brush_contents] then return end
 

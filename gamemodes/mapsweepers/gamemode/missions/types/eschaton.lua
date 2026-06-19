@@ -70,7 +70,6 @@ jcms.missions.eschaton = {
 		-- // }}}
 
 		-- // Defences {{{
-			--TODO: Some ammo crates and emplacements would also be cool to have (MORE BASED ON HOW EXPOSED WE ARE)
 			local exposureFac = math.sqrt( (#chosenArea:GetVisibleAreas() * (jcms.mapdata.areaDepths[chosenArea]+1)^2) / 500)
 			local defCount = math.min(math.floor(exposureFac * 3), 6)
 

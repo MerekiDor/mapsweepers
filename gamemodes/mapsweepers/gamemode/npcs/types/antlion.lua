@@ -1046,7 +1046,7 @@ jcms.npc_types.antlion_grubbomb = {
 	swarmWeight = 0.0000001,
 
 	class = "npc_antlion_grub",
-	bounty = 15, --TODO: This is getting the inair bonus and it's fucking up its actual cost.
+	bounty = 15,
 
 	anonymous = true,
 	isStatic = true,

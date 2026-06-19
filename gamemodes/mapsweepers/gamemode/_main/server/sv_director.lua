@@ -1462,7 +1462,7 @@
 
 					jcms.util_skyNuke(targetPos)
 
-					d.nextNuke = cTime + Lerp(timeNuking/(10*60), 55, 25) --TODO: Faster nukes as the game progresses (LERP to 30s or so over like 10 mins)
+					d.nextNuke = cTime + Lerp(timeNuking/(10*60), 55, 25)
 				end
 			end
 		end

@@ -1237,7 +1237,6 @@ jcms.npc_types.zombie_charple = {
 				end
 
 				if (ent.jcms_upgradeLevel or 0) >= 2 then
-					--TODO: Black smoke, not grey
 					--TODO: SFX
 
 					local nearest, dist = jcms.GetNearestSweeper(npc:GetPos())

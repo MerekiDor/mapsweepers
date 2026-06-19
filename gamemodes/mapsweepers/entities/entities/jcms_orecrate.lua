@@ -90,8 +90,6 @@ function ENT:SetupDataTables()
 end
 
 if SERVER then
-	--TODO: Magnetism?
-
 	function ENT:Initialize()
 		local crateType = self.CrateTypes[self.CrateType]
 		self:SetModel(crateType.model)
