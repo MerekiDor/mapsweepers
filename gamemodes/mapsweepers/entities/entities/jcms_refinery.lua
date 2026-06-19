@@ -151,9 +151,24 @@ if SERVER then
 	end
 
 	function ENT:Think()
+		local magnetPos = self:GetPos() + Vector(0,0,60)
+		local radius = 50
+		local foundEnts = ents.FindInSphere(magnetPos, radius)
+		--debugoverlay.Sphere(magnetPos, radius, 0.2, Color(255,0,0), false)
+
+		for i, ent in ipairs(foundEnts) do 
+			if ent:GetClass() == "jcms_orechunk" then 
+				local entPos = ent:WorldSpaceCenter()
+				local force = (magnetPos - entPos)
+				force:Normalize()
+				force:Mul(1000)
+				ent:GetPhysicsObject():ApplyForceCenter( force )
+			end
+		end
+
 		self:SetSaveValue("m_vecAbsVelocity", Vector(0,0,0))
 
-		self:NextThink(CurTime() + 1)
+		self:NextThink(CurTime() + 0.1)
 		return true
 	end
 
