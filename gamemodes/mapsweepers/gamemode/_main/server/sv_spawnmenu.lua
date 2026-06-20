@@ -444,6 +444,8 @@
 						util.BlastDamageInfo(dmg, tr.HitPos, blast_radius)
 						util.ScreenShake(tr.HitPos, 10, 30, math.Rand(0.4, 0.7), blast_radius*2, false)
 					end)
+
+					sound.EmitHint(SOUND_DANGER, tr.HitPos, blast_radius*2, 1.5)
 				end
 
 				jcms.spawnmenu_Airstrike {

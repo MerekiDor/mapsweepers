@@ -32,18 +32,18 @@ ENT.SentinelAnchor = true
 if CLIENT then
 	sound.Add( {
 		name = "jcms_emplacement_fire",
-		channel = CHAN_STATIC,
+		channel = CHAN_WEAPON,
 		volume = 1.0,
-		level = 162,
+		level = 140,
 		pitch = 100,
 		sound = "^jcms/jcorp_emplacement_fire.wav"
 	} )
 
 	sound.Add( {
 		name = "jcms_emplacement_fire_end",
-		channel = CHAN_STATIC,
+		channel = CHAN_WEAPON,
 		volume = 1.0,
-		level = 162,
+		level = 140,
 		pitch = 100,
 		sound = "^jcms/jcorp_emplacement_fire_end.wav"
 	} )
@@ -219,6 +219,8 @@ if SERVER then
 				tr.Entity:DispatchTraceAttack(dmg, tr)
 			end
 		end
+
+		sound.EmitHint(bit.bor(SOUND_COMBAT, SOUND_CONTEXT_GUNFIRE), v, 1536, 0.05, self)
 	end
 
 	function ENT:Think()

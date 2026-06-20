@@ -101,6 +101,8 @@ if SERVER then
 			else
 				dmg:SetAttacker(self)
 			end
+
+			sound.EmitHint(SOUND_DANGER, tr.HitPos, 300, 0.25)
 			
 			dmg:SetInflictor(self)
 			dmg:SetReportedPosition(self:GetPos())

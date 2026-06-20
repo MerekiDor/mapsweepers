@@ -235,6 +235,11 @@ if SERVER then
 				if math.abs(roll) > 160 then
 					jcms.director_TryShowTip(driver, jcms.HINT_FLIPOVER)
 				end
+
+				local range = 230 + math.min(500, speed/3)
+				if speed > 230 then
+					sound.EmitHint(SOUND_DANGER, self:GetPos(), range, 0.1, self)
+				end
 			end
 
 			for i=#self.PassengersAPC, 1, -1 do

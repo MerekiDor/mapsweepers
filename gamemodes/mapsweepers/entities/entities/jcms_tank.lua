@@ -240,6 +240,11 @@ if SERVER then
 						wep:SetNextPrimaryFire( CurTime() + 1 )
 						wep:SetNextSecondaryFire( CurTime() + 1 )
 					end
+
+					local range = 300 + math.min(500, speed/2)
+					if speed > 50 then
+						sound.EmitHint(SOUND_DANGER, self:GetPos(), range, 0.1, self)
+					end
 				end
 			end
 			
@@ -602,6 +607,8 @@ if SERVER then
 				ed:SetStart(shootPos)
 				ed:SetNormal(angles:Forward())
 				util.Effect("jcms_muzzleflash", ed)
+
+				sound.EmitHint(bit.bor(SOUND_COMBAT, SOUND_CONTEXT_GUNFIRE), shootPos, 2048, 0.3, tower)
 			end
 		end
 	end
@@ -667,6 +674,8 @@ if SERVER then
 				physTower:ApplyForceOffset(angles:Forward() * physTower:GetMass() * -20, shootPos)
 				tower:EmitSound("weapons/stinger_fire1.wav", 90, 120 + math.random() * 20)
 				self.altBarrelAlt = not self.altBarrelAlt
+
+				sound.EmitHint(bit.bor(SOUND_COMBAT, SOUND_CONTEXT_GUNFIRE), shootPos, 1536, 0.12, tower)
 			end
 		end
 	end

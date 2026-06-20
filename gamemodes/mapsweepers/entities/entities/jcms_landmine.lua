@@ -170,6 +170,12 @@ if SERVER then
 			
 			if (goodTargets >= selfTbl.RequiredTargets) and (selfTbl.blasts < selfTbl.BlastCount) and (CurTime() >= selfTbl.blastTime+selfTbl.BlastCooldown) then
 				self:Detonate()
+			elseif selfTbl.expiration then
+				local expiresIn = selfTbl.expiration - CurTime()
+
+				if expiresIn < 10 then
+					sound.EmitHint(bit.bor(SOUND_DANGER), self:GetPos(), self.Radius * 1.25, expiresIn, self)
+				end
 			end
 		end
 	end

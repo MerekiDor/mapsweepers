@@ -592,6 +592,8 @@ if SERVER then
 			
 			self:SetTurretClip( self:GetTurretClip() - 1 )
 			self:EmitSound(data.sound)
+
+			sound.EmitHint(bit.bor(SOUND_COMBAT, SOUND_CONTEXT_GUNFIRE), mypos, 1536, 0.1, self)
 		else
 			self:EmitSound(data.soundEmpty)
 		end
