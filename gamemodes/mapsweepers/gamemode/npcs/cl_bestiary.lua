@@ -129,7 +129,12 @@ jcms.bestiary = {}
 	}
 
 	jcms.bestiary.rebel_fighter = {
-		faction = "rebel", bounty = 30, health = 45,
+		faction = "rebel", bounty = 30, health = 40,
+		mdl = "models/humans/group03m/male_02.mdl", seq = 1, camfov = 30
+	}
+
+	jcms.bestiary.rebel_breacher = {
+		faction = "rebel", bounty = 45, health = 30,
 		mdl = "models/humans/group03/male_07.mdl", seq = 1, camfov = 30
 	}
 
@@ -150,7 +155,7 @@ jcms.bestiary = {}
 
 	jcms.bestiary.rebel_vanguard = {
 		faction = "rebel", bounty = 45, health = 65,
-		mdl = "models/humans/group03/male_05.mdl", seq = 1, camfov = 30, color = Color(90, 69, 110)
+		mdl = "models/barney.mdl", seq = 232, camfov = 30, color = Color(90, 69, 110)
 	}
 
 	jcms.bestiary.rebel_vortigaunt = {
