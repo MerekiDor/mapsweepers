@@ -28,7 +28,6 @@ ENT.Category = "Map Sweepers"
 ENT.Spawnable = false
 ENT.RenderGroup = RENDERGROUP_OPAQUE
 
-
 -- // Cell stuff {{{
 	jcms.zombieCreepCells = jcms.zombieCreepCells or {}
 
@@ -171,7 +170,6 @@ hook.Add("MapSweepers_MapAnalysisDone", "jcms_ZombieCreep_CalcCellData", functio
 	end
 end)
 
-
 --Footsteps
 hook.Add( "jcms_PlayerFootsteps", "0jcms_ZombieCreep_Footstep", function( ply, pos, foot, sound, volume, rf )
 	local cell = jcms.zombieCreep_GetCell( pos )
@@ -184,6 +182,10 @@ hook.Add( "jcms_PlayerFootsteps", "0jcms_ZombieCreep_Footstep", function( ply, p
 	end
 end )
 
+ENT.BodyTarget = nil
+function ENT:jcms_BodyTarget(origin, noisy)
+	return self:WorldSpaceCenter()
+end
 
 if SERVER then
 	jcms.zombieCreepCell_LastDestroyed = jcms.zombieCreepCell_LastDestroyed or {} --Tracking last removal, used to stop instant refilling.

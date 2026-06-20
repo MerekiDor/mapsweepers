@@ -40,7 +40,12 @@ if SERVER then
 				return matrix:GetTranslation()
 			end
 		end
-		return target:BodyTarget(origin)
+
+		if target.jcms_BodyTarget then
+			return target:jcms_BodyTarget(origin)
+		else
+			return target:BodyTarget(origin)
+		end
 	end
 	
 	function jcms.turret_IsDifferentTeam(self, ent)
