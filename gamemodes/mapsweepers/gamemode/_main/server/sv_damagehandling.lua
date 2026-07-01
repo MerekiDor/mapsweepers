@@ -27,22 +27,28 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 	local inflictor = dmg:GetInflictor()
 	local dmgType = dmg:GetDamageType()
 
+	local entTbl = ent:GetTable()
+	local isPlayer = ent:IsPlayer()
+
 	--Damage immunity (completely suppress dmg). Used by poison headcrabs for their 0.1s grace
-	ent.jcms_damageImmunityEnd = ent.jcms_damageImmunityEnd or 0
-	if ent.jcms_damageImmunityEnd > CurTime() then 
+	entTbl.jcms_damageImmunityEnd = entTbl.jcms_damageImmunityEnd or 0
+	if entTbl.jcms_damageImmunityEnd > CurTime() then 
 		dmg:ScaleDamage(0)
 		return true
 	end
 
+	--Damage Tracking
 	if ent:IsNPC() then
-		ent.jcms_lastDamageType = dmgType
+		entTbl.jcms_lastDamageType = dmgType
 	end
 
-	if ent:IsPlayer() and bit.band(dmgType, DMG_RADIATION) > 0 and ent:GetNWInt("jcms_antirad", 0) > 0 then --Radiation invulnerability
+	--Radiation invulnerability
+	if isPlayer and bit.band(dmgType, DMG_RADIATION) > 0 and ent:GetNWInt("jcms_antirad", 0) > 0 then
 		dmg:ScaleDamage(0)
 		return true
 	end
 
+	--Weapon inflictor hack-fix
 	if (inflictor == attacker) and attacker:IsPlayer() and bit.band(dmgType, bit.bor(DMG_BUCKSHOT, DMG_BULLET)) > 0 then
 		-- This is really shitty, but neither M9K nor ArcCW properly set up their inflictors, which is why this is necessary.
 		local wep = attacker:GetActiveWeapon()
@@ -52,8 +58,8 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 		end
 	end
 
+	--Friendly-fire
 	local isEntAndAttackerSameTeam = IsValid(attacker) and jcms.team_SameTeam(attacker, ent)
-
 	if isEntAndAttackerSameTeam then
 		if attacker:IsPlayer() and jcms.team_NPC(attacker) and not (IsValid(inflictor) and inflictor.jcms_canHurtSelfAsNPC) then
 			dmg:ScaleDamage(0) -- NPC-players can't do friendly fire damage to NPCs
@@ -63,16 +69,18 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 		end
 	end
 
+	--Bubble shields (and damage tracking?)
 	local shield = ent:GetNWInt("jcms_shield", 0)
 	if shield > 0 and bit.band(dmgType, bit.bor(DMG_CRUSH, DMG_FALL)) == 0 and dmg:GetDamage() > 0 then 
 		ent:SetNWInt("jcms_shield", math.max(shield - 1, 0))
 		dmg:SetDamage(0)
 		return 0
-	elseif ent:IsPlayer() then
-		ent.jcms_lastDamaged = CurTime()
+	elseif isPlayer then
+		entTbl.jcms_lastDamaged = CurTime()
 		jcms.net_SendDamage(ent, dmg)
 	end
 
+	--Sweeper shields
 	local swpShield = ent:GetNWInt("jcms_sweeperShield", 0)
 	if swpShield > 0 and bit.band(dmgType, DMG_CRUSH) == 0 then
 		local dmgAmnt = dmg:GetDamage()
@@ -94,7 +102,8 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 		end
 	end
 
-	if ent:IsPlayer() and bit.band(dmg:GetDamageType(), DMG_CRUSH) > 0 then --Prevent us from being instakilled by physics objects.
+	--Prevent us from being instakilled by physics objects.
+	if isPlayer and bit.band(dmg:GetDamageType(), DMG_CRUSH) > 0 then
 		local dmgAmnt = dmg:GetDamage()
 		dmgAmnt = math.min(dmgAmnt, 35)
 		dmg:SetDamage(dmgAmnt)
@@ -114,7 +123,7 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 		if attacker:IsPlayer() then
 			local data = jcms.class_GetData(attacker)
 
-			if ent:IsPlayer() then
+			if isPlayer then
 				if isEntAndAttackerSameTeam then 
 					local dmgAmnt = dmg:GetDamage()
 					local dmgCap = (ent:GetMaxHealth() + ent:GetMaxArmor()) * 0.75
@@ -160,7 +169,7 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 			dmg:ScaleDamage(scale)
 		end
 
-		if ent:IsPlayer() and ent:GetNWEntity("jcms_vehicle") then
+		if isPlayer and ent:GetNWEntity("jcms_vehicle") then
 			local veh = ent:GetNWEntity("jcms_vehicle")
 			if veh.RedirectDamage then
 				veh:RedirectDamage(ent, dmg)
@@ -171,7 +180,7 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 			attacker:jcms_damageEffect(ent, dmg)
 		end
 		
-		if ent.jcms_TakeDamage then
+		if entTbl.jcms_TakeDamage then
 			ent:jcms_TakeDamage(dmg, attacker)
 		end
 
@@ -179,7 +188,7 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 			local armorDamage = 0
 			local healthDamage = dmg:GetDamage()
 
-			if ent:IsPlayer() then
+			if isPlayer then
 				armorDamage = math.min( ent:Armor(), healthDamage )
 				healthDamage = healthDamage - armorDamage
 			end
@@ -194,6 +203,8 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 		end
 	end
 
+
+	--Poisonous stuff
 	if IsValid(attacker) then
 		--Their default behaviour seems to be hardcoded in hl2, and messing with the damageinfo breaks it (causes them to instakill).
 		--This is a bandaid solution to that. 
@@ -205,12 +216,12 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 
 		if isCrab then
 			local hp = ent:Health()
-			if ent:IsPlayer() then
+			if isPlayer then
 				dmg:SetDamage( math.min(hp-5, dmg:GetDamage()) )
 
 				--Sudden death prevention
 				if ent:Health() > 20 then
-					ent.jcms_damageImmunityEnd = math.max(ent.jcms_damageImmunityEnd, CurTime() + 0.1)
+					entTbl.jcms_damageImmunityEnd = math.max(entTbl.jcms_damageImmunityEnd, CurTime() + 0.1)
 					--Human reaction times range from 100-200ms (ish). One perceptual cycle is something like 70ms (on the high end, it can be lower). 
 					--100ms of delay gives you at least a bit of time to respond if you notice just before it hits, and ensures you at least *perceive* what happened before you die. 
 				end
@@ -218,7 +229,7 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 				dmg:SetDamage(math.min(math.max(0, hp-1), 15))
 			end
 		elseif isCavernGuard or isWorker then 
-			if ent:IsPlayer() then 
+			if isPlayer then 
 				dmg:SetDamage( math.min( dmg:GetDamage(), ent:GetMaxHealth() * 0.7 ) )
 			end
 		end

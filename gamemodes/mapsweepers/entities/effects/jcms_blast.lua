@@ -210,94 +210,97 @@ function EFFECT:Think()
 end
 
 function EFFECT:Render()
-	local f = self.t / self.tout
+	local selfTbl = self:GetTable()
+
+	local f = selfTbl.t / selfTbl.tout
 	
-	if self.blasttype == 3 then
-		local intime = 0.2 / self.tout
+	if selfTbl.blasttype == 3 then
+		local intime = 0.2 / selfTbl.tout
 		local f_insize = math.min(1, f/intime)
 		local f_fadeout = f < intime and 1-f_insize or ( (f - intime) / (1 - intime) )^4
-		self.color.a = 255 * (1-f_fadeout)
+		selfTbl.color.a = 255 * (1-f_fadeout)
 		
-		local ep = EyePos()
-		for i, pt in ipairs(self.smokepoints) do
+		local ep = jcms.EyePos_lowAccuracy
+		for i, pt in ipairs(selfTbl.smokepoints) do
 			pt[4] = pt[1]:DistToSqr(ep)
 		end
 		
-		render.SetMaterial(self.mat_fire3)
-		table.sort(self.smokepoints, self.SmokeSorter)
+		render.SetMaterial(selfTbl.mat_fire3)
+		table.sort(selfTbl.smokepoints, selfTbl.SmokeSorter)
 		
-		for i, pt in ipairs(self.smokepoints) do
-			self.color_aux.r = self.color.r * math.min(1, (pt[5].x + 0.5)/2)
-			self.color_aux.g = self.color.g * math.min(1, (pt[5].y + 0.5)/2)
-			self.color_aux.b = self.color.b * math.min(1, (pt[5].z + 0.5)/2)
-			self.color_aux.a = self.color.a
-			pt[1]:Add(pt[2] * FrameTime())
-			render.DrawSprite(pt[1], pt[3]*f_insize, pt[3]*f_insize, self.color_aux)
+		local dt = FrameTime()
+		for i, pt in ipairs(selfTbl.smokepoints) do
+			local x, y, z = pt[5]:Unpack()
+			local r, g, b, a = selfTbl.color_aux:Unpack()
+			selfTbl.color_aux:SetUnpacked(r * math.min(1, (x + 0.5)/2), g * math.min(1, (y + 0.5)/2), b * math.min(1, (z + 0.5)/2), a)
+
+			pt[1]:Add(pt[2] * dt)
+			render.DrawSprite(pt[1], pt[3]*f_insize, pt[3]*f_insize, selfTbl.color_aux)
 		end
 		
-		local distFrac = ep:DistToSqr(self.pos) / (self.size + 64)^2
+		local distFrac = ep:DistToSqr(selfTbl.pos) / (selfTbl.size + 64)^2
 		if distFrac < 1 then
 			cam.Start2D()
-				local r, g, b = self.color:Unpack()
-				surface.SetDrawColor(r, g, b, math.sqrt(Lerp(math.min(1, distFrac*2), 1, 0))*self.color.a)
+				local r, g, b = selfTbl.color:Unpack()
+				surface.SetDrawColor(r, g, b, math.sqrt(Lerp(math.min(1, distFrac*2), 1, 0))*selfTbl.color.a)
 				surface.DrawRect(-4, -4, ScrW()+8, ScrH()+8)
 			cam.End2D()
 		end
-	elseif self.blasttype == 4 then			
+	elseif selfTbl.blasttype == 4 then			
 		f = math.ease.OutQuad(f)
 		local a_ring = math.max(0, 1-f)
-		local ringsize = Lerp(f, self.size*0.5, self.size*2 + 8)
-		self.color_ring.r = 255*a_ring*a_ring
-		self.color_ring.g = 255*a_ring
-		self.color_ring.b = 255*a_ring*a_ring
-		self.color_ring.a = 255*a_ring
+		local ringsize = Lerp(f, selfTbl.size*0.5, selfTbl.size*2 + 8)
+		selfTbl.color_ring.r = 255*a_ring*a_ring
+		selfTbl.color_ring.g = 255*a_ring
+		selfTbl.color_ring.b = 255*a_ring*a_ring
+		selfTbl.color_ring.a = 255*a_ring
 		
 		local a_ring2 = math.max(0, 1-f*2)
-		local ringsize2 = Lerp(f, self.size*0.75, self.size*3 + 16)
-		self.color_ring2.r = 200*a_ring2*a_ring
-		self.color_ring2.g = 180*a_ring2
-		self.color_ring2.b = 190*a_ring2*a_ring2
-		self.color_ring2.a = 255*a_ring2
+		local ringsize2 = Lerp(f, selfTbl.size*0.75, selfTbl.size*3 + 16)
+		selfTbl.color_ring2.r = 200*a_ring2*a_ring
+		selfTbl.color_ring2.g = 180*a_ring2
+		selfTbl.color_ring2.b = 190*a_ring2*a_ring2
+		selfTbl.color_ring2.a = 255*a_ring2
 		
 		render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
 			render.SetColorMaterial()
-			render.DrawSphere(self.pos, ringsize/2, 7, 7, self.color_ring)
+			render.DrawSphere(selfTbl.pos, ringsize/2, 7, 7, selfTbl.color_ring)
 			
-			render.SetMaterial(self.mat_ring1)
-			render.DrawQuadEasy(self.pos, self.normal, ringsize, ringsize, self.color_ring)
-			render.DrawQuadEasy(self.pos, self.normal2, ringsize2, ringsize2, self.color_ring2)
+			render.SetMaterial(selfTbl.mat_ring1)
+			render.DrawQuadEasy(selfTbl.pos, selfTbl.normal, ringsize, ringsize, selfTbl.color_ring)
+			render.DrawQuadEasy(selfTbl.pos, selfTbl.normal2, ringsize2, ringsize2, selfTbl.color_ring2)
 		render.OverrideBlend( false )
-	elseif self.blasttype == 5 then
+	elseif selfTbl.blasttype == 5 then
 		local f_flash = 1 - 0.1 / (0.1 + f)
 		local a_flash = math.max(0, 1-f*4)
 		local e_flash = math.max(0, 1-f*3)
 
 		if a_flash > 0 then
-			self.color.r = self.color_aux.r*a_flash*a_flash
-			self.color.g = self.color_aux.g*a_flash
-			self.color.b = self.color_aux.b*a_flash
+			selfTbl.color.r = selfTbl.color_aux.r*a_flash*a_flash
+			selfTbl.color.g = selfTbl.color_aux.g*a_flash
+			selfTbl.color.b = selfTbl.color_aux.b*a_flash
 
 			render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
-				render.SetMaterial(self.mat_ring2)
-				render.DrawSprite(self.pos, self.size*e_flash*2, self.size*e_flash*2, self.color)
+				render.SetMaterial(selfTbl.mat_ring2)
+				render.DrawSprite(selfTbl.pos, selfTbl.size*e_flash*2, selfTbl.size*e_flash*2, selfTbl.color)
 				render.SetColorMaterial()
-				self.color.a = 100 * a_flash
-				render.DrawSphere(self.pos, self.size*f_flash, 4, 4, self.color)
+				selfTbl.color.a = 100 * a_flash
+				render.DrawSphere(selfTbl.pos, selfTbl.size*f_flash, 4, 4, selfTbl.color)
 			render.OverrideBlend(false)
 
-			render.SetMaterial(self.mat_discharge)
-			self.color.a = 255 * a_flash
+			render.SetMaterial(selfTbl.mat_discharge)
+			selfTbl.color.a = 255 * a_flash
 			for i=1, math.random(4, 7) do
 				local beamLen = math.random(2, 5)
 				render.StartBeam(beamLen)
-					local beamv = Vector(self.pos)
+					local beamv = Vector(selfTbl.pos)
 					local beamn = VectorRand(-1, 1)
 					beamn:Normalize()
 					beamn:Mul(32*a_flash)
 					local beamw = math.Rand(4, 25)
 
 					for j=1, beamLen do
-						render.AddBeam(beamv, beamw, (j-1)/(beamLen-1), self.color)
+						render.AddBeam(beamv, beamw, (j-1)/(beamLen-1), selfTbl.color)
 						beamw = beamw * 0.9
 						beamv:Add(beamn)
 
@@ -310,71 +313,71 @@ function EFFECT:Render()
 				render.EndBeam()
 			end
 		end
-	elseif self.blasttype == 6 then
+	elseif selfTbl.blasttype == 6 then
 		local blastCol = Color(175, 255, 175, 200 * (1-f)^2)
 		render.SetColorMaterial()
-		render.DrawSphere( self.pos, 4500 * f^1.5, 12, 12, blastCol)
-		render.DrawSphere( self.pos, -4500 * f^1.5, 12, 12, blastCol )
+		render.DrawSphere( selfTbl.pos, 4500 * f^1.5, 12, 12, blastCol)
+		render.DrawSphere( selfTbl.pos, -4500 * f^1.5, 12, 12, blastCol )
 
 		local ringCol = Color(150, 255, 150, 200 * (1-f)^2)
-		render.SetMaterial(self.mat_ring1)
-		render.DrawQuadEasy(self.pos, jcms.vectorUp, 6500*f*4, 6500*f*4, ringCol)
+		render.SetMaterial(selfTbl.mat_ring1)
+		render.DrawQuadEasy(selfTbl.pos, jcms.vectorUp, 6500*f*4, 6500*f*4, ringCol)
 	else
 		local f_flash = 1 - 0.1 / (0.1 + f)
 		local a_flash = math.max(0, 1-f*4)
 		local e_flash = math.max(0, 1-f*3)
 	
 		if a_flash > 0 then
-			if self.blasttype == 1 then
-				self.color.r = 255*a_flash
-				self.color.g = 255*a_flash*a_flash
-				self.color.b = 255*a_flash*a_flash*a_flash
-			elseif self.blasttype == 2 then
-				self.color.r = 255*a_flash
-				self.color.g = 150*a_flash*a_flash*a_flash
-				self.color.b = 150*a_flash*a_flash*a_flash
-			elseif self.blasttype == 7 then
-				self.color.r = 255*a_flash
-				self.color.g = 230*a_flash
-				self.color.b = 150*a_flash*a_flash
+			if selfTbl.blasttype == 1 then
+				selfTbl.color.r = 255*a_flash
+				selfTbl.color.g = 255*a_flash*a_flash
+				selfTbl.color.b = 255*a_flash*a_flash*a_flash
+			elseif selfTbl.blasttype == 2 then
+				selfTbl.color.r = 255*a_flash
+				selfTbl.color.g = 150*a_flash*a_flash*a_flash
+				selfTbl.color.b = 150*a_flash*a_flash*a_flash
+			elseif selfTbl.blasttype == 7 then
+				selfTbl.color.r = 255*a_flash
+				selfTbl.color.g = 230*a_flash
+				selfTbl.color.b = 150*a_flash*a_flash
 			end
 		
 			render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
-			if self.blasttype == 1 then
-				render.SetMaterial(self.altmat and self.mat_fire1 or self.mat_fire2)
-				render.DrawSprite(self.pos, self.size*e_flash*2, self.size*e_flash*2, self.color)
+			if selfTbl.blasttype == 1 then
+				render.SetMaterial(selfTbl.altmat and selfTbl.mat_fire1 or selfTbl.mat_fire2)
+				render.DrawSprite(selfTbl.pos, selfTbl.size*e_flash*2, selfTbl.size*e_flash*2, selfTbl.color)
 				render.SetColorMaterial()
-				render.DrawSphere(self.pos, self.size*f_flash, 7, 7, self.color)
-			elseif self.blasttype == 2 or self.blasttype == 7 then
-				render.SetMaterial(self.mat_fire3)
-				render.DrawSprite(self.pos, self.size*e_flash*2, self.size*e_flash*2, self.color)
+				render.DrawSphere(selfTbl.pos, selfTbl.size*f_flash, 7, 7, selfTbl.color)
+			elseif selfTbl.blasttype == 2 or selfTbl.blasttype == 7 then
+				render.SetMaterial(selfTbl.mat_fire3)
+				render.DrawSprite(selfTbl.pos, selfTbl.size*e_flash*2, selfTbl.size*e_flash*2, selfTbl.color)
 			end
 			render.OverrideBlend( false )
 		end
 		
-		if self.blasttype == 1 then
-			render.SetMaterial(self.mat_ring1)
-		elseif self.blasttype == 2 or self.blasttype == 7 then
-			render.SetMaterial(self.mat_ring2)
+		if selfTbl.blasttype == 1 then
+			render.SetMaterial(selfTbl.mat_ring1)
+		elseif selfTbl.blasttype == 2 or selfTbl.blasttype == 7 then
+			render.SetMaterial(selfTbl.mat_ring2)
 		end
 		
 		local a_ring = math.max(0, 1-f)^2
-		local ringsize = Lerp(math.ease.OutQuart(f), self.size*0.5, self.size*2 + 8)
-		self.color_ring.r = 255*a_ring
-		self.color_ring.g = 255*a_ring*a_ring
-		self.color_ring.b = 255*a_ring*a_ring
-		self.color_ring.a = 255*a_ring
+		local ringsize = Lerp(math.ease.OutQuart(f), selfTbl.size*0.5, selfTbl.size*2 + 8)
+		selfTbl.color_ring.r = 255*a_ring
+		selfTbl.color_ring.g = 255*a_ring*a_ring
+		selfTbl.color_ring.b = 255*a_ring*a_ring
+		selfTbl.color_ring.a = 255*a_ring
 		
 		local a_ring2 = math.max(0, 1-f*2)
-		local ringsize2 = Lerp(math.ease.OutQuart(f), self.size*0.75, self.size*3 + 16)
-		self.color_ring2.r = 255*a_ring2
-		self.color_ring2.g = 255*a_ring2*a_ring2
-		self.color_ring2.b = 255*a_ring2*a_ring2
-		self.color_ring2.a = 255*a_ring2
+		local ringsize2 = Lerp(math.ease.OutQuart(f), selfTbl.size*0.75, selfTbl.size*3 + 16)
+		selfTbl.color_ring2.r = 255*a_ring2
+		selfTbl.color_ring2.g = 255*a_ring2*a_ring2
+		selfTbl.color_ring2.b = 255*a_ring2*a_ring2
+		selfTbl.color_ring2.a = 255*a_ring2
 		
 		render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
-			render.DrawQuadEasy(self.pos, self.normal, ringsize, ringsize, self.color_ring)
-			render.DrawQuadEasy(self.pos, self.normal2, ringsize2, ringsize2, self.color_ring2)
+			render.DrawQuadEasy(selfTbl.pos, selfTbl.normal, ringsize, ringsize, selfTbl.color_ring)
+			render.DrawQuadEasy(selfTbl.pos, selfTbl.normal2, ringsize2, ringsize2, selfTbl.color_ring2)
 		render.OverrideBlend( false )
 	end
 end

@@ -107,6 +107,11 @@ function ENT:Initialize()
 
 		self.jcms_stunEnd = CurTime()
 	end
+
+	if CLIENT then
+		self.spinBone = self:LookupBone("spinbone")
+		self.animSpinup = 0
+	end
 	
 	self.turretAngle = Angle(0, 0, 0)
 end
@@ -178,15 +183,15 @@ end
 function ENT:TurretAngleUpdate(dt)
 	local selfTbl = self:GetTable()
 
-	local target = selfTbl:GetTurretDesiredAngle()
-	local angle = selfTbl.turretAngle or Angle(0,0,0)
+	local targetAng = selfTbl:GetTurretDesiredAngle()
+
 	local speedPitch, speedYaw = selfTbl.TurretTurnSpeed(self)
-	speedPitch = speedPitch or speedYaw
-	
 	local pitchMin, pitchMax = selfTbl.TurretPitchLock(self)
-	angle.p = math.Clamp(math.ApproachAngle(angle.p, target.p, dt*speedPitch), -pitchMax, -pitchMin)
-	angle.y = math.ApproachAngle(angle.y, target.y, dt*speedYaw)
-	angle.r = target.r
+
+	--Approach target angles
+	local cPitch, cYaw, cRoll = selfTbl.turretAngle:Unpack()
+	local tPitch, tYaw, tRoll = targetAng:Unpack()
+	selfTbl.turretAngle:SetUnpacked(math.Clamp(math.ApproachAngle(cPitch, tPitch, dt*speedPitch), -pitchMax, -pitchMin), math.ApproachAngle(cYaw, tYaw, dt*speedYaw), tRoll) 
 end
 
 function ENT:TurretAngleIsSafe()
@@ -213,7 +218,6 @@ function ENT:TurretPitchLock()
 end
 
 if SERVER then
-	
 	function ENT:UpdateTurretKind(kind)
 		self:SetTurretKind(kind)
 		self:SetBodygroup(1, jcms.turret_bodygroups[ kind ] or 1)
@@ -305,12 +309,13 @@ if SERVER then
 		
 		--Below is at least 50% of the cost of turrets.
 
+
 		local isHacked = selfTbl:GetHackedByRebels()
 		local selfPvpTeam = self:GetNWInt("jcms_pvpTeam", -1)
 		local entIndices = {}
 		for _, ent in ipairs(ents.FindInSphere(origin, radius)) do 
 			--if ent ~= self and ent:Health() > 0 then
-			if jcms.team_GoodTarget(ent) and jcms.turret_IsDifferentTeam_Optimised(isHacked, ent, selfPvpTeam) and (self:TurretVisible(ent) or (IsValid(ent:GetNWEntity("jcms_vehicle", NULL)) and self:TurretVisible(ent:GetNWEntity("jcms_vehicle", NULL)))) then
+			if jcms.team_GoodTarget(ent) and jcms.turret_IsDifferentTeam_Optimised(isHacked, ent, selfPvpTeam) and (selfTbl.TurretVisible(self, ent) or (IsValid(ent:GetNWEntity("jcms_vehicle", NULL)) and selfTbl.TurretVisible(self, ent:GetNWEntity("jcms_vehicle", NULL)))) then
 				table.insert(selfTbl.targetsCache, ent)
 				entIndices[ent] = ent:EntIndex()
 			end
@@ -320,6 +325,7 @@ if SERVER then
 			return entIndices[first] < entIndices[last]
 		end
 		table.sort(selfTbl.targetsCache, ent_index_sorter)
+
 
 		return selfTbl.targetsCache
 	end
@@ -766,28 +772,29 @@ if SERVER then
 end
 
 if CLIENT then
+	local angYaw = Angle(0,0,0)
+	local angPitch = Angle(0,0,0)
+	local angSpin = Angle(0,0,0)
 	function ENT:Think()
 		local selfTbl = self:GetTable()
 		local frameTime = FrameTime()
-		local ang = selfTbl.turretAngle or Angle(0,0,0) --self:TurretAngle()
+		local pitch, yaw, roll = selfTbl.turretAngle:Unpack()
 
-		self:ManipulateBoneAngles(1, Angle(ang.y,0,0))
-		self:ManipulateBoneAngles(2, Angle(0,0,ang.p))
+		angYaw.p = yaw 
+		angPitch.r = pitch
+		self:ManipulateBoneAngles(1, angYaw)
+		self:ManipulateBoneAngles(2, angPitch)
 		
 		local spinning = selfTbl.GetTurretSpinup(self)
-		selfTbl.animSpinup = ((selfTbl.animSpinup or 0) + spinning*frameTime*4)%1
+		selfTbl.animSpinup = (selfTbl.animSpinup + spinning*frameTime*4)%1
 		
-		local spinBoneId = self:LookupBone("spinbone")
-		if spinBoneId then
-			self:ManipulateBoneAngles(spinBoneId, Angle(selfTbl.animSpinup*360,0,0))
-		end
+		angSpin.p = selfTbl.animSpinup*360
+		self:ManipulateBoneAngles(selfTbl.spinBone, angSpin)
 		
 		if spinning > 0 then
 			if not selfTbl.soundSpinup then
 				selfTbl.soundSpinup = CreateSound(self, "npc/turret_wall/turret_loop1.wav")
-				selfTbl.soundSpinup:ChangePitch(20, 0)
-				selfTbl.soundSpinup:ChangeVolume(0, 0)
-				selfTbl.soundSpinup:Play()
+				selfTbl.soundSpinup:PlayEx(0, 20)
 			end
 			
 			selfTbl.soundSpinup:ChangePitch(Lerp(math.sqrt(spinning), 20, 130), 0.2)

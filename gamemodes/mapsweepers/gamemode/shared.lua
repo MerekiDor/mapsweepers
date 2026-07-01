@@ -955,12 +955,23 @@ local nmt = FindMetaTable("NPC")
 
 		local mt = getmetatable(ent) --moderately faster than an Is<Type> function call individually, and can be used repeatedly afterwards.
 
+		--[[
 		local npcCheck = (mt == nmt and (not SERVER or nmt.GetNPCState(ent) ~= NPC_STATE_DEAD) and (emt.Health(ent)>0) and not jcms.team_invalidNPCs[emt.GetClass(ent)] and not emt.GetInternalVariable(ent,"startburrowed"))
 		local playerCheck = mt == pmt and pmt.Alive(ent) and pmt.GetObserverMode(ent)==OBS_MODE_NONE
 		local nextbotCheck = mt == nbmt and emt.Health(ent) > 0
 		local entClassCheck = jcms.validTargetEnts[emt.GetClass(ent)] and emt.Health(ent) > 0
 
 		return npcCheck or playerCheck or nextbotCheck or entClassCheck --NOTE: Could be optimised more by turning it into a single massive boolean expression, but idk if that's worth it.
+		--]]
+
+		return 
+		((mt == nmt and (not SERVER or nmt.GetNPCState(ent) ~= NPC_STATE_DEAD) and (emt.Health(ent)>0) and not jcms.team_invalidNPCs[emt.GetClass(ent)] and not emt.GetInternalVariable(ent,"startburrowed"))) --Are we an NPC?
+		or
+		(mt == pmt and pmt.Alive(ent) and pmt.GetObserverMode(ent)==OBS_MODE_NONE) --Are we a player?
+		or
+		(mt == nbmt and emt.Health(ent) > 0) --Are we a nextbot?
+		or
+		(jcms.validTargetEnts[emt.GetClass(ent)] and emt.Health(ent) > 0) --Are we some other targetable entity?
 	end
 
 	function jcms.team_pvpSameTeam(e1, e2) --Shared pvp Team?

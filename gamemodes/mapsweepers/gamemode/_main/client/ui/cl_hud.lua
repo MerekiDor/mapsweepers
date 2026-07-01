@@ -409,6 +409,10 @@
 	end
 
 	local swayVec = Vector(0,0,0)
+	function jcms.update3d2dSwayVec(time)
+		swayVec:SetUnpacked(math.sin(time) * 0.1, math.cos(time) * 0.1, math.sin(time*2) * 0.04)
+	end
+
 	function jcms.setup3d2dDiagonal(top, left)
 		local pos = EyePos()
 		local angles = EyeAngles()
@@ -417,7 +421,7 @@
 		local pad = 100
 		local off, sv = 12 + 0.13 * math.sin(time), gui.ScreenToVector(left and pad*1.2 or jcms.scrW-pad*1.2, top and pad or jcms.scrH-pad)
 
-		swayVec:SetUnpacked(math.sin(time) * 0.1, math.cos(time) * 0.1, math.sin(time*2) * 0.04)
+		--swayVec:SetUnpacked(math.sin(time) * 0.1, math.cos(time) * 0.1, math.sin(time*2) * 0.04)
 		sv:Mul(32)
 		pos:Add(sv)
 		pos:Add(swayVec)
@@ -459,7 +463,7 @@
 			error("invalid direction") 
 		end
 
-		swayVec:SetUnpacked(math.sin(time) * 0.1, math.cos(time) * 0.1, math.sin(time*2) * 0.04)
+		--swayVec:SetUnpacked(math.sin(time) * 0.1, math.cos(time) * 0.1, math.sin(time*2) * 0.04)
 		sv:Mul(39)
 		pos:Add(sv)
 		pos:Add(swayVec)
@@ -2641,11 +2645,12 @@
 
 	function jcms.hud_RegularDraw()
 		if jcms.disableHUD then return end
-
 		local locPly = jcms.locPly
 
 		render.ClearDepth()
 		cam.IgnoreZ(true)
+
+		jcms.update3d2dSwayVec(CurTime())
 
 		local trace = locPly:GetEyeTrace()
 
@@ -2771,6 +2776,7 @@
 	end
 
 	function jcms.hud_SpectatorDraw()
+		jcms.update3d2dSwayVec(CurTime())
 		local tg = jcms.locPly:GetObserverTarget()
 
 		if IsValid(tg) and tg:IsPlayer() then
@@ -3067,6 +3073,8 @@
 				render.ClearDepth()
 				cam.IgnoreZ(true)
 				
+				jcms.update3d2dSwayVec(CurTime())
+				
 				jcms.setup3d2dCentral("center")
 					drawSeq(1, 0.5, 1.2, "npc/scanner/combat_scan5.wav", jcms.draw_Crosshair)
 				cam.End3D2D()
@@ -3127,6 +3135,8 @@
 				
 				render.ClearDepth()
 				cam.IgnoreZ(true)
+				
+				jcms.update3d2dSwayVec(CurTime())
 
 				if (t > 0.9 and t < 2.5) or (t < 3.4 and CurTime()%(1/4)<(1/8)) then
 					jcms.setup3d2dCentral("center")
