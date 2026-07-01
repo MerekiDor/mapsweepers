@@ -21,7 +21,7 @@
 
 jcms.missions.miningoperations = {
 	faction = "antlion",
-	pvpAllowed = true,
+	pvpAllowed = false,
 	
 	generate = function(data, missionData)
 		--Place refineries / Difficulty calculations

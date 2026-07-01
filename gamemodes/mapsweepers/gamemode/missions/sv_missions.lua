@@ -263,7 +263,8 @@
 	end
 
 	function jcms.mission_Randomize()
-		local missionWeights = jcms.mission_GetWeightedTypes(pvpOnly, isBoss)
+		local isBoss = jcms.runprogress.winstreak > 0 and jcms.runprogress.winstreak % 5 == 0
+		local missionWeights = jcms.mission_GetWeightedTypes(jcms.util_IsPVP(), isBoss)
 
 		local newType = jcms.util_ChooseByWeight(missionWeights)
 		local data = assert(jcms.missions[ newType ], "error randomizing mission type, picked an invalid one: '" .. tostring(newType) .. "'")
