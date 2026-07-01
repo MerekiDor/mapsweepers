@@ -813,7 +813,7 @@
 
 		antirad = {
 			category = jcms.SPAWNCAT_SUPPLIES,
-			cost = 400,
+			cost = 300,
 			cooldown = 5 * 60,
 			slotPos = 3,
 			pvpExclusive = true,
@@ -837,7 +837,7 @@
 				local crate, flare = jcms.spawnmenu_Airdrop(pos, "jcms_restock", 2, "#jcms.antirad", col, ply)
 				crate:SetAmmoCashInside( 0 )
 				crate:SetHealthInside( 0 )
-				crate:SetAntiradInside( 60 )
+				crate:SetAntiradInside( 90 )
 				crate:SetOwnerNickname( ply:Nick() )
 				crate:SetLocalAngularVelocity( AngleRand(48, 128) )
 				crate:SetMaterial("models/jcms/"..faction.."_crate_heal")

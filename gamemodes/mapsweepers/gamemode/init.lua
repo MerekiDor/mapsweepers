@@ -1325,7 +1325,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		ply:GodDisable()
 		if jcms.util_IsPVP() then		
 			ply.jcms_isNPC = true
-			jcms.giveCash(ply, 125)
+			jcms.giveCash(ply, 250)
 		end
 
 		ply:SetNWBool("jcms_ready", false)
@@ -1839,7 +1839,10 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 
 			bounty = bounty * jcms.cvar_cash_mul_final:GetFloat()
 			bounty = bounty * jcms.director_GetBountyMul()
-			
+			if jcms.util_IsPVP() then
+				bounty = bounty * jcms.cvar_pvp_cash_mul:GetFloat()
+			end
+				
 			jcms.spreadContributionBounty(npc, bounty, attacker)
 		end
 	end

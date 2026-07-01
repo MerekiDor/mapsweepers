@@ -73,6 +73,27 @@ if SERVER then
 				dmg:SetDamagePosition(entPos)
 				dmg:SetReportedPosition(entPos)
 				ent:TakeDamageInfo(dmg)
+			elseif ent:GetClass() == "jcms_shieldcharger" then
+				ent:SetHealth(ent:Health() - 1)
+				ent:SetHealthFraction(math.Clamp(ent:Health() / ent:GetMaxHealth(), 0, 1))
+				
+				--TODO: These are probably a decent bit of unnecessary network strain, would be better to let the shieldcharger itself handle it clientside
+
+				--Shield-break
+				local ed = EffectData()
+				ed:SetEntity(ent)
+				ed:SetFlags(1)
+				ed:SetColor(jcms.util_ColorIntegerFast(0, 225, 0))
+				util.Effect("jcms_shieldeffect", ed)
+				
+				--Arcs
+				local ed = EffectData()
+				ed:SetEntity(ent)
+				ed:SetScale(1)
+				ed:SetMagnitude(9)
+				ed:SetColor( jcms.util_ColorIntegerFast(0, 255, 0) )
+				ed:SetMaterialIndex(1)
+				util.Effect("jcms_electricarcs", ed)
 			end
 		end
 
