@@ -651,8 +651,8 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		end
 	end)
 
-	--[[
-	hook.Add("PlayerPostThink", "jcms_IdleAnnouncer", function(ply)
+	
+	hook.Add("PlayerPostThink", "jcms_IdleTracking", function(ply)
 		if jcms.director and (not jcms.director.gameover) and jcms.team_JCorp_player(ply) and ply:Alive() and ply:GetObserverMode() == OBS_MODE_NONE then
 			local pos = ply:GetPos()
 			local time = CurTime()
@@ -662,13 +662,14 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 				ply.jcms_idleSince = time
 			end
 
+			--[[
 			local timeIdling = (time - ply.jcms_idleSince)
 			if timeIdling > 120 and not jcms.director.debug then
 				jcms.announcer_Speak(jcms.ANNOUNCER_IDLE, ply)
 				ply.jcms_idleSince = time + math.random() * 5
-			end
+			end--]]
 		end
-	end)--]]
+	end)
 
 	hook.Add("PlayerPostThink", "jcms_PlayerMenuThink", function(ply)
 		if (ply:GetObserverMode() == OBS_MODE_FIXED or ply:GetObserverMode() == OBS_MODE_CHASE) then
