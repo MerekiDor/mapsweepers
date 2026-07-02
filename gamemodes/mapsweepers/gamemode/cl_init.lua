@@ -1242,10 +1242,9 @@ end)
 		local skyPodsTotal = 30
 		local fallNormal = math.random() < 0.2 and Vector(math.Rand(-2, 2), math.Rand(-2, 2), math.Rand(-4, -3)) or Vector(math.random()-0.5, math.random()-0.5, -1-math.random()*2)
 		fallNormal:Normalize()
+		local nx, ny, nz = fallNormal:Unpack()
 		
-		local function makeSkyPod()
-			local skypod = {}
-			
+		local function resetSkyPod(skypod)
 			local a = math.random()*math.pi*2
 			local cos, sin = math.cos(a), math.sin(a)
 			local dist = 1000 * ( math.Rand(0.8, 1.8)^3 )
@@ -1254,56 +1253,72 @@ end)
 			skypod.pos = Vector(cos*dist, sin*dist, 0) - fallNormal*altitude
 			skypod.fade = 0
 			skypod.speed = math.Rand(54, 70)
-			
+		end
+
+		local function makeSkyPod()
+			local skypod = {}
+			resetSkyPod(skypod)
 			return skypod
 		end
+
+		for i=1, skyPodsTotal do
+			skyPods[i] = makeSkyPod()
+		end
+
 		
+		--NOTE: This hook is REALLY expensive, which is why I've resorted to doing vector logic manually. 
+		local respawnThreshold = -512
 		local droppodCol = Color(255, 30, 30)
 		local droppodColBrighter = Color(255, 130, 120)
+		local offsetPos = Vector(0,0,0) --For re-use
 		hook.Add("PostDraw2DSkyBox", "jcms_Skybox", function()
 			if jcms.performanceEstimate < 45 or render.GetRenderTarget() then return end
 
 			render.OverrideDepthEnable( true, false )
-
-			if #skyPods < skyPodsTotal then
-				for i=#skyPods+1, skyPodsTotal do
-					skyPods[i] = makeSkyPod()
-				end
-			end
 			
-			cam.Start3D(Vector(0, 0, 0))
-				local col = droppodCol
-				local colBrighter = droppodColBrighter
-				local respawnThreshold = -512
-				
+			cam.Start3D(jcms.vectorOrigin)
 				render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
 				local dt = FrameTime()
-				local time = CurTime()
 				for i, skypod in ipairs(skyPods) do
-					local f = skypod.fade
-					if skypod.pos.z > respawnThreshold then
+					local px, py, pz = skypod.pos:Unpack()
+
+					if pz > respawnThreshold then
 						skypod.fade = math.min(1, skypod.fade + dt)
-						skypod.pos:Add(fallNormal * (skypod.speed * dt))
-						
-						render.SetMaterial(mat_beam)
-						render.StartBeam(2)
-							render.AddBeam(skypod.pos, math.Rand(3, 7)*f, 0, colBrighter)
-							render.AddBeam(skypod.pos - fallNormal*math.random(64, 100), 0, 1, col)
-						render.EndBeam()
-						
-						render.SetMaterial(mat_lamp)
-						render.StartBeam(2)
-							local width = math.Rand(12, 24)*f
-							render.AddBeam(skypod.pos, width, 0, colBrighter)
-							render.AddBeam(skypod.pos - fallNormal*math.random(64, 100), width, 1, col)
-						render.EndBeam()
 					else
 						skypod.fade = math.max(0, skypod.fade - dt/2)
-						
-						if skypod.fade <= 0 then
-							table.Empty(skypod)
-							skyPods[i] = makeSkyPod()
-						end
+					end
+
+					local f = skypod.fade
+					local dP = skypod.speed * dt
+					skypod.pos:SetUnpacked( px + (nx*dP), py + (ny*dP), pz + (nz*dP) )
+					--skypod.pos:Add(fallNormal * (skypod.speed * dt))
+					
+					render.SetMaterial(mat_beam)
+					render.StartBeam(2)
+						render.AddBeam(skypod.pos, math.Rand(3, 7)*f, 0, droppodColBrighter)
+
+						--[[
+						offsetPos:Set(fallNormal)
+						offsetPos:Mul(-math.random(64, 100))
+						offsetPos:Add(skypod.pos)
+						--]]
+						local r = math.random(64, 100)
+						offsetPos:SetUnpacked(px - (nx*r), py - (ny*r), pz - (nz*r)) 
+						render.AddBeam(offsetPos, 0, 1, droppodCol)
+					render.EndBeam()
+					
+					render.SetMaterial(mat_lamp)
+					render.StartBeam(2)
+						local width = math.Rand(12, 24)*f
+						render.AddBeam(skypod.pos, width, 0, droppodColBrighter)
+
+						local r = math.random(64, 100)
+						offsetPos:SetUnpacked(px - (nx*r), py - (ny*r), pz - (nz*r)) 
+						render.AddBeam(offsetPos, width, 1, droppodCol)
+					render.EndBeam()
+
+					if f <= 0 then 
+						resetSkyPod(skypod)
 					end
 				end
 				render.OverrideBlend(false)
