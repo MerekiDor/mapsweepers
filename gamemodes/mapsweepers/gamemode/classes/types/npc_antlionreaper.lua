@@ -145,7 +145,11 @@ if CLIENT then
 	class.color = Color(255, 252, 83)
 	class.colorAlt = Color(255, 41, 41)
 
-	function class.Render(ply)
+	function class.Render(ply) 
+		--Lua-error prevention. Would be better if they faced where the player was looking or something.
+		ply.EyeAnglePitch = ply.EyeAnglePitch or { 0, 0, 0, 0 }
+		ply.EyeAngleYaw = ply.EyeAngleYaw or { 0, 0, 0, 0 }
+
 		local eyeFunc = scripted_ents.GetMember("npc_jcms_reaper", "DrawEyes")
 		if type(eyeFunc) == "function" then
 			eyeFunc(ply, scripted_ents.GetMember("npc_jcms_reaper", "MatGlow"))
