@@ -622,6 +622,33 @@ jcms.npc_types.antlion_burrowerguard = {
 		end)
 	end,
 
+	--TODO: This needs to be removed and replaced with a custom system for dealing with poison.
+	damageEffect = function(npc, target, dmgInfo)
+		if npc.jcms_burrowerGuard_suppressDamageEffect then return end
+
+		if not(bit.band(dmgInfo:GetDamageType(), DMG_CLUB) > 0) then
+			dmgInfo:ScaleDamage(0)
+		else
+			dmgInfo:SetDamageType(bit.bor(DMG_CLUB, DMG_POISON))
+			dmgInfo:ScaleDamage(3)
+
+			if target:IsPlayer() and target:Armor() == 0 then
+				local newDmgInfo = DamageInfo()
+
+				newDmgInfo:SetDamage(10)
+				newDmgInfo:SetAttacker(npc)
+				newDmgInfo:SetInflictor(npc)
+				newDmgInfo:SetDamageType(DMG_CLUB)
+				newDmgInfo:SetReportedPosition(dmgInfo:GetReportedPosition())
+				newDmgInfo:SetDamagePosition(dmgInfo:GetDamagePosition())
+				
+				npc.jcms_burrowerGuard_suppressDamageEffect = true
+				target:TakeDamageInfo(newDmgInfo)
+				npc.jcms_burrowerGuard_suppressDamageEffect = false
+			end
+		end
+	end,
+
 	timerMin = 0.1,
 	timerMax = 1.2,
 	timedEvent = function(npc) --Not replicated for cyberguards because they're teleported in by mafia.
