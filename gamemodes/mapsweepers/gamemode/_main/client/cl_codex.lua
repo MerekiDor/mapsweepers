@@ -128,10 +128,28 @@
 		},
 
 		{
-			unlock_id = "snipingzombies",
-			name = "#jcms.codexlogs_snipingzombies_name",
-			text = "#jcms.codexlogs_snipingzombies"
-		}
+			unlock_id = "lightbeams",
+			name = "#jcms.codexlogs_lightbeams_name",
+			text = "#jcms.codexlogs_lightbeams"
+		},
+
+		{
+			unlock_id = "resident",
+			name = "#jcms.codexlogs_resident_name",
+			text = "#jcms.codexlogs_resident"
+		},
+
+		{
+			unlock_id = "shields",
+			name = "#jcms.codexlogs_shields_name",
+			text = "#jcms.codexlogs_shields"
+		},
+
+		{
+			unlock_id = "bubblemantle",
+			name = "#jcms.codexlogs_bubblemantle_name",
+			text = "#jcms.codexlogs_bubblemantle"
+		},
 	}
 
 	-- outdated (pre-v1.2) entries
