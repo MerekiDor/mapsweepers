@@ -246,7 +246,7 @@ if SERVER then
 		local scale = self:GetModelScale()
 		self:SetCollisionBounds(Vector(-50,-50,0)*scale,Vector(50,50,180)*scale)
 		
-		self:SetNextThink(CurTime() + 1)
+		self:NextThink(CurTime() + 1)
 		return true
 	end
 end
