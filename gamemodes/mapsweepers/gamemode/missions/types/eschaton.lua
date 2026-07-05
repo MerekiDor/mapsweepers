@@ -45,7 +45,7 @@ jcms.missions.eschaton = {
 
 		local diffMult = math.sqrt(jcms.runprogress_GetDifficulty())
 		missionData.progress = 0
-		missionData.duration = 60*5 * diffMult --6 minutes baseline
+		missionData.duration = 60*4 * diffMult
 
 		-- // Evac Gen {{{
 			--Intent: Generate in partially covered areas, but not indoors or in super exposed ones
@@ -132,7 +132,7 @@ jcms.missions.eschaton = {
 			local time = jcms.director_GetMissionTime()
 			
 			if time >= 60 then
-				return baseCost + 4 + 4*math.floor( (time-60)/60 )
+				return baseCost + 4 + 3*math.floor( (time-60)/60 )
 			else
 				return 0
 			end
