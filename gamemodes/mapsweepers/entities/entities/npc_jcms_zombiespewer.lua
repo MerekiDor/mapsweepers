@@ -43,12 +43,12 @@ if SERVER then
 
 		self:SetModelScale(0.5)
 		
-		self:PhysicsInitBox( Vector(-56,-56,0),Vector(56,56,512) )
+		self:PhysicsInitBox( Vector(-56,-56,0),Vector(56,56,512) ) --NOTE: This is also set in Think as a bandaid fix for the below comment.
 		self:SetMoveType(MOVETYPE_NONE)
 
-		timer.Simple(0.1, function() --We get reset to (-3.250000 -3.250000 0.000000)	(3.250000 3.250000 18.000000) sometimes during missions somehow?
+		--[[timer.Simple(0.1, function() --We get reset to (-3.250000 -3.250000 0.000000)	(3.250000 3.250000 18.000000) sometimes during missions somehow?
 			self:SetCollisionBounds(Vector(-56,-56,0),Vector(56,56,512))
-		end)
+		end)--]]
 
 		self:SetMaxHealth(1150)
 		self:SetHealth(1150)
@@ -89,6 +89,9 @@ if SERVER then
 			self.nextSpeak = CurTime() + 20 + math.Rand(0, 20)
 			--self.nextSpeak = CurTime() + 10
 		end
+
+		--Bandaid fix. Our collisions get messed up under unknown circumstances, this ensures they're corrected eventually if they do.
+		self:SetCollisionBounds(Vector(-56,-56,0),Vector(56,56,512))
 
 		self:NextThink(CurTime() + 5)
 		return true

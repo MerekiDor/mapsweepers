@@ -62,12 +62,13 @@ if SERVER then
 
 			self:SetModelScale(1.5, 30)
 			--TODO: SFX
+
 			timer.Simple(30, function()
 				if not IsValid(self) then return end
+				
 				self.jcms_upgradeLevel = 1
 				self:SetHealth(self:Health() * 1.25)
-				self:SetMaxHealth(self:GetMaxHealth() * 1.5)
-
+				self:SetMaxHealth(self:GetMaxHealth() * 1.25)
 				--TODO: SFX
 
 				timer.Simple(80, function()
@@ -78,7 +79,7 @@ if SERVER then
 						if not IsValid(self) then return end
 						self.jcms_upgradeLevel = 2
 						self:SetHealth(self:Health() * 1.25)
-						self:SetMaxHealth(self:GetMaxHealth() * 1.5)
+						self:SetMaxHealth(self:GetMaxHealth() * 1.25)
 					end)
 				end)
 			end)
@@ -240,6 +241,13 @@ if SERVER then
 				end)
 			end
 		end
+		
+		--Our collisions get messed up when changing scale.
+		local scale = self:GetModelScale()
+		self:SetCollisionBounds(Vector(-50,-50,0)*scale,Vector(50,50,180)*scale)
+		
+		self:SetNextThink(CurTime() + 1)
+		return true
 	end
 end
 
