@@ -289,6 +289,10 @@ jcms.missions.datadownload = {
 
 		jcms.mapgen_PlaceNaturals(jcms.mapgen_AdjustCountForMapSize(12), weightOverride)
 		--jcms.mapgen_PlaceEncounters()
+
+		for i, crate in ipairs(ents.FindByClass("jcms_ammo_crate")) do 
+			crate:SetLocked(true)
+		end
 	end,
 
 	tagEntities = function(director, missionData, tags)
@@ -444,6 +448,11 @@ jcms.missions.datadownload = {
 			if md.defenseOngoing then
 				pillarsShouldBeActive = true
 
+				--Unlock crates
+				for i, crate in ipairs(ents.FindByClass("jcms_ammo_crate")) do 
+					crate:SetLocked(false)
+				end
+
 				--Swarm Accel
 				if #d.npcs < 30 then 
 					d.swarmNext = (d.swarmNext or jcms.director_GetMissionTime()) - 1
@@ -561,6 +570,11 @@ jcms.missions.datadownload = {
 						pillar:SetIsDisrupted(false)
 						pillar:SetHealth( pillar:GetMaxHealth() )
 						pillar:SetHealthFraction(1)
+					end
+					
+					--Re-lock crates
+					for i, crate in ipairs(ents.FindByClass("jcms_ammo_crate")) do 
+						crate:SetLocked(true)
 					end
 
 					md.defenseOngoing = false

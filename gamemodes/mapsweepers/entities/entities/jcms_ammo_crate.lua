@@ -42,6 +42,7 @@ end
 function ENT:SetupDataTables()
 	self:NetworkVar("Int", 0, "Cooldown")
 	self:NetworkVar("Float", 1, "LastUsedAt")
+	self:NetworkVar("Bool", 0, "Locked")
 
 	if SERVER then
 		self:SetCooldown(5)
@@ -59,6 +60,11 @@ if SERVER then
 		if not ( IsValid(activator) and activator:IsPlayer() and jcms.team_JCorp_player(activator) and activator:Alive() and activator:GetObserverMode() == OBS_MODE_NONE ) then
 			return
 		end
+		if self:GetLocked() then 
+			self:EmitSound("player/suit_denydevice.wav")
+			return 
+		end
+
 		
 		local ct, cooldown, lastTime = CurTime(), self:GetCooldown(), self:GetLastUsedAt()
 		local worked = false
@@ -142,20 +148,27 @@ if CLIENT then
 		local frac = math.Clamp( ( CurTime() - self:GetLastUsedAt() ) / self:GetCooldown(), 0, 1 )
 
 		local r,g,b = 255, 32, 37
-		if frac >= 1 then
+		if frac >= 1 and not self:GetLocked() then
 			r,g,b = 132, 230, 255
 		end
 		cam.Start3D2D(v, a, 1/16)
 			surface.SetDrawColor(r, g, b, 255*frac)
-			if eyeDist <= 500*500 then
+			if eyeDist <= 500^2 then
 				surface.DrawOutlinedRect(-128, 96, 256, 54, 4)
 			end
 			surface.SetMaterial(self.mat_ammo)
 			surface.DrawTexturedRectRotated(0, 0, 128, 128, 0)
 			surface.SetDrawColor(r, g, b, 255*(0.5+(frac^2)/2))
-			surface.DrawRect(-128+8, 96+8, (256-16)*frac, 54-16)
-			if eyeDist <= 128*128 then
-				draw.SimpleText( language.GetPhrase("jcms.cooldown_crate"):format(self:GetCooldown()), "jcms_medium", 0, 96+54+8, surface.GetDrawColor(), TEXT_ALIGN_CENTER )
+			if not self:GetLocked() then
+				surface.DrawRect(-128+8, 96+8, (256-16)*frac, 54-16)
+			end
+
+			if eyeDist <= 128^2 then
+				if self:GetLocked() then 
+					draw.SimpleText( [=[LOCKED]=], "jcms_medium", 0, 96 + 54/2, surface.GetDrawColor(), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+				else
+					draw.SimpleText( language.GetPhrase("jcms.cooldown_crate"):format(self:GetCooldown()), "jcms_medium", 0, 96+54+8, surface.GetDrawColor(), TEXT_ALIGN_CENTER )
+				end
 			end
 		cam.End3D2D()
 	end

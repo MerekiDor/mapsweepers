@@ -332,6 +332,19 @@ local prefabs = jcms.prefabs
 			pillar:SetAngles(Angle(0, math.random(8)*45, 0))
 			pillar:Spawn()
 
+			
+			do -- Ammo crate
+				local pos = pillar:GetPos()
+				local ang = pillar:GetAngles()
+
+				ang:RotateAroundAxis(ang:Up(), 180)
+				pos = pos + ang:Forward()*36 + ang:Up()*16
+				local ammocrate = ents.Create("jcms_ammo_crate")
+				ammocrate:SetPos(pos)
+				ammocrate:SetAngles(ang)
+				ammocrate:Spawn()
+			end
+
 			return pillar 
 		end
 	}
