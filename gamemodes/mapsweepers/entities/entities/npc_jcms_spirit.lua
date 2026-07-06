@@ -105,9 +105,10 @@ if SERVER then
 		--TODO: 
 	end
 	
-	function ENT:IsGoodGrabTarget_optimised(selfTbl, target)
+	--TODO: Cache values for grabwhitelist, health, danger
+	function ENT:IsGoodGrabTarget_optimised(selfTbl, selfIsJCorp, selfIsNPC, target)
 		local targetTbl = target:GetTable()
-		return IsValid(target) and selfTbl.GrabWhitelist[target:GetClass()] and (target:Health() > 0) and (not IsValid(target:GetParent())) and (not targetTbl.jcms_danger or targetTbl.jcms_danger < jcms.NPC_DANGER_BOSS) and jcms.team_SameTeam(self, target)
+		return IsValid(target) and selfTbl.GrabWhitelist[target:GetClass()] and (target:Health() > 0) and (not IsValid(target:GetParent())) and (not targetTbl.jcms_danger or targetTbl.jcms_danger < jcms.NPC_DANGER_BOSS) and jcms.team_SameTeam_optimised(selfIsJCorp, selfIsNPC, self, target)
 	end
 
 	function ENT:OnTakeDamage(dmg)
@@ -167,10 +168,12 @@ if SERVER then
 		end
 
 		-- // Find the furthest valid target to go grab {{{
-			local npcs = ents.FindByClass("npc_*")
+			local npcs = jcms.director.npcs --ents.FindByClass("npc_*") --director table's more optimised, and we don't transport any anonymous npcs
 			local bestDist2, furthest = selfTbl.MinGrabDist^2
+			
+			local selfIsJCorp, selfIsNPC = jcms.team_JCorp_ent(self), jcms.team_NPC_optimised(self)
 			for i, npc in ipairs(npcs) do
-				if not selfTbl.IsGoodGrabTarget_optimised(self, selfTbl, npc) or self:IsUnreachable( npc ) then continue end
+				if not selfTbl.IsGoodGrabTarget_optimised(self, selfTbl, selfIsJCorp, selfIsNPC, npc) or self:IsUnreachable( npc ) then continue end
 
 				local dist2 = npc:GetPos():DistToSqr(enemyPos)
 				if dist2 > bestDist2 then
@@ -208,6 +211,7 @@ if SERVER then
 				self:SetSchedule(SCHED_PATROL_RUN)
 			end
 		end
+
 	end
 
 	function ENT:Death(attacker, inflictor)
@@ -284,9 +288,11 @@ if SERVER then
 		if selfTbl.wantToCarry then							-- We're looking for NPCs to eat
 			if not(not selfTbl.carryCooldown or cTime > selfTbl.carryCooldown) then return end --Cooldown
 
+
 			--Grab one valid target within our radius & wait.
+			local selfIsJCorp, selfIsNPC = jcms.team_JCorp_ent(self), jcms.team_NPC_optimised(self)
 			for i, npc in ipairs( ents.FindInSphere(selfPos, selfTbl.GrabDistance) ) do
-				if selfTbl.IsGoodGrabTarget_optimised(self, selfTbl, npc) and self:Visible(npc) and (not IsValid(npc:GetEnemy()) or npc:GetEnemy():GetPos():DistToSqr(npc:GetPos()) > selfTbl.MinGrabDist^2) then
+				if selfTbl.IsGoodGrabTarget_optimised(self, selfTbl, selfIsJCorp, selfIsNPC, npc) and self:Visible(npc) and (not IsValid(npc:GetEnemy()) or npc:GetEnemy():GetPos():DistToSqr(npc:GetPos()) > selfTbl.MinGrabDist^2) then
 					self:CarryNPC(npc)
 					selfTbl.carryCooldown = cTime + 0.25
 					break
