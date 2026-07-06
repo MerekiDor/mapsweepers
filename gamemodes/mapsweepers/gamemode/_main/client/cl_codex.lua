@@ -150,6 +150,18 @@
 			name = "#jcms.codexlogs_bubblemantle_name",
 			text = "#jcms.codexlogs_bubblemantle"
 		},
+
+		{
+			unlock_id = "tombstone",
+			name = "#jcms.codexlogs_tombstone_name",
+			text = "#jcms.codexlogs_tombstone"
+		},
+
+		{
+			unlock_id = "norelease",
+			name = "#jcms.codexlogs_norelease_name",
+			text = "#jcms.codexlogs_norelease"
+		},
 	}
 
 	-- outdated (pre-v1.2) entries
