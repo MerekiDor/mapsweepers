@@ -398,7 +398,8 @@
 			draw.SimpleText(str4, "jcms_small_bolder", 48, 84, col, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 		end
 
-		if BRANCH == "x86-64" then
+		--if BRANCH == "x86-64" then
+		if jit.arch == "x86" then
 			local col = jcms.color_pulsing
 			surface.SetDrawColor(col)
 			drawHollowPolyButton(24, 84-9+28, 18, 18, 4)
