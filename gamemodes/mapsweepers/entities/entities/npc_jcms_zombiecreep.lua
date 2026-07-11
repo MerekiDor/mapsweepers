@@ -192,7 +192,6 @@ if SERVER then
 
 	function ENT:Initialize()
 		self:SetModel("models/barnacle.mdl")
-		self:SetSubMaterial(0, "models/jcms/zombiepolyp/polyp_base")
 		self:SetAngles( Angle(0, 0, 180) )
 
 		self:PhysicsInitBox( Vector(-52,-52,0),Vector(52,52,52) )
