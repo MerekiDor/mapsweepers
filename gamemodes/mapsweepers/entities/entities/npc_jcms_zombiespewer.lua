@@ -26,7 +26,7 @@ ENT.PrintName = "Fog Spewer"
 ENT.Author = "Octantis Addons"
 ENT.Category = "Map Sweepers"
 ENT.Spawnable = false
-ENT.RenderGroup = RENDERGROUP_BOTH
+ENT.RenderGroup = RENDERGROUP_OPAQUE
 ENT.AutomaticFrameAdvance = true
 
 jcms.zombieSpewer_FogDistValues = {
@@ -39,7 +39,7 @@ jcms.zombieSpewer_FogDistValues = {
 if SERVER then 
 	function ENT:Initialize()
 		self:SetModel("models/props_wasteland/antlionhill.mdl")
-		--TODO: Material (or model if mereki does that)
+		self:SetMaterial("models/jcms/zombiespewer/body")
 
 		self:SetModelScale(0.5)
 		
@@ -261,8 +261,10 @@ if CLIENT then
 		-- // }}}
 
 		-- // Particles {{{
+		
 			--TODO: Move vectors out of this think if it's notably expensive. Idk yet because it doesn't run *that* often, but still somewhat often.
-			local part = self.emitter:Add( "particle/particle_noisesphere", self:WorldSpaceCenter() + VectorRand(-10, 10) + Vector(-0,-5,50))
+			--local part = self.emitter:Add( "particle/particle_noisesphere", self:WorldSpaceCenter() + VectorRand(-10, 10) + Vector(-0,-5,50))
+			local part = self.emitter:Add( "particle/particle_noisesphere", self:WorldSpaceCenter())
 			part:SetStartSize(60)
 			part:SetEndSize(100)
 			part:SetDieTime(4)
@@ -275,6 +277,7 @@ if CLIENT then
 			part:SetVelocity(Vector(0,0,175) + VectorRand(-40,40))
 
 			part:SetGravity(Vector(0,50, 0)) --"Wind" effect
+			
 		-- // }}}
 
 		self:SetNextClientThink(CurTime() + 0.05)
@@ -317,6 +320,14 @@ if CLIENT then
 		-- // }}}
 	end
 
+	local scaleVec = Vector(1,1,1)
+	function ENT:Draw()
+		local sin = math.sin(CurTime() * 0.85)
+		scaleVec.z = (1 + sin/8)^0.5
+
+		self:ManipulateBoneScale(0, scaleVec)
+		self:DrawModel()
+	end
 
 	--TODO: Needs to be adjusted when visual pass is done
 	function jcms.zombieSpewer_DrawEyes(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)

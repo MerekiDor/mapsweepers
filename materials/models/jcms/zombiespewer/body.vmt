@@ -1,10 +1,11 @@
-"UnlitGeneric"
+"VertexLitGeneric"
 {
-	"$basetexture" "models/debug/debugwhite"
-	//"$bumpmap" "models/jcms/zombiespawner/normal"
-	"$phong" 1
-	"$nofog"	1
-	"$phongexponenttexture" "models/jcms/zombiespawner/metallic"
-	"$phongboost" 1.0
-	"$phongfresnelranges"		"[0 0.5 1]"
+	"$basetexture" "models/jcms/zombiespewer/body"
+	"$bumpmap" "models/jcms/zombiespewer/normal"
+
+	//TODO: Get rid of this when we have a proper eye texture
+	//"$phong" 1
+	//"$phongexponenttexture" "models/jcms/zombiespawner/metallic"
+	//"$phongboost" 1.0
+	//"$phongfresnelranges"		"[0 0.5 1]"
 }
