@@ -69,13 +69,17 @@ if SERVER then
 	function jcms.util_TryGiveAmmo(ply, cash)
 		if cash <= 0 or not IsValid(ply) then
 			return false
-		end
-
+		end	
+		
 		local typeCosts = {}
-		local typeDemands = {}
-		local sortedByCost = {}
+		local typesSortedByCost = {} --The types in order of cost (indexed)
 
+		local typeCounts = {} --How much we already have
+		local typeDemands = {} --How much the weapon ""wants"" for its mag
+
+		--Get counts and types
 		for i, wep in ipairs(ply:GetWeapons()) do
+			--Primary then secondary
 			for j=1,2 do
 				local ammoType = j==1 and wep:GetPrimaryAmmoType() or wep:GetSecondaryAmmoType()
 				local ammoTypeName = game.GetAmmoName(ammoType)
@@ -84,23 +88,44 @@ if SERVER then
 					if not typeCosts[ammoTypeName] then
 						local ammoPrice = jcms.weapon_ammoCosts[ ammoTypeName ] or jcms.weapon_ammoCosts._DEFAULT
 						typeCosts[ammoTypeName] = ammoPrice
-						table.insert(sortedByCost, ammoTypeName)
+						table.insert(typesSortedByCost, ammoTypeName)
 					end
 
-					typeDemands[ammoTypeName] = (typeDemands[ammoTypeName] or 0) + math.max(1, j==1 and wep:GetMaxClip1() or math.ceil(wep:GetMaxClip2()/2))
+					local clip = j==1 and wep:GetMaxClip1() or math.ceil(wep:GetMaxClip2()/2)
+					clip = (clip > 0 and clip) or 100 --Belt fed weapons get treated as 100
+
+					typeDemands[ammoTypeName] = (typeDemands[ammoTypeName] or 0) + math.max(1,clip)
+					
+					typeCounts[ammoTypeName] = ply:GetAmmoCount(ammoTypeName)
 				end
 			end
 		end
 
-		table.sort(sortedByCost, function(first, last)
+		table.sort(typesSortedByCost, function(first, last)
 			return typeCosts[first] > typeCosts[last]
 		end)
+
+		
+		local avgAmmoCash = 0 -- 'ammoCash' is cost*count
+		for i, ammoTypeName in ipairs(typesSortedByCost) do
+			avgAmmoCash = avgAmmoCash + typeCounts[ammoTypeName] * typeCosts[ammoTypeName]
+		end
+		avgAmmoCash = avgAmmoCash / #typesSortedByCost
+
+		--Reduce demand for ammo we already have a lot of.
+		for i, ammoTypeName in ipairs(typesSortedByCost) do
+			local ammoCash = typeCounts[ammoTypeName] * typeCosts[ammoTypeName]
+			local deviation = avgAmmoCash - ammoCash
+
+			typeDemands[ammoTypeName] = typeDemands[ammoTypeName] + math.ceil(deviation/10)
+		end
+
 
 		local totalGiven = {}
 		local firstIteration = true
 		repeat
 			local gotAtLeastOne = false
-			for i, ammoType in ipairs(sortedByCost) do
+			for i, ammoType in ipairs(typesSortedByCost) do
 				local affordableDemand = math.min(typeDemands[ammoType], math.max(1, math.floor(cash/typeCosts[ammoType])))
 
 				if affordableDemand > 0 then
@@ -116,7 +141,7 @@ if SERVER then
 
 			if firstIteration then
 				firstIteration = false
-				sortedByCost = table.Reverse(sortedByCost)
+				typesSortedByCost = table.Reverse(typesSortedByCost)
 			end
 			
 			if not gotAtLeastOne then

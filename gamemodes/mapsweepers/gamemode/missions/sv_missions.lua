@@ -117,6 +117,7 @@
 			jcms.ReplaceAllCrates()
 			jcms.DisableThumpers()
 			jcms.SetDoorReturns()
+			jcms.ForceOpenFuncDoors()
 			if jcms.cvar_performanceMode:GetBool() then 
 				jcms.ClearTinyProps()
 				jcms.ClearWindows()

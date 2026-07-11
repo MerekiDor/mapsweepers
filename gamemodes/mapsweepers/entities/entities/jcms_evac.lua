@@ -35,6 +35,8 @@ function ENT:Initialize()
 		self.nextSlowCharge = CurTime()
 		self:SetMoveType(MOVETYPE_NONE)
 		self:PhysicsInitStatic(SOLID_VPHYSICS)
+		
+		self.chargeBoost = 0
 	end
 
 	if CLIENT then
@@ -183,6 +185,20 @@ if SERVER then
 
 	function ENT:UpdateTransmitState()
 		return (self:GetCharge() < self:GetMaxCharge() and TRANSMIT_PVS) or TRANSMIT_ALWAYS
+	end
+
+	function ENT:OnTakeDamage(dmgInfo)
+		local attacker = dmgInfo:GetAttacker()
+		if attacker:IsPlayer() and jcms.util_IsStunstick( dmgInfo:GetInflictor() ) and self:GetCanCharge() and not self:IsBeamActive() then
+			--Boost our charge every 3 hits.
+			attacker:EmitSound("buttons/button9.wav", 75, 130)
+
+			self.chargeBoost = self.chargeBoost + 1
+			if self.chargeBoost >= 3 then
+				self:SetCharge(self:GetCharge() + 1)
+				self.chargeBoost = 0
+			end
+		end
 	end
 end
 

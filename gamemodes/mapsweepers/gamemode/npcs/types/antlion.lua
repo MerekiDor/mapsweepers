@@ -904,8 +904,8 @@ jcms.npc_types.antlion_ultracyberguard = {
 		-- // }}}
 
 		-- // Laser Beams {{{
-			local enemy = npc:GetEnemy() 
-			if IsValid(enemy) and npc.jcms_uCyberguard_nextBeam < CurTime() and enemy:WorldSpaceCenter():DistToSqr(npc:GetPos()) >150 then 
+			local enemy = npc:GetEnemy()
+			if IsValid(enemy) and npc.jcms_uCyberguard_nextBeam < CurTime() and enemy:WorldSpaceCenter():DistToSqr(npc:GetPos()) > 150 then 
 				local ePos = npc:Visible(enemy) and enemy:EyePos() or npc:GetEnemyLastSeenPos(enemy)
 
 				npc:SetSchedule(SCHED_RANGE_ATTACK2)
@@ -935,8 +935,12 @@ jcms.npc_types.antlion_ultracyberguard = {
 				local beamTotal = beamPrep + beamLife
 				
 				--npc:SetPlaybackRate(0.85)
+
+				npc.jcms_uCyberguard_nextBeam = CurTime() + 2 --Stop us from re-running logic whil we're mid-prep
+				--npc.jcms_cyberguardLastAtk = CurTime() --Stop the shieldbubble logic from interrupting us
 				timer.Simple(0.9, function()
 					if not IsValid(npc) or not IsValid(enemy) or not(npc:GetCurrentSchedule() == SCHED_RANGE_ATTACK2) then
+						npc:RemoveLayer( gestureLayer )
 						return 
 					end 
 					--npc:SetPlaybackRate(0.15)
@@ -992,9 +996,9 @@ jcms.npc_types.antlion_ultracyberguard = {
 						beam:SetPos(pos)
 						beam:SetAngles(LerpAngle(frac, startAng, finishAng))
 					end)
+			
+					npc.jcms_uCyberguard_nextBeam = CurTime() + (npc.jcms_uCyberguard_stage2 and 8 or 15)
 				end)
-
-				npc.jcms_uCyberguard_nextBeam = CurTime() + (npc.jcms_uCyberguard_stage2 and 8 or 15)
 			end
 		-- // }}}
 	end,

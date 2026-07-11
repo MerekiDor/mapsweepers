@@ -235,7 +235,7 @@ if SERVER then
 		local tr = util.TraceLine {
 			start = origin,
 			endpos = target:WorldSpaceCenter(),
-			mask = MASK_OPAQUE_AND_NPCS,
+			mask = MASK_SHOT,
 			filter = self
 		}
 		
