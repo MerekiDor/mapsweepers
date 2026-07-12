@@ -340,7 +340,7 @@ if SERVER then
 			},
 
 			["thumpium"] = {
-				color = Color(50, 50, 200),
+				color = Color(140, 248, 248),
 				material = "models/props_combine/combinethumper002",
 				value = 7,
 
