@@ -1065,6 +1065,13 @@ jcms.npc_types.antlion_reaper = {
 		npc:SetMaxLookDistance(3000)
 		
 		npc.jcms_maxScaledDmg = 65
+	end,
+
+	damageEffect = function(npc, target, dmgInfo)
+		--0.75x damage to non-players (mainly turrets), because they can't dodge
+		if not target:IsPlayer() then 
+			dmgInfo:ScaleDamage(0.75)
+		end
 	end
 }
 

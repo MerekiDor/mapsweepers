@@ -127,7 +127,6 @@ jcms.missions.miningoperations = {
 			for i=1, totalOres do 
 				--local wallspots = jcms.prefab_GetWallSpotsFromArea(area, 48, 500)
 				--TODO: Try to place us on walls first, stamp on area otherwise.
-				--TODO: weight against placing near refineries
 
 				local area = jcms.util_ChooseByWeight(oreAreaWeights)
 				oreAreaWeights[area] = oreAreaWeights[area] * 0.00000001

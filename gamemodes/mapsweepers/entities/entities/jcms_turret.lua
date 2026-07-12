@@ -455,6 +455,8 @@ if SERVER then
 
 	function ENT:Think()
 		local selfTbl = self:GetTable()
+		if selfTbl.jcms_stunEnd > CurTime() then return end
+
 		local cTime = CurTime()
 		local data = selfTbl.GetTurretData(self)
 		
