@@ -153,7 +153,7 @@ if SERVER then
 				end
 
 				for _, ent in ipairs(ents.FindInSphere(self:GetPos(), 64)) do
-					if jcms.team_GoodTarget(ent) then
+					if jcms.team_GoodTarget(ent) or ent.jcms_canBeEvacuated then
 						if ent:IsPlayer() and jcms.team_JCorp_player(ent) and not IsValid(ent:GetNWEntity("jcms_vehicle", NULL)) then
 							self:BeamUp(ent)
 							break

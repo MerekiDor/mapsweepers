@@ -1928,11 +1928,16 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		return sweepers
 	end
 
-	function jcms.GetNearestSweeper(pos)
+	function jcms.GetNearestSweeper(pos, capRadius)
 		local sweepers = jcms.GetAliveSweepers()
 
 		local sweeper = NULL
 		local closestDist = math.huge
+
+		if type(capRadius) == "number" then
+			closestDist = capRadius
+		end
+
 		for i, ply in ipairs(sweepers) do
 			local dist = ply:GetPos():Distance(pos)
 			if dist < closestDist then

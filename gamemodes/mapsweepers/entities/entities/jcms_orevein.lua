@@ -530,6 +530,8 @@ if SERVER then
 						aiSnd:Spawn()
 						aiSnd:SetParent(ent)
 						ent.jcms_aiSound = aiSnd
+
+						ent.jcms_canBeEvacuated = true
 					end,
 
 					chunkThink = function(ent)
@@ -589,10 +591,41 @@ if SERVER then
 
 						--Scare off ants
 						ent.jcms_aiSound:Fire("EmitAISound")
+
+						-- Chase players in evac
+						local d = jcms.director
+						if d and d.missionData and d.missionData.evacuating then
+							local phys = ent:GetPhysicsObject()
+							if not IsValid(phys) then return end
+
+							local swp = jcms.GetNearestSweeper(selfPos, 1000)
+							if IsValid(swp) then
+								local fuckyou = swp:EyePos()
+								fuckyou:Sub(selfPos)
+								local len = math.max(1, fuckyou:Length())
+								fuckyou:Div(len)
+
+								if len < 50 then
+									fuckyou:Mul(-500)
+								else
+									fuckyou:Mul(200)
+								end
+								phys:AddVelocity(fuckyou)
+							end
+						end
 					end,
 
 					chunkTakeDamage = function(ent, dmgInfo) --Indestructible
-						dmgInfo:ScaleDamage(0)
+						-- Get knocked back in evac
+						local d = jcms.director
+						if d and d.missionData and d.missionData.evacuating then
+							for i=1,5 do
+								ent:TakePhysicsDamage(dmgInfo)
+							end
+							dmgInfo:ScaleDamage(0.1)
+						else
+							dmgInfo:ScaleDamage(0)
+						end
 
 						if ent.jcms_isReflecting then return end --Infinite loop safety
 
