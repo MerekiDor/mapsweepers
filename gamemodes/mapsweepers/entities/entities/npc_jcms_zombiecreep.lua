@@ -256,6 +256,7 @@ if SERVER then
 		self.scaleSpeed = sizeMult * densityMult
 	end
 
+	local npcMins, npcMaxs = Vector(-52,-52,0),Vector(52,52,52)
 	function ENT:Think()
 		local selfTbl = self:GetTable()
 		local cTime = CurTime()
@@ -282,8 +283,18 @@ if SERVER then
 					local cellPos = jcms.zombieCreep_GetCellPos( cell )
 					local nearest, dist = jcms.GetNearestSweeper(cellPos)
 					if dist > 1000 then
-						jcms.npc_Spawn("zombie_creep", cellPoints[math.random(#cellPoints)])
-						break
+						local tr = util.TraceHull({
+							mins = npcMins,
+							maxs = npcMaxs,
+							mask = MASK_NPCSOLID,
+							start = cellPos,
+							endpos = cellPos
+						})
+
+						if not IsValid(tr.Entity) then
+							jcms.npc_Spawn("zombie_creep", cellPoints[math.random(#cellPoints)])
+							break
+						end
 					end
 				end
 			end
