@@ -2591,7 +2591,15 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 			local plyTotal = player.GetCount() + player.GetCountConnecting()
 			local yesCount, noCount, anyCount = #vote.yes, #vote.no, #vote.any
 
-			if (yesCount + noCount + anyCount == plyTotal) then
+			local voteRatio = jcms.cvar_pvpvoteratio:GetFloat()
+			local requiredForPVP = math.ceil(plyTotal * voteRatio)
+			local requiredForPVE = math.ceil(plyTotal * (1-voteRatio))
+
+			local allVoted = yesCount + noCount + anyCount == plyTotal
+			local yesWon = yesCount >= requiredForPVP
+			local noWon = noCount >= requiredForPVE
+			
+			if allVoted or yesWon or noWon then
 				shouldProcess = true
 			end
 		else
