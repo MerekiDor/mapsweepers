@@ -336,7 +336,7 @@ jcms.npc_types.zombie_explodingcrab = {
 	faction = "zombie",
 
 	danger = jcms.NPC_DANGER_FODDER,
-    cost = 0.025,
+    cost = 0.0375,
     swarmWeight = 0.0000001,
 
 	class = "npc_headcrab_fast",
@@ -553,7 +553,7 @@ jcms.npc_types.zombie_creeper = {
 	noArenaMode = true,
 
 	danger = jcms.NPC_DANGER_STRONG,
-    cost = 0.05,
+    cost = 0.075,
     swarmWeight = 0.2,
 	swarmLimit = 4,
 
@@ -571,7 +571,7 @@ jcms.npc_types.zombie_husk = {
 	faction = "zombie",
 
 	danger = jcms.NPC_DANGER_FODDER,
-    cost = 0.15,
+    cost = 0.225,
     swarmWeight = 1,
 
 	class = "npc_zombie",
@@ -636,7 +636,7 @@ jcms.npc_types.zombie_fast = {
 	faction = "zombie",
 
 	danger = jcms.NPC_DANGER_FODDER,
-    cost = 0.35,
+    cost = 0.525,
     swarmWeight = 0.6,
 
 	class = "npc_fastzombie",
@@ -688,7 +688,7 @@ jcms.npc_types.zombie_crawler = {
 	faction = "zombie",
 
 	danger = jcms.NPC_DANGER_FODDER,
-    cost = 0.15,
+    cost = 0.225,
     swarmWeight = 0.35,
 
 	class = "npc_fastzombie_torso",
@@ -712,7 +712,7 @@ jcms.npc_types.zombie_poison = {
 	faction = "zombie",
 
 	danger = jcms.NPC_DANGER_STRONG,
-    cost = 0.45,
+    cost = 0.675,
     swarmWeight = 0.45,
 
 	class = "npc_poisonzombie",
@@ -744,7 +744,7 @@ jcms.npc_types.zombie_minitank = {
 	faction = "zombie",
 
 	danger = jcms.NPC_DANGER_BOSS, --Originally STRONG, but I'm using this as a fallback for if there's too many spawners now.
-    cost = 0.35,
+    cost = 0.525,
     swarmWeight = 0.0000000001, --0.3,
 
 	class = "npc_poisonzombie",
@@ -921,7 +921,7 @@ jcms.npc_types.zombie_combine = {
 	episodes = true,
 
 	danger = jcms.NPC_DANGER_STRONG,
-    cost = 0.6,
+    cost = 0.9,
     swarmWeight = 0.5,
 
 	class = "npc_zombine",
@@ -1009,7 +1009,7 @@ jcms.npc_types.zombie_spirit = {
 	faction = "zombie",
 
 	danger = jcms.NPC_DANGER_STRONG,
-	cost = 1,
+	cost = 1.5,
 	swarmWeight = 0.35,
 
 	class = "npc_jcms_spirit",
@@ -1043,7 +1043,7 @@ jcms.npc_types.zombie_spawner = {
 	faction = "zombie",
 
 	danger = jcms.NPC_DANGER_BOSS,
-	cost = 1.25,
+	cost = 1.9,
 	swarmWeight = 1,
 
 	class = "npc_jcms_zombiespawner",
@@ -1092,8 +1092,8 @@ jcms.npc_types.zombie_spewer = {
 	faction = "zombie",
 
 	danger = jcms.NPC_DANGER_BOSS,
-	cost = 1.25,
-	swarmWeight = 0.45,
+	cost = 1.9,
+	swarmWeight = 0.65,
 
 	class = "npc_jcms_zombiespewer",
 	bounty = 350,
@@ -1111,7 +1111,7 @@ jcms.npc_types.zombie_charple = {
 	faction = "zombie",
 
 	danger = jcms.NPC_DANGER_FODDER,
-	cost = 0.2,
+	cost = 0.3,
 	swarmWeight = 0.0000001,
 
 	class = "npc_fastzombie",

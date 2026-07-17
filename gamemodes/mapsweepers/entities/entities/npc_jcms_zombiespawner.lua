@@ -29,6 +29,14 @@ ENT.Spawnable = false
 ENT.RenderGroup = RENDERGROUP_BOTH
 ENT.AutomaticFrameAdvance = true
 
+function ENT:SetupDataTables()
+	self:NetworkVar("Bool", 0, "IsUpgrading")
+
+	if SERVER then
+		self:SetIsUpgrading(false)
+	end
+end
+
 if SERVER then 
 	function ENT:Initialize()
 		self:SetModel("models/jcms/zombiespawner.mdl")
@@ -56,34 +64,9 @@ if SERVER then
 
 		--Upgrade
 		self.jcms_upgradeLevel = 0
-		--TODO: Might be worth considering making a better system for this (rather than just timers) if we want to expand/control it more nested timers will get a bit ridiculous eventually.
-		timer.Simple(80, function()
-			if not IsValid(self) then return end
+		self.jcms_nextUpgrade = CurTime() + 80
 
-			self:SetModelScale(1.5, 30)
-			--TODO: SFX
-
-			timer.Simple(30, function()
-				if not IsValid(self) then return end
-				
-				self.jcms_upgradeLevel = 1
-				self:SetHealth(self:Health() * 1.25)
-				self:SetMaxHealth(self:GetMaxHealth() * 1.25)
-				--TODO: SFX
-
-				timer.Simple(80, function()
-					if not IsValid(self) then return end
-					
-					self:SetModelScale(2, 30)
-					timer.Simple(30, function()
-						if not IsValid(self) then return end
-						self.jcms_upgradeLevel = 2
-						self:SetHealth(self:Health() * 1.25)
-						self:SetMaxHealth(self:GetMaxHealth() * 1.25)
-					end)
-				end)
-			end)
-		end)
+		self.nextSlowThink = CurTime() + 1 --Work-around for broken anims
 	end
 
 	function ENT:OnTakeDamage(dmgInfo)
@@ -137,9 +120,12 @@ if SERVER then
 	end
 
 	function ENT:Think()
-		local selfPos = self:GetPos()
-
 		local selfTbl = self:GetTable()
+		local cTime = CurTime()
+		if selfTbl.nextSlowThink > cTime then return end
+		
+		--Spawning logic
+		local selfPos = self:GetPos()
 		if selfTbl.nextSpawn < CurTime() and not self.dying then
 			for i=#selfTbl.spawnedNPCs, 1, -1 do 
 				local npc = selfTbl.spawnedNPCs[i]
@@ -241,21 +227,49 @@ if SERVER then
 				end)
 			end
 		end
+
+		--Upgrading logic
+		local upgradeLvl = self.jcms_upgradeLevel
+		if self.jcms_nextUpgrade < CurTime() and not self:GetIsUpgrading() and upgradeLvl < 2 then 
+			self:SetIsUpgrading(true)
+			self:EmitSound("npc/barnacle/barnacle_bark"..tostring(math.random(1,2))..".wav", 100, math.random(60, 80))
+			
+			local upgradeDur = 30
+			self:SetModelScale( 1 + (upgradeLvl+1)/2, upgradeDur)
+			timer.Simple(upgradeDur, function()
+				if not IsValid(self) then return end
+
+				self:SetHealth(self:Health() * 1.25)
+				self:SetMaxHealth(self:GetMaxHealth() * 1.25)
+
+				self.jcms_upgradeLevel = self.jcms_upgradeLevel + 1
+				self.jcms_nextUpgrade = CurTime() + 80
+				self:SetIsUpgrading(false)
+			end)
+		end
 		
 		--Our collisions get messed up when changing scale.
 		local scale = self:GetModelScale()
 		self:SetCollisionBounds(Vector(-50,-50,0)*scale,Vector(50,50,180)*scale)
 		
-		self:NextThink(CurTime() + 1)
-		return true
+		
+		self.nextSlowThink = cTime + 1 --Work-around for broken anims
+
+		--self:NextThink(CurTime() + 1)
+		--return true
 	end
 end
 
 if CLIENT then
+	ENT.decal_blood = Material("decals/bloodstain_002")
 	jcms.zombieSpawnerEyeMat = Material("models/jcms/zombiespawner/eyes")
 
 	function ENT:Initialize()
 		hook.Add("PostDrawTranslucentRenderables", "jcms_ZombieSpawnerEyes", jcms.zombieSpawner_DrawEyes)
+
+		self.nextDigestSound = 0
+		self.nextEffect = 0
+		self.nextFleshSound = 0
 	end
 
 	function ENT:Think()
@@ -270,6 +284,73 @@ if CLIENT then
 				ed:SetMagnitude(math.Rand(0.1, 0.3))
 				ed:SetFlags(0)
 				util.Effect("jcms_bigblast", ed)
+			end
+		end
+
+		--Upgrade Visuals
+		if FrameTime() > 0 and self:GetIsUpgrading() then
+			local cTime = CurTime()
+
+			--Blood effects
+			if self.nextEffect < cTime then
+				-- // Get a point around the edges {{{
+					local mdlScale = self:GetModelScale()
+					local dir = Vector(math.Rand(-1,1), math.Rand(-1,1), 0)
+					dir:Normalize()
+					dir:Mul(mdlScale * 50)
+				-- }}}
+
+				local effPos = self:GetPos()
+				effPos:Add(dir)
+
+				local ed = EffectData()
+				ed:SetColor(0)
+				ed:SetNormal(VectorRand(-1,1):GetNormalized())
+				ed:SetOrigin(effPos)
+				ed:SetScale(10)
+				util.Effect("bloodImpact", ed)
+				
+				self.nextEffect = cTime + 0.05
+			end
+
+			--Flesh SFX & decals
+			if self.nextFleshSound < cTime then
+				self:EmitSound("physics/flesh/flesh_squishy_impact_hard"..math.random(1,4)..".wav", 75, math.random(80, 90), 1)
+				self.nextFleshSound = cTime + 0.1 + math.Rand(0, 0.2)
+				
+				-- // Get a point around the edges {{{
+					local mdlScale = self:GetModelScale()
+					local dir = Vector(math.Rand(-1,1), math.Rand(-1,1), 0)
+					dir:Normalize()
+					dir:Mul(mdlScale * 60)
+					dir.z = -100
+				-- }}}
+
+				-- // Decal code I stole from bigblast {{{
+					local selfPos = self:WorldSpaceCenter()
+					local tr = util.TraceLine {
+						start = selfPos,
+						endpos = selfPos + dir,
+						mask = MASK_PLAYERSOLID_BRUSHONLY
+					}
+
+					if (tr.Hit) and (IsValid(tr.Entity) or tr.Entity == game.GetWorld()) and IsValid(self) then
+						local scale = math.Rand(0.5, 1)
+						util.DecalEx(self.decal_blood, tr.Entity, tr.HitPos, tr.Normal, color_white, scale, scale)
+					end
+				-- // }}}
+			end
+
+			--Play digesting sounds while we're upgrading
+			if self.nextDigestSound < cTime then 
+				local digestSounds = {
+					"npc/barnacle/barnacle_digesting1.wav",
+					"npc/barnacle/barnacle_digesting2.wav"
+				}
+				local sndChoice = digestSounds[math.random(#digestSounds)]
+
+				self:EmitSound(sndChoice, 90, 90)
+				self.nextDigestSound = cTime + SoundDuration(sndChoice)/0.9
 			end
 		end
 	end
