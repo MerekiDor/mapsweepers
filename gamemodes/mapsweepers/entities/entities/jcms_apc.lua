@@ -354,6 +354,8 @@ if SERVER then
 			return
 		end
 
+		local creepedRatio = 0
+
 		local mass = phys:GetMass()
 		local mypos = self:WorldSpaceCenter()
 		local myang = phys:GetAngles()
@@ -401,7 +403,12 @@ if SERVER then
 					self.delayedForces[i] = self.delayedForces[i] * 0.3
 				end
 
-				debugoverlay.SweptBox(tr1pos, tr1.HitPos, mins, maxs, Angle(0,0,0), 0.1, Color(255, 0, 0))
+				--debugoverlay.SweptBox(tr1pos, tr1.HitPos, mins, maxs, Angle(0,0,0), 0.1, Color(255, 0, 0))
+				
+				local cell = jcms.zombieCreep_GetCell( tr1.HitPos )
+				if jcms.zombieCreepCells[cell] then
+					creepedRatio = creepedRatio + 1/#self.vectorOffsets
+				end
 
 				if self.delayedForces[i] > 0 then
 					local lImp, aImp = phys:CalculateForceOffset(myup * ( self.delayedForces[i] / vectorNumber ) , tr1pos)
@@ -483,15 +490,17 @@ if SERVER then
 		-- }}}
 
 		-- Final {{{
+			local speedScalar = Lerp(creepedRatio, 1, 0.4)
+
 			local vecAngular = Vector(0, 0, 0)
 			vecAngular:Add(vecAngularSum)
 			vecAngular:Add(angDamp)
-			vecAngular.z = vecAngular.z - ctrlSpin * Lerp(ctrlTurbo, self.TurnSpeed, self.TurnSpeedTurbo)
+			vecAngular.z = vecAngular.z - ctrlSpin * Lerp(ctrlTurbo, self.TurnSpeed, self.TurnSpeedTurbo) * speedScalar
 
 			local vecLinear = Vector(0, 0, 0)
 			vecLinear:Add(vecLinearSum)
 			vecLinear:Add(xyDamp)
-			vecLinear.x = vecLinear.x + ctrlFwd * Lerp(ctrlTurbo, self.Speed, self.SpeedTurbo)
+			vecLinear.x = vecLinear.x + ctrlFwd * Lerp(ctrlTurbo, self.Speed, self.SpeedTurbo) * speedScalar
 			
 			return vecAngular, vecLinear, SIM_LOCAL_ACCELERATION
 		-- }}}

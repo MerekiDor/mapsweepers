@@ -32,6 +32,7 @@ ENT.RenderGroup = RENDERGROUP_OPAQUE
 	jcms.zombieCreepCells = jcms.zombieCreepCells or {}
 
 	-- // Cell Grid Definitions
+		local cellOffset = 128-17 --Mitigation for the extra size cells get making empty areas appear fleshed. Most hammer geometry is on power of 2 coords so this just offsets it a little.
 		local cellWidth = 512
 		local cellHeight = 256
 
@@ -48,7 +49,7 @@ ENT.RenderGroup = RENDERGROUP_OPAQUE
 	-- // Getters {{{
 		function jcms.zombieCreep_GetCellIndices(pos)
 			--Convert world space xyz to array space xyz
-			return math.floor((pos.x + 16384) / cellWidth, 0), math.floor((pos.y + 16384) / cellWidth, 0), math.floor((pos.z + 16384) / cellHeight, 0)
+			return math.floor((pos.x + 16384 + cellOffset) / cellWidth, 0), math.floor((pos.y + 16384 + cellOffset) / cellWidth, 0), math.floor((pos.z + 16384 + cellOffset) / cellHeight, 0)
 		end
 
 		function jcms.zombieCreep_GetCellByIndices(x, y, z)
@@ -70,7 +71,7 @@ ENT.RenderGroup = RENDERGROUP_OPAQUE
 			local yIndex = (zRemainder - yRemainder) / rowLength
 			local zIndex = (cell - zRemainder) / layerLength
 
-			return Vector((xIndex * cellWidth) - 16384, (yIndex * cellWidth)  - 16384, (zIndex * cellHeight) - 16384)
+			return Vector((xIndex * cellWidth) - 16384 - cellOffset, (yIndex * cellWidth)  - 16384 - cellOffset, (zIndex * cellHeight) - 16384 - cellOffset)
 		end
 	-- // }}}
 
@@ -205,8 +206,8 @@ if SERVER then
 		end
 		self:SetBloodColor(BLOOD_COLOR_ANTLION)
 		
-		self:SetMaxHealth(75)
-		self:SetHealth(75)
+		self:SetMaxHealth(150)
+		self:SetHealth(150)
 
 		self.jcms_ignoreStraggling = true
 	
@@ -267,7 +268,7 @@ if SERVER then
 			selfTbl.nextExpansion = cTime + expansionTime--]]
 
 			local depth = jcms.zombieCreep_cellDepths[self.jcms_zombieCreep_cell] or 0
-			local expansionTime = (17.5 / (self.scaleSpeed * (depth+1))) 
+			local expansionTime = (25 / (self.scaleSpeed * (depth+1))) 
 			selfTbl.nextExpansion = cTime + expansionTime
 
 
@@ -315,6 +316,10 @@ if SERVER then
 			local inflictor = dmgInfo:GetInflictor()
 			if IsValid(inflictor) and jcms.util_IsStunstick(inflictor) then 
 				dmgInfo:ScaleDamage(4)
+			end
+			
+			if bit.band( dmgInfo:GetDamageType(), bit.bor(DMG_BLAST,DMG_BLAST_SURFACE) ) > 0 then
+				dmgInfo:ScaleDamage(2)
 			end
 		-- // }}}
 
@@ -454,7 +459,7 @@ if CLIENT then
 					--Calculate our mins / maxes for the box
 					local mins, maxs = jcms.zombieCreep_GetCellPos(chunkStart) - offs, jcms.zombieCreep_GetCellPos(chunkEnd) + vecCellSize + offs
 
-					-- normal mins/maxes, inner mins/maxes, outermins/maxes
+					--normal mins/maxes, inner mins/maxes, outermins/maxes
 					table.insert(jcms.zombieCreepBoxes, {mins, maxs, mins - offs2, maxs + offs2, mins + offs2, maxs - offs2})
 
 					--We still have to check after our mesh's last x, but we can skip a few cells we've already looked at.
