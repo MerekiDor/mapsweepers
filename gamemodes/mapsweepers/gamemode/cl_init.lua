@@ -1433,6 +1433,11 @@ end)
 	hook.Add("OnPlayerChat", "jcms_trackChatHistory", function(ply, text, teamChat, isDead)
 		if not IsValid(ply) or not ply:IsPlayer() then return end 
 
+		if IsValid(jcms.offgame) then
+			surface.PlaySound( "common/talk.wav" )
+			surface.PlaySound( "npc/metropolice/vo/on1.wav" ) --Feel free to remove if this gets annoying. Apparently surface.PlaySound doesn't support pitch.
+		end
+
 		jcms.chatHistory_Add(ply:Nick(), text, "chat")
 	end)
 
