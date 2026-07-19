@@ -238,4 +238,26 @@
 			return false
 		end
 	end
+
+	do --Save Found Logs
+		local codexLogs = "mapsweepers/client/codexLogs.txt"
+		hook.Add("InitPostEntity", "jcms_restoreFoundLogs", function()
+			if file.Exists(codexLogs, "DATA") then
+				local dataTxt = file.Read(codexLogs, "DATA")
+				local dataTbl = util.JSONToTable(util.Decompress(dataTxt))
+
+				table.Merge(jcms.codex_logsUnlocked, dataTbl, true)
+			end
+		end)
+
+		local function storeFoundLogs()
+			if not jcms.fullyLoaded then return end
+			
+			local dataStr = util.Compress( util.TableToJSON(jcms.codex_logsUnlocked) )
+			file.Write(codexLogs, dataStr)
+		end
+
+		hook.Add("client_disconnect", "jcms_storeFoundLogs", storeFoundLogs)
+		hook.Add("ShutDown", "jcms_storeFoundLogs", storeFoundLogs)
+	end
 -- }}}
