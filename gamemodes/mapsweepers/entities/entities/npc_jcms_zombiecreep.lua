@@ -41,6 +41,7 @@ ENT.RenderGroup = RENDERGROUP_OPAQUE
 		local totalLength = layerLength * math.ceil(32768 / cellHeight) --Max index of the table
 	-- // }}}
 	local vecCellSize = Vector(cellWidth, cellWidth, cellHeight)
+	jcms.zombieCreep_cellSize = vecCellSize
 	
 	--Optimisation - tracking the start/end so we don't have to check a ton of empty spots each rebuild.
 	jcms.zombieCreepMinCell = jcms.zombieCreepMinCell or totalLength
@@ -210,6 +211,13 @@ if SERVER then
 		self:SetHealth(150)
 
 		self.jcms_ignoreStraggling = true
+
+		local ed = EffectData()
+			ed:SetStart(self:GetPos())
+			ed:SetOrigin(self:GetPos())
+			ed:SetMagnitude(2)
+
+		util.Effect("jcms_creepexpand", ed)
 	
 		-- // Cell & Expansion
 			local cell = jcms.zombieCreep_GetCell( self:GetPos() )
