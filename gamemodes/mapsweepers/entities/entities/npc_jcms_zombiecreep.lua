@@ -194,6 +194,10 @@ if SERVER then
 
 	function ENT:Initialize()
 		self:SetModel("models/barnacle.mdl")
+		
+		self:SetSubMaterial(0, "models/jcms/zombiecreep/body")
+		self:SetSubMaterial(1, "vgui/null")
+		self:SetSubMaterial(2, "vgui/null")
 		self:SetAngles( Angle(0, 0, 180) )
 
 		self:PhysicsInitBox( Vector(-52,-52,0),Vector(52,52,52) )
