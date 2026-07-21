@@ -70,11 +70,15 @@ if SERVER then
 			end
 		else
 			if self.nextJammerSwitch < CurTime() then 
+				self.nextJammerSwitch = CurTime() + self.JammerSwitchInterval
+
 				self.jammerIndex = (self.jammerIndex % #self.jammers) + 1
 
 				for i, subTbl in ipairs(self.jammers) do 
-					for i, jammer in ipairs(subTbl) do 
+					local relativeIndex = (i - self.jammerIndex + #self.jammers) % #self.jammers 
+					for _, jammer in ipairs(subTbl) do 
 						jammer:SetIsActive(false)
+						jammer:SetNextStateSwitch(CurTime() + (relativeIndex * self.JammerSwitchInterval))
 					end
 				end
 
@@ -92,12 +96,11 @@ if SERVER then
 					timer.Create(timerName, 1, 3, ping) --3s
 
 					timer.Simple(4, function()
-						if not IsValid(jammer) then return end
+						if not IsValid(jammer) or self:GetShieldJCorp() then return end
 						jammer:SetIsActive(true)
+						jammer:SetNextStateSwitch(self.nextJammerSwitch)
 					end)
 				end
-
-				self.nextJammerSwitch = CurTime() + self.JammerSwitchInterval
 			end
 		end
 

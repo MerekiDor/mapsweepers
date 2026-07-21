@@ -880,7 +880,6 @@ end)
 					render.SetColorMaterial()
 					render.DrawSphere(pos, -rad, 22, 22, color_white)
 				end
-			
 			render.OverrideBlend(false)
 			
 			render.SetStencilCompareFunction(STENCIL_EQUAL)
@@ -889,7 +888,7 @@ end)
 			render.OverrideBlend(true, BLEND_ONE, BLEND_ONE, BLENDFUNC_ADD)
 				cam.Start2D()
 					surface.SetMaterial(jcms.mat_noise)
-					surface.SetDrawColor(220/2, 180/2, 250/2)
+					surface.SetDrawColor(220*0.65, 180*0.65, 250*0.65)
 					jcms.hud_DrawNoiseRect(0, 0, ScrW(), ScrH())
 				cam.End2D()
 			render.OverrideBlend(false)

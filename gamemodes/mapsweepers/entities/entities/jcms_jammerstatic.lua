@@ -33,6 +33,7 @@ ENT.JammingTime = 2
 
 function ENT:SetupDataTables()
 	self:NetworkVar("Bool", 0, "IsActive")
+	self:NetworkVar("Float", 0, "NextStateSwitch")
 
 	self:NetworkVarNotify("IsActive", function(ent, name, old, new )
 		if old == new then return end
@@ -96,9 +97,67 @@ if SERVER then
 	end
 end
 
-if CLIENT then
+if CLIENT then	
+	ENT.SwitchInterval = scripted_ents.GetMember("jcms_mainframe", "JammerSwitchInterval")
+	
+	ENT.chargebarRT = GetRenderTarget("jcms_jammerpillarchargebar_rt", 8, 200)
+	ENT.chargebarRTMat = CreateMaterial("jcms_jammerpillarchargebar", "VertexLitGeneric", {
+		["$basetexture"] = ENT.chargebarRT:GetName(),
+		["$pointsamplemagfilter"] = 1,
+		["$selfillum"] = 1
+	})
+
 	function ENT:Initialize()
 		self:SetRenderBounds(jcms.vectorOrigin, jcms.vectorOrigin, Vector(self.JammingRadius, self.JammingRadius, self.JammingRadius) )
+	end
+
+	function ENT:RenderScreen()
+		local timeFrac = (self:GetNextStateSwitch() - CurTime()) / self.SwitchInterval
+		local barHeight = math.Round(timeFrac*200)
+
+		render.PushRenderTarget(self.chargebarRT)
+		cam.Start2D()
+		
+			if timeFrac < 0 and (CurTime()+0.03)%0.5<0.25 then 
+				surface.SetDrawColor(99, 53, 0)
+				surface.DrawRect(0, 0, 8, 200, 1)
+
+				surface.SetDrawColor(252, 255, 82)
+				surface.DrawRect(0, 0, 8, 200, 1)
+
+				surface.SetDrawColor(255, 211, 13)
+				surface.DrawOutlinedRect(0, 0, 8, 200, 1)	
+			else
+				if self:GetIsActive() then
+					surface.SetDrawColor(81, 0, 99)
+				else
+					surface.SetDrawColor(15, 0, 99)
+				end
+				surface.DrawRect(0, 0, 8, 200 - barHeight, 1)
+	
+				if self:GetIsActive() then
+					surface.SetDrawColor(185, 99, 255)
+				else
+					surface.SetDrawColor(99, 255, 247)
+				end
+				
+				surface.DrawRect(0, 200 - barHeight, 8, barHeight, 1)
+				if self:GetIsActive() then
+					surface.SetDrawColor(238, 108, 255)
+				else
+					surface.SetDrawColor(108, 135, 255)
+				end
+				surface.DrawOutlinedRect(0, 200 - barHeight, 8, barHeight, 1)	
+			end
+		cam.End2D()
+		render.PopRenderTarget()
+	end
+
+	function ENT:Draw()
+		self:RenderScreen()
+		render.MaterialOverrideByIndex(1, self.chargebarRTMat)
+		self:DrawModel()
+		render.MaterialOverrideByIndex()
 	end
 
 	function ENT:DrawTranslucent()
@@ -107,7 +166,6 @@ if CLIENT then
 		end
 	end
 
-	--TODO: Would be nice if progress until we activate/deactivate was displayed in the same manner as datadownload HP
 	function ENT:DrawStaticOverlay()
 		jcms.render_JammerSphere( self:GetPos(), self.JammingRadius )
 	end

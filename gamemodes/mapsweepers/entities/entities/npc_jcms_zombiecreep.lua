@@ -216,11 +216,12 @@ if SERVER then
 
 		self.jcms_ignoreStraggling = true
 
+		self:AddEFlags(EFL_FORCE_CHECK_TRANSMIT)
+
 		local ed = EffectData()
 			ed:SetStart(self:GetPos())
 			ed:SetOrigin(self:GetPos())
 			ed:SetMagnitude(2)
-
 		util.Effect("jcms_creepexpand", ed)
 	
 		-- // Cell & Expansion
@@ -267,6 +268,10 @@ if SERVER then
 		local densityMult = avgSizeMult / densityMult
 
 		self.scaleSpeed = sizeMult * densityMult
+	end
+
+	function ENT:UpdateTransmitState()
+		return TRANSMIT_ALWAYS
 	end
 
 	local npcMins, npcMaxs = Vector(-52,-52,0),Vector(52,52,52)
