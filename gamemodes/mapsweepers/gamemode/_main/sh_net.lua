@@ -390,6 +390,7 @@ if SERVER then
 			net.WriteUInt(WLD_MISSIONTOGGLE, bits_wld)
 			net.WriteBool(true)
 			net.WriteBool(true)
+			net.WriteString(jcms.director_GetIntroMusicOverride())
 		net.Broadcast()
 	end
 	
@@ -1142,7 +1143,13 @@ if CLIENT then
 				jcms.aftergame_bonuses = nil
 
 				if isNewMission and jcms.shouldPlayMusic() then -- Disable music if we have Nombat or DOOM music addons
-					jcms.playRandomSong()
+					local musicOverride = net.ReadString()
+
+					if musicOverride ~= "" then 
+						surface.PlaySound(musicOverride)
+					else
+						jcms.playRandomSong()
+					end
 				end
 				
 				jcms.hud_BeginningSequence()

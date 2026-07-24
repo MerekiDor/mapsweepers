@@ -31,6 +31,10 @@ jcms.missions.eschaton = {
 		["ambient/explosions/exp3.wav"] = 1,
 		["ambient/explosions/exp4.wav"] = 1
 	},
+
+	musicOverride = {
+		"jcms/missionstart.mp3"
+	},
 	
 	generate = function(data, missionData)
 		jcms.mapgen_PlaceNaturals( jcms.mapgen_AdjustCountForMapSize(20) )

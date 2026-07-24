@@ -181,6 +181,16 @@
 	-- }}}
 	
 	-- Helpers {{{
+		function jcms.director_GetIntroMusicOverride()
+			local d = jcms.director
+			if d and d.missionType and jcms.missions[d.missionType] and jcms.missions[d.missionType].musicOverride then 
+				local musicOverride = jcms.missions[d.missionType].musicOverride
+				return musicOverride[math.random(#musicOverride)]
+			end
+
+			return ""
+		end
+
 		function jcms.director_GetMissionTime()
 			return CurTime() - (jcms.director.missionStartTime or 0)
 		end

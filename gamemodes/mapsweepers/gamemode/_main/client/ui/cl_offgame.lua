@@ -231,7 +231,8 @@ jcms.offgame = jcms.offgame or NULL
 
 			-- Primary {{{
 				pnl.buttonsPrimary = { selection = 1 }
-				
+
+				--Mission tab
 				local bMis = pnl:Add("DButton")
 				bMis:SetText("#jcms.mission")
 				bMis.BuildFunc = function(tab)
@@ -248,6 +249,7 @@ jcms.offgame = jcms.offgame or NULL
 				end
 				table.insert(pnl.buttonsPrimary, bMis)
 				
+				--Stats tab
 				local bPersonal = pnl:Add("DButton")
 				bPersonal:SetText("#jcms.mystats")
 				bPersonal.BuildFunc = function(tab) 
@@ -255,6 +257,7 @@ jcms.offgame = jcms.offgame or NULL
 				end
 				table.insert(pnl.buttonsPrimary, bPersonal)
 				
+				--Information tab
 				local bInfo = pnl:Add("DButton")
 				bInfo:SetText("#jcms.information")
 				bInfo.BuildFunc = function(tab) 
@@ -262,6 +265,7 @@ jcms.offgame = jcms.offgame or NULL
 				end
 				table.insert(pnl.buttonsPrimary, bInfo)
 
+				--Options tab
 				local bOpts = pnl:Add("DButton")
 				bOpts:SetText("#jcms.options")
 				bOpts.BuildFunc = function(tab) 
@@ -269,6 +273,7 @@ jcms.offgame = jcms.offgame or NULL
 				end
 				table.insert(pnl.buttonsPrimary, bOpts)
 
+				--Leaderboard tab
 				if not game.SinglePlayer() then
 					local bLeaderboard = pnl:Add("DButton")
 					bLeaderboard:SetText("#jcms.leaderboard")

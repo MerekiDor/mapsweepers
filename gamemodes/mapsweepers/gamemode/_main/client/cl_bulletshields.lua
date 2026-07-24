@@ -213,7 +213,7 @@ local function drawSweeperShield(ent)
 	if swpShield <= 0 then return end
 
 	local maxShield = jcms.sweeperShield_EntMaxCache[ent] or 0 --TODO: Why does this very briefly get nilled sometimes?
-	local rgb = jcms.sweeperShield_EntColourCache[ent] or 0 --r,g,b as a 3 value table
+	local rgb = jcms.sweeperShield_EntColourCache[ent] or {0,0,0} --r,g,b as a 3 value table
 	
 	local isDecayShield = swpShield > maxShield
 	local alpha = (isDecayShield and 1) or math.Clamp(swpShield/maxShield, 0, 1) --TODO: Why did I do (isDecayShield and 1) again? Double check if that's needed (clamp seems like it should handle it?)
