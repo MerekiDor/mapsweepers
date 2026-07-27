@@ -97,8 +97,8 @@ if SERVER then
 	end
 end
 
-if CLIENT then	
-	ENT.SwitchInterval = scripted_ents.GetMember("jcms_mainframe", "JammerSwitchInterval")
+if CLIENT then
+	ENT.SwitchInterval = 120 --scripted_ents.GetMember("jcms_mainframe", "JammerSwitchInterval") --This causes load-order issues, hardcoded for now.
 	
 	ENT.chargebarRT = GetRenderTarget("jcms_jammerpillarchargebar_rt", 8, 200)
 	ENT.chargebarRTMat = CreateMaterial("jcms_jammerpillarchargebar", "VertexLitGeneric", {

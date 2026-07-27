@@ -329,7 +329,7 @@ if CLIENT then
 					eyeMat:Rotate(eyeAng)
 
 					cam.PushModelMatrix(eyeMat)
-						if eye == 2 then
+						if eye == 2 and (selfTbl.GetBeam1 or selfTbl.GetBeam2) then
 							local beam = smul==-1 and selfTbl:GetBeam1() or selfTbl:GetBeam2()
 
 							if IsValid(beam) then
