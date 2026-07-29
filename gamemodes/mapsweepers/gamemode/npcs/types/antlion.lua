@@ -940,7 +940,9 @@ jcms.npc_types.antlion_ultracyberguard = {
 				--npc.jcms_cyberguardLastAtk = CurTime() --Stop the shieldbubble logic from interrupting us
 				timer.Simple(0.9, function()
 					if not IsValid(npc) or not IsValid(enemy) or not(npc:GetCurrentSchedule() == SCHED_RANGE_ATTACK2) then
-						npc:RemoveLayer( gestureLayer )
+						if IsValid(npc) then
+							npc:RemoveLayer( gestureLayer )
+						end
 						return 
 					end 
 					--npc:SetPlaybackRate(0.15)
