@@ -50,6 +50,10 @@
 	-- Do NOT put underscores in your mission key names. They're strictly lowercase latin characters.
 	
 	jcms.missions = {}
+	function jcms.mission_IsBossMission(winstreak)
+		return jcms.runprogress.winstreak > 0 and jcms.runprogress.winstreak % 5 == 0
+	end
+
 	function jcms.mission_GetWeightedTypes(pvpOnly, isBoss) --Gets weights for all missions based on previous missions/factions
 		local misHistoryWeights, facHistoryWeights = jcms.runprogress_GetMissionHistoryWeights()
 		
@@ -264,8 +268,7 @@
 	end
 
 	function jcms.mission_Randomize()
-		local isBoss = jcms.runprogress.winstreak > 0 and jcms.runprogress.winstreak % 5 == 0
-		local missionWeights = jcms.mission_GetWeightedTypes(jcms.util_IsPVP(), isBoss)
+		local missionWeights = jcms.mission_GetWeightedTypes(jcms.util_IsPVP(), jcms.mission_IsBossMission())
 
 		local newType = jcms.util_ChooseByWeight(missionWeights)
 		local data = assert(jcms.missions[ newType ], "error randomizing mission type, picked an invalid one: '" .. tostring(newType) .. "'")
@@ -460,6 +463,8 @@
 		
 		jcms.serverExtension_forcedEvac = false
 		jcms.serverExtension_suddenDeath = false
+		
+		jcms.leaderboard_UpdateCanUseWinstreakToken()
 	end
 
 	function jcms.mission_SetStartDelay(delay)

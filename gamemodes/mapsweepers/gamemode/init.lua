@@ -506,6 +506,10 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 	end)
 	
 	hook.Add("OnNPCKilled", "jcms_OnKill", function(npc, attacker, inflictor)
+		if npc.jcms_onKilled then 
+			npc:jcms_onKilled(attacker, inflictor)
+		end
+
 		if IsValid(attacker) and attacker:IsPlayer() then
 			if jcms.director and jcms.director.gameover then
 				return
@@ -2099,6 +2103,8 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 			rp.difficulty = jcms.runprogress_CalculateDifficultyFromWinstreak(rp.winstreak, rp.totalWins)
 			game.GetWorld():SetNWInt("jcms_winstreak", rp.winstreak)
 			game.GetWorld():SetNWInt("jcms_difficulty", rp.difficulty)
+			
+			jcms.leaderboard_UpdateCanUseWinstreakToken()
 		end
 	end)
 
@@ -2267,6 +2273,30 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 				ply:ConCommand("jcms_jointeam 1")
 			end
 		end
+	end)
+
+	concommand.Add("jcms_redeemwinstreaktoken", function(ply, cmd, args)
+		jcms.leaderboard_UpdateCanUseWinstreakToken()
+		if not(jcms.leaderboard_CanUseWinstreakToken() and ply:GetNWInt("jcms_winstreakTokens", -1 ) > 0) then return end
+
+		jcms.util_playSoundGlobal("ambient/levels/labs/coinslot1.wav")
+
+		jcms.runprogress_Victory()
+		jcms.leaderboard_UpdateCanUseWinstreakToken()
+
+		for i, ply in player.Iterator() do
+			local sid64 = ply:SteamID64()
+
+			local evacCash = jcms.cvar_cash_evac:GetInt()
+			local winCash = jcms.cvar_cash_victory:GetInt()
+
+			jcms.runprogress_AddStartingCash(sid64, evacCash + winCash)
+		end
+
+		jcms.leaderboard_TakeWinstreakToken(ply)
+		jcms.leaderboard_UpdatePlayerWinstreakTokens(ply)
+
+		jcms.mission_Randomize()
 	end)
 
 	concommand.Add("jcms_setclass", function(ply, cmd, args)
@@ -3059,6 +3089,14 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 				util.ScreenShake( pos, 300, 40, 4.5, 32000, true, filter )
 			end)
 		end)
+	end
+
+	function jcms.util_playSoundGlobal(soundName, volume, pitch)
+		local filter = RecipientFilter()
+		filter:AddAllPlayers()
+		local soundPatch = CreateSound(game.GetWorld(), soundName, filter)
+		soundPatch:SetSoundLevel(0)
+		soundPatch:PlayEx(volume or 1, pitch or 100)
 	end
 
 -- // }}}

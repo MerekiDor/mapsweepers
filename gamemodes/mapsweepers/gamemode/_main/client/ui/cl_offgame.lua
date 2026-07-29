@@ -812,11 +812,43 @@ jcms.offgame = jcms.offgame or NULL
 
 					bJoinTeam2.DoClick = bJoinTeam1.DoClick
 				-- }}}
+					
+				local yOffs = 0
+				local tokens = LocalPlayer():GetNWInt("jcms_winstreakTokens", -1)
+				if jcms.util_GetWinstreakTokensAllowed() and tokens > 0 then
+					local bWinstreakToken = pnlPVE:Add("DButton")
+
+					local text = string.format([=[Redeem Winstreak Token [%d] ]=], tokens)
+					bWinstreakToken:SetText(text)
+					bWinstreakToken:SetPos(0, 90)
+					bWinstreakToken:SetSize(300, 32)
+					bWinstreakToken.Paint = jcms.paint_ButtonFilled
+					bWinstreakToken.jFont = "jcms_medium"
+					function bWinstreakToken:DoClick()
+						RunConsoleCommand("jcms_redeemwinstreaktoken")
+
+						tokens = LocalPlayer():GetNWInt("jcms_winstreakTokens", -1)
+						local text = string.format([=[Redeem Winstreak Token [%d] ]=], tokens - 1)
+						bWinstreakToken:SetText(text)
+
+						if tokens-1 <= 0 then
+							bWinstreakToken:Remove()
+						end
+
+						timer.Simple(0.1, function() --Unreliable, hide based on updated NWVar
+							if IsValid(bWinstreakToken) and not jcms.util_GetWinstreakTokensAllowed() then
+								bWinstreakToken:Remove()
+							end
+						end)
+					end
+
+					yOffs = 60
+				end
 
 				if LocalPlayer():IsAdmin() then
 					local bChangeMission = btnHouse:Add("DButton")
 					bChangeMission:SetText("#jcms.changemission_sp")
-					bChangeMission:SetPos(32, 264)
+					bChangeMission:SetPos(32, 264 + yOffs)
 					bChangeMission:SetSize(400-64-24, 32)
 					bChangeMission.Paint = jcms.paint_Button
 					bChangeMission.jFont = "jcms_medium"
@@ -827,7 +859,7 @@ jcms.offgame = jcms.offgame or NULL
 
 					local bTogglePVP = btnHouse:Add("DButton")
 					bTogglePVP:SetText("")
-					bTogglePVP:SetPos(48, 264 + 32 + 4)
+					bTogglePVP:SetPos(48, 264 + 32 + 4 + yOffs)
 					bTogglePVP:SetSize(400-64-24, 32)
 					bTogglePVP.Paint = jcms.paint_Button
 					bTogglePVP.jFont = "jcms_medium"

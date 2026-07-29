@@ -95,11 +95,35 @@
 				playerStats[sid64] = jcms.leaderboard_GetStatsPVE(sid64)
 			end
 
+			local postMissionStats = jcms.director_GetPostMissionStats()
+			local playerSid64Stats = {}
+			for i, pd in ipairs(postMissionStats.players) do 
+				playerSid64Stats[pd.sid64] = pd
+			end
+
+			--rt(playercount) rounded up max of 4
+			local eligbleWinstreakTokens = math.min(math.ceil(math.sqrt(player.GetCount())), 4)
+			if victory and jcms.mission_IsBossMission() then --winstreak tokens being granted
+				--Separation of concern? What's that?
+				jcms.util_playSoundGlobal("garrysmod/ui_click.wav", 1, 120)
+			end
+
+			table.Shuffle(playerStats)
 			for sid64, stats in pairs(playerStats) do
 				if victory then --If we won and are present or forgiven we get positive increases
 					if jcms.leaderboard_VictoryEligble(sid64) then 
 						stats.wins = stats.wins + 1
 						stats.highestWinstreak = math.max(stats.highestWinstreak, jcms.runprogress.winstreak)
+
+						if jcms.leaderboard_WinstreakTokenEligble(playerSid64Stats[sid64]) and eligbleWinstreakTokens > 0 then
+							stats.winstreakTokens = stats.winstreakTokens + 1
+							eligbleWinstreakTokens = eligbleWinstreakTokens - 1
+							
+							local ply = player.GetBySteamID64(sid64)
+							if IsValid(ply) then
+								PrintMessage( HUD_PRINTTALK, "[MapSwepeers] " .. ply:Nick() .. " earned a winstreak token" )
+							end
+						end
 					end
 				else --If we lost and were here at all we lose
 					stats.losses = stats.losses + 1
@@ -109,6 +133,10 @@
 			end
 
 			jcms.leaderboard_RecalculateTopPlayers( playerStats, false )
+
+			for i, ply in player.Iterator() do
+				jcms.leaderboard_UpdatePlayerWinstreakTokens(ply) --A little wasteful but the perf impact is tiny so who cares
+			end
 		end
 
 		function jcms.leaderboard_PVPRoundEnd(winningTeam)
@@ -232,6 +260,49 @@
 		end
 -- // }}}
 
+-- // Winstreak Tokens {{{
+	hook.Add("PlayerInitialSpawn", "jcms_RestoreWinstreakTokens", function(ply)
+		jcms.leaderboard_UpdatePlayerWinstreakTokens(ply)
+	end)
+
+	--game.IsDedicated()
+	function jcms.leaderboard_CanUseWinstreakToken()
+		--TODO: Cap based on highest winstreak (maybe of all players on the server?)
+		return not jcms.mission_IsBossMission(jcms.runprogress.winstreak)
+	end
+
+	function jcms.leaderboard_WinstreakTokenEligble( playerPostMissionStats )
+		return playerPostMissionStats.evacuated and jcms.mission_IsBossMission()
+	end
+
+
+	--Net stuff
+	function jcms.leaderboard_UpdateCanUseWinstreakToken()
+		game.GetWorld():SetNWBool("jcms_canUseWinstreakTokens", jcms.leaderboard_CanUseWinstreakToken())
+	end
+
+	function jcms.leaderboard_UpdatePlayerWinstreakTokens(ply)
+		local stats = jcms.leaderboard_GetStatsPVE(ply:SteamID64())
+		ply:SetNWInt("jcms_winstreakTokens", stats.winstreakTokens)
+	end
+
+	function jcms.leaderboard_TakeWinstreakToken(ply)
+		local sid64 = ply:SteamID64()
+		local pveStats = jcms.leaderboard_GetStatsPVE(sid64)
+
+		pveStats.winstreakTokens = pveStats.winstreakTokens - 1
+		jcms.leaderboard_SaveStats(pveStats, sid64, false)
+	end
+
+	function jcms.leaderboard_GiveWinstreakToken(ply)
+		local sid64 = ply:SteamID64()	
+		local pveStats = jcms.leaderboard_GetStatsPVE(sid64)
+
+		pveStats.winstreakTokens = pveStats.winstreakTokens + 1
+		jcms.leaderboard_SaveStats(pveStats, sid64, false)
+	end
+-- // }}}
+
 
 -- // Filesystem {{{
 	file.CreateDir("mapsweepers")
@@ -260,6 +331,7 @@
 				highestWinstreak = 0,
 				wins = 0,
 				losses = 0,
+				winstreakTokens = 0
 			}
 			
 			jcms.leaderboard_TryLoadStats(statsTbl, sid64, false)
@@ -285,7 +357,7 @@
 			local dir = isPVP and pvpDir or pveDir
 			local filePath = dir .. "/" .. sid64 .. ".json"
 			if file.Exists(filePath, "DATA") then
-				local fileTbl = util.JSONToTable(file.Read(filePath)) --TODO: Compress
+				local fileTbl = util.JSONToTable(file.Read(filePath))
 				table.Merge(statsTbl, fileTbl)
 			end
 			--Results affect statsTabl

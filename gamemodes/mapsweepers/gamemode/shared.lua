@@ -1583,6 +1583,10 @@ local nmt = FindMetaTable("NPC")
 		return game.GetWorld():GetNWInt("jcms_winstreak", 0)
 	end
 
+	function jcms.util_GetWinstreakTokensAllowed()
+		return game.GetWorld():GetNWBool("jcms_canUseWinstreakTokens", false)
+	end
+
 	function jcms.util_GetCurrentDifficulty() --NOTE: Ditto
 		return game.GetWorld():GetNWFloat("jcms_difficulty", 0)
 	end
