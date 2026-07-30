@@ -28,6 +28,9 @@ ENT.Category = "Map Sweepers"
 ENT.Spawnable = false
 ENT.RenderGroup = RENDERGROUP_BOTH
 
+ENT.SlowChargeRate = 5
+ENT.CanStunstickAccelerate = true
+
 function ENT:Initialize()
 	self:SetModel("models/jcms/jcorp_evac.mdl")
 
@@ -168,7 +171,7 @@ if SERVER then
 				local cTime = CurTime()
 				if safe or selfTbl.nextSlowCharge < cTime then 
 					selfTbl:SetCharge(charge + 1)
-					selfTbl.nextSlowCharge = cTime + 5
+					selfTbl.nextSlowCharge = cTime + self.SlowChargeRate
 				end
 
 				if selfTbl:GetCharge() > maxcharge then 
@@ -188,6 +191,8 @@ if SERVER then
 	end
 
 	function ENT:OnTakeDamage(dmgInfo)
+		if not self.CanStunstickAccelerate then return end
+
 		local attacker = dmgInfo:GetAttacker()
 		if attacker:IsPlayer() and jcms.util_IsStunstick( dmgInfo:GetInflictor() ) and self:GetCanCharge() and not self:IsBeamActive() then
 			--Boost our charge every 3 hits.

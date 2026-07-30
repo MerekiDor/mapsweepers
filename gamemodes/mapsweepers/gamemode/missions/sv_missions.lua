@@ -464,6 +464,7 @@
 		jcms.serverExtension_forcedEvac = false
 		jcms.serverExtension_suddenDeath = false
 		
+		jcms.leaderboard_RecalculateHighestWinstreak()
 		jcms.leaderboard_UpdateCanUseWinstreakToken()
 	end
 

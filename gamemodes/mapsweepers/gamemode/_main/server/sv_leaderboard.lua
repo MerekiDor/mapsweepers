@@ -261,14 +261,30 @@
 -- // }}}
 
 -- // Winstreak Tokens {{{
-	hook.Add("PlayerInitialSpawn", "jcms_RestoreWinstreakTokens", function(ply)
+	hook.Add("PlayerInitialSpawn", "jcms_WinstreakTokens_Restore", function(ply)
 		jcms.leaderboard_UpdatePlayerWinstreakTokens(ply)
+		jcms.leaderboard_RecalculateHighestWinstreak()
+	end)
+	
+	hook.Add("PlayerDisconnected", "jcms_WinstreakTokens_PlayerLeft", function(ply)
+		jcms.leaderboard_RecalculateHighestWinstreak()
 	end)
 
-	--game.IsDedicated()
+	jcms.leaderboard_highestWinstreak = jcms.leaderboard_highestWinstreak or 0
+	function jcms.leaderboard_RecalculateHighestWinstreak()
+		local highest = 0
+
+		for i, ply in player.Iterator() do 
+			local stats = jcms.leaderboard_GetStatsPVE(ply:SteamID64())
+			highest = math.max(highest, stats.highestWinstreak)
+		end
+
+		jcms.leaderboard_highestWinstreak = highest
+		jcms.leaderboard_UpdateCanUseWinstreakToken()
+	end
+
 	function jcms.leaderboard_CanUseWinstreakToken()
-		--TODO: Cap based on highest winstreak (maybe of all players on the server?)
-		return not jcms.mission_IsBossMission(jcms.runprogress.winstreak)
+		return game.IsDedicated() and not jcms.mission_IsBossMission(jcms.runprogress.winstreak) and jcms.runprogress.winstreak < jcms.leaderboard_highestWinstreak
 	end
 
 	function jcms.leaderboard_WinstreakTokenEligble( playerPostMissionStats )

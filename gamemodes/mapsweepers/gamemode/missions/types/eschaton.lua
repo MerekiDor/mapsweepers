@@ -37,7 +37,7 @@ jcms.missions.eschaton = {
 	},
 	
 	generate = function(data, missionData)
-		jcms.mapgen_PlaceNaturals( jcms.mapgen_AdjustCountForMapSize(20) )
+		jcms.mapgen_PlaceNaturals( jcms.mapgen_AdjustCountForMapSize(30) )
 		jcms.mapgen_SpreadPrefabs("eschaton_remains", math.max(20, jcms.mapgen_AdjustCountForMapSize(5)), 100, false)
 		
 		--Prefabs from all factions
@@ -71,6 +71,8 @@ jcms.missions.eschaton = {
 			missionData.evacEnt:SetMaterial("models/jcms/jcorp_evac_old")
 
 			missionData.evacEnt.jcms_evacPreventCharge = true
+			missionData.evacEnt.CanStunstickAccelerate = false
+			missionData.evacEnt.SlowChargeRate = 3 --less punishing slow-charge
 		-- // }}}
 
 		-- // Defences {{{
