@@ -821,7 +821,7 @@ jcms.offgame = jcms.offgame or NULL
 				if jcms.util_GetWinstreakTokensAllowed() and tokens > 0 then
 					local bWinstreakToken = pnlPVE:Add("DButton")
 
-					local text = string.format([=[Redeem Winstreak Token [%d] ]=], tokens)
+					local text = language.GetPhrase("jcms.redeemwstokens"):format(tokens)
 					bWinstreakToken:SetText(text)
 					bWinstreakToken:SetPos(0, 90)
 					bWinstreakToken:SetSize(300, 32)
@@ -831,7 +831,7 @@ jcms.offgame = jcms.offgame or NULL
 						RunConsoleCommand("jcms_redeemwinstreaktoken")
 
 						tokens = LocalPlayer():GetNWInt("jcms_winstreakTokens", -1)
-						local text = string.format([=[Redeem Winstreak Token [%d] ]=], tokens - 1)
+						local text = language.GetPhrase("jcms.redeemwstokens"):format(tokens-1)
 						bWinstreakToken:SetText(text)
 
 						if tokens-1 <= 0 then
@@ -3528,7 +3528,7 @@ jcms.offgame = jcms.offgame or NULL
 			local frame = jcms.offgame:Add("DFrame")
 			
 			surface.SetFont("jcms_medium")
-			local tw, th = surface.GetTextSize([=[#jcms.modal_readynoweapons_description]=])
+			local tw, th = surface.GetTextSize("#jcms.modal_readynoweapons_description")
 
 			--almost everything in this function is copy pasted from the offgame_ModalJoinNPC function above
 			frame:SetSize(math.max(500, tw + 24 *2), 172)

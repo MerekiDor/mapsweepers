@@ -165,7 +165,7 @@ if CLIENT then
 
 			if eyeDist <= 128^2 then
 				if self:GetLocked() then 
-					draw.SimpleText( [=[LOCKED]=], "jcms_medium", 0, 96 + 54/2, surface.GetDrawColor(), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+					draw.SimpleText( language.GetPhrase("jcms.ammocrate_locked"), "jcms_medium", 0, 96 + 54/2, surface.GetDrawColor(), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 				else
 					draw.SimpleText( language.GetPhrase("jcms.cooldown_crate"):format(self:GetCooldown()), "jcms_medium", 0, 96+54+8, surface.GetDrawColor(), TEXT_ALIGN_CENTER )
 				end

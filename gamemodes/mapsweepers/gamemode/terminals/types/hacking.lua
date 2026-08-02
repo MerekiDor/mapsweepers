@@ -671,8 +671,9 @@ if CLIENT then
 
 	terms.sort = function(ent, mx, my, w, h, modedata)
 		local color_bg, color_fg, color_accent = jcms.terminal_GetColors(ent)
-		draw.SimpleText([=[Sort these pillars]=], "jcms_hud_small", w/2, 0, color_bg, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
-		draw.SimpleText([=[Sort these pillars]=], "jcms_hud_small", w/2, -2, color_fg, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+		local txt = language.GetPhrase("#jcms.sortpillars")
+		draw.SimpleText(txt, "jcms_hud_small", w/2, 0, color_bg, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+		draw.SimpleText(txt, "jcms_hud_small", w/2, -2, color_fg, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 
 		local parts = modedata:Split(" ")
 		local currentIndex = tonumber(parts[1])

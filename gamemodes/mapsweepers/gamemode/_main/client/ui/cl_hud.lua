@@ -2942,7 +2942,13 @@
 
 		-- // Respawn Queue {{{
 			local queuePos = me:GetNWInt("jcms_respawnQueuePos", 1)
-			local str = string.CardinalToOrdinal(queuePos) .. [=[ in line]=]
+
+			local str
+			if queuePos == 1 then
+				str = language.GetPhrase("jcms.respawnqueuepos_next")
+			else
+				str = language.GetPhrase("jcms.respawnqueuepos"):format(queuePos - 1)
+			end
 
 			local queueCol1 = jcms.color_dark
 			local queueCol2 = queuePos > 1 and jcms.color_bright or jcms.color_alert

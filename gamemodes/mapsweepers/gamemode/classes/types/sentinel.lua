@@ -502,8 +502,8 @@ if CLIENT then
 		local isAtMaxDamage = active and (barrierEnt:GetDamageTaken() >= barrierEnt:GetMaxDamageTaken())
 
 		local str1 = ("[%s]"):format( (input.LookupBinding("+walk") or "N/A"):upper() )
-		local str2 = [=[Bullet Barrier]=]
-		local str3 = ([=[Accumulated shields: %d]=]):format(accumulated)
+		local str2 = language.GetPhrase("jcms.bulletbarrier")
+		local str3 = language.GetPhrase("jcms.bulletbarrier_accum"):format(accumulated)
 
 		local colorDark = active and jcms.color_dark or jcms.color_dark_alt
 		local colorBright = active and (isAtMaxDamage and jcms.color_alert or jcms.color_bright) or jcms.color_bright_alt
