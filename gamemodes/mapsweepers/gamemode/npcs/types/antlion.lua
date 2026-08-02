@@ -1122,7 +1122,7 @@ jcms.npc_types.antlion_cyberbug = {
 				local enemyPos = enemy:GetPos()
 
 				npc:SetIdealYaw((enemyPos - npcPos):Angle().yaw)
-				if not(sched == 126 or sched == 125 or sched==41 or not npc:IsOnGround() or npcPos:DistToSqr(enemyPos) < 200^2) then  -- 126/125/41 = attacking, 108 = flying
+				if not(sched==126 or sched==125 or sched==41 or sched==118 or not npc:IsOnGround() or npcPos:DistToSqr(enemyPos) < 200^2) then  -- 126/125/41 = attacking, 108 = flying
 					if not IsValid(npc.jcms_cybershield) then
 						local barrier = ents.Create("jcms_sentinelbarrier")
 						barrier:SetSentinel(npc)
