@@ -515,7 +515,10 @@ jcms.offgame = jcms.offgame or NULL
 				pnl.controlPanel.bReady.Paint = jcms.paint_ButtonFilled
 				pnl.controlPanel.bReady.jFont = lowres and "jcms_small_bolder" or "jcms_medium"
 				function pnl.controlPanel.bReady:DoClick()
-					RunConsoleCommand("jcms_ready")
+					if next(LocalPlayer():GetWeapons(), 1) == nil then -- warn the player if they have no weapons
+						jcms.offgame_ModalReadyNoWeapons(pnl.tabPnl)
+					else RunConsoleCommand("jcms_ready")
+					end
 				end
 
 				pnl.controlPanel.bLeave = pnl.controlPanel:Add("DButton")
@@ -3520,6 +3523,52 @@ jcms.offgame = jcms.offgame or NULL
 				frame:Remove()
 			end
 		end
+
+		function jcms.offgame_ModalReadyNoWeapons(tab) -- appears when player readies without weapons
+			local frame = jcms.offgame:Add("DFrame")
+			
+			surface.SetFont("jcms_medium")
+			local tw, th = surface.GetTextSize([=[#jcms.modal_readynoweapons_description]=])
+
+			--almost everything in this function is copy pasted from the offgame_ModalJoinNPC function above
+			frame:SetSize(math.max(500, tw + 24 *2), 172)
+			frame:Center()
+			frame:SetDraggable(false)
+			frame:SetBackgroundBlur(true)
+			frame:SetDrawOnTop(true)
+			frame:ShowCloseButton(false)
+			frame:SetTitle("")
+			frame.Paint = jcms.paint_ModalReadyNoWeapons
+
+			local close = frame:Add("DButton")
+			close:SetText("x")
+			close:SetSize(64, 24)
+			close:SetPos(frame:GetWide() - close:GetWide() - 8, 8)
+			function close:DoClick()
+				frame:Remove()
+			end
+			close.Paint = jcms.paint_ButtonFilled
+
+			local confirm = frame:Add("DButton")
+			confirm:SetText("#jcms.confirm")
+			confirm:SetSize(200, 24)
+			confirm:SetY( frame:GetTall() - confirm:GetTall() - 12 )
+			confirm:CenterHorizontal(0.5)
+			confirm.Paint = jcms.paint_Button
+			function confirm:DoClick()
+				tab.Paint = jcms.offgame_paint_MissionPrepTab
+
+				for i, child in ipairs( tab:GetChildren() ) do
+					child:Remove()
+				end
+
+				RunConsoleCommand("jcms_ready")
+				surface.PlaySound("buttons/button14.wav")
+
+				frame:Remove()
+			end
+		end
+
 	-- }}}
 
 	-- Post-mission screen {{{
