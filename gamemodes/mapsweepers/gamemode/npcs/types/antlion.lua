@@ -1099,6 +1099,8 @@ jcms.npc_types.antlion_cyberbug = {
 		npc:SetHealth(npc:GetMaxHealth())
 
 		npc.jcms_shieldForcedOffUntil = 0
+		npc.jcms_shieldActivationStart = 0
+		npc.jcms_shieldActivationStarted = false
 
 		npc:CallOnRemove("jcms_cleanupShield", function()
 			if IsValid(npc.jcms_cybershield) then
@@ -1123,6 +1125,16 @@ jcms.npc_types.antlion_cyberbug = {
 
 				npc:SetIdealYaw((enemyPos - npcPos):Angle().yaw)
 				if not(sched==126 or sched==125 or sched==41 or sched==118 or not npc:IsOnGround() or npcPos:DistToSqr(enemyPos) < 200^2) then  -- 126/125/41 = attacking, 108 = flying
+					if not npc.jcms_shieldActivationStarted then
+						npc.jcms_shieldActivationStart = cTime
+						npc.jcms_shieldActivationStarted = true
+					end
+				else
+					npc.jcms_shieldActivationStarted = false
+				end
+
+				--Activate shield after a delay
+				if cTime - npc.jcms_shieldActivationStart > 0.1 and npc.jcms_shieldActivationStarted then
 					if not IsValid(npc.jcms_cybershield) then
 						local barrier = ents.Create("jcms_sentinelbarrier")
 						barrier:SetSentinel(npc)
@@ -1147,14 +1159,13 @@ jcms.npc_types.antlion_cyberbug = {
 						-- // }}}
 
 						barrier:SetParent(npc)
-
+						
 						npc.jcms_cybershield = barrier
-					else
-						--Slower attack speed
-						npc:SetPlaybackRate(0.75)
 					end
-
 					return
+				else
+					--Slower attack speed
+					npc:SetPlaybackRate(0.75)
 				end
 			end
 
