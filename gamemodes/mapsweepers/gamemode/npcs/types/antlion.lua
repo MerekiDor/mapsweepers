@@ -1077,6 +1077,125 @@ jcms.npc_types.antlion_reaper = {
 	end
 }
 
+jcms.npc_types.antlion_cyberbug = {
+	portalSpawnWeight = 0.1,
+	faction = "antlion",
+	
+	danger = jcms.NPC_DANGER_STRONG,
+	cost = 1,
+	swarmWeight = 0.3,
+
+	class = "npc_antlion",
+	bounty = 35,
+
+	postSpawn = function(npc)
+		npc:SetMaterial("models/jcms/cyberbug")
+
+		npc.jcms_dmgMult = 5
+		npc:SetMaxHealth(75)
+		npc:SetHealth(npc:GetMaxHealth())
+
+		npc.jcms_shieldForcedOffUntil = 0
+
+		npc:CallOnRemove("jcms_cleanupShield", function()
+			if IsValid(npc.jcms_cybershield) then
+				npc.jcms_cybershield:Remove()
+			end
+		end)
+		
+		local timerName = "jcms_cyberbug_fastthink" .. tostring(npc:EntIndex())
+		timer.Create(timerName, 0.1, 0, function()
+			if not IsValid(npc) or npc:Health() <= 0 then
+				timer.Remove(timerName)
+				return
+			end
+
+			local cTime = CurTime()
+			local enemy = npc:GetEnemy()
+			if IsValid(enemy) and cTime > npc.jcms_shieldForcedOffUntil then
+				local sched = npc:GetCurrentSchedule()
+				--:SetIdealYaw( number angle )
+				local npcPos = npc:GetPos()
+				local enemyPos = enemy:GetPos()
+
+				npc:SetIdealYaw((enemyPos - npcPos):Angle().yaw)
+				if not(sched == 126 or sched == 125 or sched==41 or not npc:IsOnGround() or npcPos:DistToSqr(enemyPos) < 200^2) then  -- 126/125/41 = attacking, 108 = flying
+					if not IsValid(npc.jcms_cybershield) then
+						local barrier = ents.Create("jcms_sentinelbarrier")
+						barrier:SetSentinel(npc)
+						barrier:SetIsAntlionShield(true)
+						barrier:Spawn()
+						barrier:SetModelScale(1.5, 0)
+						barrier:SetMaterial("jcms_antlionSentinelShield")
+						--barrier:SetColor(jcms.factions_GetColor("antlion"))
+
+						-- // Position set-up {{{
+							local pos, ang = npc:WorldSpaceCenter(), npc:EyeAngles()
+							local fwd = ang:Forward()
+							local up = ang:Up()
+							ang:RotateAroundAxis(up, 180)
+							
+							fwd:Mul(64 + math.abs(ang.p)/180*32)
+							pos:Add(fwd)
+
+							ang.p = ang.p * 0.75
+							barrier:SetPos(pos)
+							barrier:SetAngles(ang)
+						-- // }}}
+
+						barrier:SetParent(npc)
+
+						npc.jcms_cybershield = barrier
+					else
+						--Slower attack speed
+						npc:SetPlaybackRate(0.75)
+					end
+
+					return
+				end
+			end
+
+			--We have a guard statement in the block above
+			if IsValid(npc.jcms_cybershield) then 
+				npc.jcms_cybershield:Remove()
+				npc.jcms_shieldForcedOffUntil = cTime + 0.5
+			end
+		end)
+	end,
+
+	think = function(npc)
+		jcms.npc_AntlionFodder_Think(npc)
+	end,
+
+	onKilled = function(npc, attacker, inflictor)
+		if IsValid(npc.jcms_cybershield) then
+			npc.jcms_cybershield:Remove()
+		end
+	end,
+
+	
+	takeDamage = function(npc, dmgInfo)
+		dmgInfo:SetDamageType(DMG_ALWAYSGIB)
+
+		if jcms.util_IsStunstick( dmgInfo:GetInflictor() ) then
+			dmgInfo:ScaleDamage(2)
+		end
+		
+		local ed = EffectData()
+		ed:SetOrigin(dmgInfo:GetDamagePosition())
+		ed:SetNormal( (dmgInfo:GetDamagePosition() - npc:WorldSpaceCenter()):GetNormalized() )
+		util.Effect("MetalSpark", ed)
+
+		npc:EmitSound("Computer.BulletImpact")
+
+		timer.Simple(0, function()
+			if IsValid(npc) and npc:Health() <= 0 and IsValid(npc.jcms_cybershield) then
+				npc.jcms_cybershield:Remove()
+			end
+		end)
+	end
+}
+
 jcms.npc_types.antlion_grubbomb = {
 	faction = "antlion",
 	noArenaMode = true,

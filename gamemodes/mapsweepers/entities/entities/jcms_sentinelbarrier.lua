@@ -36,11 +36,12 @@ function ENT:SetupDataTables()
 	self:NetworkVar("Float", 1, "MinDamageTaken")
 	self:NetworkVar("Float", 2, "MaxDamageTaken")
 	self:NetworkVar("Entity", 0, "Sentinel")
+	self:NetworkVar("Bool", 0, "IsAntlionShield")
 end
 
 function ENT:Initialize()
 	self:SetModel("models/jcms/jcorp_sentinelbarrier.mdl")
-	self:SetMaterial("models/props_combine/portalball001_sheet")
+	--self:SetMaterial("models/props_combine/portalball001_sheet")
 	--self:SetColor(Color(0, 161, 255))
 	self:PhysicsInit(SOLID_VPHYSICS)
 	self:SetHealth(1)
@@ -65,16 +66,17 @@ function ENT:Initialize()
 end
 
 function ENT:SetPosToSentinel()
-	local ply = self:GetSentinel()
-	if not IsValid(ply) then return end
+	local owner = self:GetSentinel()
+	if not IsValid(owner) then return end
 
-	local pos, ang = ply:WorldSpaceCenter(), ply:EyeAngles()
+	local pos, ang = owner:WorldSpaceCenter(), owner:EyeAngles()
 	local fwd = ang:Forward()
 	local up = ang:Up()
 	ang:RotateAroundAxis(up, 180)
 	
 	fwd:Mul(48 + math.abs(ang.p)/180*24)
 	pos:Add(fwd)
+
 	up:Mul(4)
 	pos:Add(up)
 
@@ -99,10 +101,12 @@ end
 
 if SERVER then
 	function ENT:Think()
-		local dt = 0.1
-		self:NextThink( CurTime() + dt )
-		self:SetPosToSentinel()
-		return true
+		if not self:GetIsAntlionShield() then
+			local dt = 0.1
+			self:NextThink( CurTime() + dt ) --this is kinda redundant, 0.1s is the default - j
+			self:SetPosToSentinel()
+			return true
+		end
 	end
 
 	function ENT:OnTakeDamage(dmg)
@@ -121,9 +125,19 @@ if SERVER then
 	end
 
 	function ENT:Detonate()
-		local shieldRestorationFactor = self:GetShieldRestorationFactor()
+		if self:GetIsAntlionShield() then 
+			local ed = EffectData()
+			ed:SetMagnitude(1)
+			ed:SetOrigin(self:WorldSpaceCenter())
+			ed:SetRadius(15)
+			ed:SetNormal(self:GetAngles():Forward())
+			ed:SetFlags(5)
+			ed:SetColor( jcms.util_ColorInteger(Color(255, 128, 0)) )
+			util.Effect("jcms_blast", ed)
+		else
+			local shieldRestorationFactor = self:GetShieldRestorationFactor()
+			if shieldRestorationFactor <= 0 then return end
 
-		if shieldRestorationFactor > 0 then
 			local pos = self:WorldSpaceCenter()
 			local powerFactor = self:GetDamageTakenFactor()
 			
@@ -137,23 +151,23 @@ if SERVER then
 			util.Effect("jcms_blast", ed)
 
 			local sentinel = self:GetSentinel()
-			if IsValid(sentinel) then
-				for i, swp in ipairs( jcms.GetSweepersInRange(pos, 1200 + 300*powerFactor) ) do
-					if jcms.team_SameTeam(sentinel, swp) then
-						local armor = swp:Armor()
-						local armorMax = swp:GetMaxArmor()
-						local newValue = math.min( armorMax * 1.25, armor + math.ceil(armorMax * shieldRestorationFactor) ) -- Allow up to 25% overcharge
+			if not IsValid(sentinel) then return end
 
-						if newValue > armor then
-							swp:SetArmor(newValue)
-							local ed2 = EffectData()
-							ed2:SetEntity(swp)
-							ed2:SetOrigin(pos)
-							ed2:SetMagnitude(1)
-							ed2:SetScale(1)
-							ed2:SetFlags(0)
-							util.Effect("jcms_chargebeam", ed)
-						end
+			for i, swp in ipairs( jcms.GetSweepersInRange(pos, 1200 + 300*powerFactor) ) do
+				if jcms.team_SameTeam(sentinel, swp) then
+					local armor = swp:Armor()
+					local armorMax = swp:GetMaxArmor()
+					local newValue = math.min( armorMax * 1.25, armor + math.ceil(armorMax * shieldRestorationFactor) ) -- Allow up to 25% overcharge
+
+					if newValue > armor then
+						swp:SetArmor(newValue)
+						local ed2 = EffectData()
+						ed2:SetEntity(swp)
+						ed2:SetOrigin(pos)
+						ed2:SetMagnitude(1)
+						ed2:SetScale(1)
+						ed2:SetFlags(0)
+						util.Effect("jcms_chargebeam", ed)
 					end
 				end
 			end
@@ -162,6 +176,12 @@ if SERVER then
 end
 
 if CLIENT then
+	ENT.mat_antShield = CreateMaterial("jcms_antlionSentinelShield", "UnlitGeneric", {
+		["$basetexture"] = "models/debug/debugwhite",
+		["$detail"] = "models/props_combine/portalball001_sheet",
+		["$detailscale"] = 1
+	})
+
 	function ENT:Think()
 		local dt = FrameTime()
 		self.popupTime = self.popupTime + dt
@@ -193,25 +213,43 @@ if CLIENT then
 	end
 
 	function ENT:DrawTranslucent()
-		self:SetPosToSentinel()
 		self:RemoveAllDecals()
 		self:SetupBones()
-
-		local damageDelta = 1 - 100 / (100 + self.damageDelta)
-		local shieldPowerExp = (1 - self.popupTime/3) / (self.popupTime*24 + 1) + 0.13 + damageDelta
-		local damagePower = 50 * self:GetDamageTakenFactor()
-
-		local scaleVector = VectorRand(0.99, 1.01 + damagePower/1000)
-		local shieldScale = math.ease.OutBack( math.min(self.popupTime*4, 1) )*0.3 + 0.7 + damageDelta*0.75
-		scaleVector:Mul(shieldScale)
-
-		local mtx = self.distortMatrix
-		mtx:Identity()
-		mtx:Scale( scaleVector )
 		
-		self:EnableMatrix("RenderMultiply", mtx)
-		render.SetColorModulation(damagePower, Lerp(shieldPowerExp, 0, 10), Lerp(shieldPowerExp, 0, 20))
-			self:DrawModel()
-		render.SetColorModulation(1, 1, 1)
+		if not self:GetIsAntlionShield() then
+			self:SetPosToSentinel()
+
+			local damageDelta = 1 - 100 / (100 + self.damageDelta)
+			local shieldPowerExp = (1 - self.popupTime/3) / (self.popupTime*24 + 1) + 0.13 + damageDelta
+			local damagePower = 50 * self:GetDamageTakenFactor()
+
+			local scaleVector = VectorRand(0.99, 1.01 + damagePower/1000)
+			local shieldScale = math.ease.OutBack( math.min(self.popupTime*4, 1) )*0.3 + 0.7 + damageDelta*0.75
+			scaleVector:Mul(shieldScale)
+
+			local mtx = self.distortMatrix
+			mtx:Identity()
+			mtx:Scale( scaleVector )
+			
+			self:EnableMatrix("RenderMultiply", mtx)
+
+			render.SetColorModulation(damagePower, Lerp(shieldPowerExp, 0, 10), Lerp(shieldPowerExp, 0, 20))
+				self:DrawModel()
+			render.SetColorModulation(1, 1, 1)
+		else
+			local mtx = self.distortMatrix
+			mtx:Identity()
+			mtx:Scale( VectorRand(1, 1.1) )
+			
+			self:EnableMatrix("RenderMultiply", mtx)
+
+			render.MaterialOverride(self.mat_antShield)
+				render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
+					render.SetColorModulation(1, 0.50, 0)
+						self:DrawModel()
+					render.SetColorModulation(1, 1, 1)
+				render.OverrideBlend( false )
+			render.MaterialOverride()
+		end
 	end
 end

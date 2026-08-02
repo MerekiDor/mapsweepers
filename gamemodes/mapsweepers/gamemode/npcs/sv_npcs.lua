@@ -183,6 +183,7 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 		npcTbl.jcms_TakeDamage = enemyData.takeDamage
 		npcTbl.jcms_EntityFireBullets = enemyData.entityFireBullets
 		npcTbl.jcms_damageEffect = enemyData.damageEffect
+		npcTbl.jcms_onKilled = enemyData.onKilled
 		npcTbl.jcms_faction = enemyData.faction
 
 		npcTbl.jcms_bounty = enemyData.bounty or 100
