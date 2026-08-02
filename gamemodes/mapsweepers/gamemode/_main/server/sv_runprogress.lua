@@ -91,7 +91,7 @@ function jcms.runprogress_AddStartingCash(ply_or_sid64, amount)
 	if startingCashTable[ sid64 ] then
 		startingCashTable[ sid64 ] = math.ceil( startingCashTable[ sid64 ] + ( tonumber(amount) or 0 ) )
 	else
-		startingCashTable[ sid64 ] = math.ceil( jcms.cvar_cash_start:GetInt() + ( tonumber(amount) or 0 ) )
+		startingCashTable[ sid64 ] = math.ceil( jcms.runprogress_GetDefaultCash() + ( tonumber(amount) or 0 ) )
 	end
 end
 
@@ -102,7 +102,7 @@ function jcms.runprogress_ResetStartingCash(ply_or_sid64)
 	end
 	sid64 = "_" .. sid64 --Stop JSONToTable from obliterating us.
 
-	jcms.runprogress.playerStartingCash[ sid64 ] = jcms.cvar_cash_start:GetInt()
+	jcms.runprogress.playerStartingCash[ sid64 ] = jcms.runprogress_GetDefaultCash()
 end
 
 function jcms.runprogress_GetStartingCash(ply_or_sid64)
@@ -116,7 +116,10 @@ function jcms.runprogress_GetStartingCash(ply_or_sid64)
 	end
 	sid64 = "_" .. sid64 --Stop JSONToTable from obliterating us.
 
-	return jcms.runprogress.playerStartingCash[ sid64 ] or (jcms.cvar_cash_start:GetInt() + jcms.runprogress.winstreak * jcms.cvar_cash_victory:GetInt())
+	return jcms.runprogress.playerStartingCash[ sid64 ] or jcms.runprogress_GetDefaultCash()
+
+function jcms.runprogress_GetDefaultCash()
+	return (jcms.cvar_cash_start:GetInt() + jcms.runprogress.winstreak * jcms.cvar_cash_victory:GetInt())
 end
 
 function jcms.runprogress_UpdateAllPlayers()
