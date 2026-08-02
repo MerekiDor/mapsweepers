@@ -348,11 +348,11 @@
 
 	function jcms.paint_ModalReadyNoWeapons(p, w, h) -- modal that appears when you try to ready without any weapons
 		jcms_Modal(p, w, h)
-		draw.SimpleText([=[#jcms.modal_readynoweapons_title]=], "jcms_big", 16, 8, jcms.color_bright)
-		draw.SimpleText([=[#jcms.modal_readynoweapons_description]=], "jcms_medium", 24, 48, jcms.color_bright)
+		draw.SimpleText("#jcms.modal_readynoweapons_title", "jcms_big", 16, 8, jcms.color_bright)
+		draw.SimpleText("#jcms.modal_readynoweapons_description", "jcms_medium", 24, 48, jcms.color_bright)
 		
 		local w, h = p:GetSize()
-		draw.SimpleText([=[#jcms.modal_readynoweapons_warning]=], "jcms_small_bolder", w/2, 116, jcms.color_bright, TEXT_ALIGN_CENTER)
+		draw.SimpleText("#jcms.modal_readynoweapons_warning", "jcms_small_bolder", w/2, 116, jcms.color_bright, TEXT_ALIGN_CENTER)
 
 		return true
 	end
