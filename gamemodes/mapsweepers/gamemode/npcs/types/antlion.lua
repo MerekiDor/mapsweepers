@@ -1089,7 +1089,10 @@ jcms.npc_types.antlion_cyberbug = {
 	bounty = 35,
 
 	postSpawn = function(npc)
-		npc:SetMaterial("models/jcms/cyberbug")
+		npc:SetSubMaterial(0, "models/jcms/cyberbug")
+		npc:SetSubMaterial(1, "models/jcms/cyberbug")
+		npc:SetSubMaterial(2, "models/jcms/cyberbug")
+		npc:SetSubMaterial(3, "models/jcms/cyberbug")
 
 		npc.jcms_dmgMult = 5
 		npc:SetMaxHealth(75)
