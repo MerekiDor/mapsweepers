@@ -1714,6 +1714,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		["gm_construct"] = 1.5,
 		["jcms_jcorpdistrict"] = 3,
 		["jcms_mafiadistrict"] = 3,
+		["jcms_rggdistrict"] = 3,
 	}
 
 	function jcms.setMapWeight(map, weight) 
