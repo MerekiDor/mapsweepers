@@ -54,6 +54,8 @@ include "_main/server/sv_turrets.lua"
 include "_main/server/sv_damagehandling.lua"
 include "_main/server/sv_rangecap.lua"
 
+resource.AddWorkshop("3564041088") --TODO: TEMPORARY. Needed for ZMod to work.
+
 -- // Mission Includes {{{
 	do 
 		include "missions/sv_missions.lua"
