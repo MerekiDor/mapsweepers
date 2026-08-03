@@ -141,7 +141,7 @@ local function drawBubbleShield(ent, i) --Renamed from bulletshield, as the old 
 
 	--Shield damage flash animation
 	if entTbl.jcms_shieldLastCount ~= shield then
-		if entTbl.jcms_shieldLastCount > shield then
+		if entTbl.jcms_shieldLastCount or 0 > shield then
 			entTbl.jcms_shieldDamageAnim = 1
 		end
 		entTbl.jcms_shieldLastCount = shield
