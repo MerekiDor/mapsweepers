@@ -1699,6 +1699,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		["gm_construct"] = true,
 		["jcms_jcorpdistrict"] = true,
 		["jcms_mafiadistrict"] = true,
+		["jcms_rggdistrict"] = true,
 		
 		--Recommended collection
 		["gm_voidtown"] = true,
