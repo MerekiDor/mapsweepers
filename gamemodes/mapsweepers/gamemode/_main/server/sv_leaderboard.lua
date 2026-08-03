@@ -288,7 +288,7 @@
 	end
 
 	function jcms.leaderboard_WinstreakTokenEligble( playerPostMissionStats )
-		return playerPostMissionStats.evacuated and jcms.mission_IsBossMission()
+		return playerPostMissionStats and playerPostMissionStats.evacuated and jcms.mission_IsBossMission()
 	end
 
 
