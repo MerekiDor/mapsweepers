@@ -807,13 +807,20 @@
 			
 			return queue
 		end
-		
+
+		--npc hull checks
+		local hullMins = Vector(-32, -32, 0)
+		local hullMaxs = Vector(32, 32, 50)
+		local hullMaxsZ = Vector(0,0, hullMaxs.z)
+		--Hex Trace offsets
+		local downVec = Vector(0,0,-32768)
+		local upVec = Vector(0,0,15)
 		function jcms.director_PackSquadVectors(startingVector, count, spacing, parameterOverrides)
 			local dotTolerance = 0.1
-			local hullMins = Vector(-32, -32, 0)
-			local hullMaxs = Vector(32, 32, 50)
-			local vUp = Vector(0, 0, 1)
-			
+			hullMins:SetUnpacked(-32, -32, 0)
+			hullMaxs:SetUnpacked(32, 32, 50)
+			hullMaxsZ.z = hullMaxs.z
+
 			local filter = nil
 			if parameterOverrides then
 				filter = parameterOverrides.filter
@@ -831,7 +838,7 @@
 			local vectors = {}
 			local openDict = {}
 			local chunks, chunksize, getChunkId, getChunkTable, getAllNearbyNodes = jcms.util_ChunkFunctions(512)
-			
+
 			local traceRes = {}
 			local traceData = { mask = bit.bor(MASK_NPCSOLID_BRUSHONLY, MASK_WATER), filter = filter, output = traceRes, mins = hullMins, maxs = hullMaxs }
 
@@ -858,8 +865,6 @@
 			end
 
 			local spreadShape = 6
-			local downVec = Vector(0,0,-32768)
-			local upVec = Vector(0,0,15)
 			local ceiling = 256
 			if parameterOverrides then
 				spreadShape = tonumber(parameterOverrides.spreadShape) or spreadShape
@@ -880,7 +885,7 @@
 						--Bring us to ceiling/get out from underneath any displacements.
 						traceData.mask = bit.bor(MASK_NPCSOLID_BRUSHONLY, MASK_WATER)
 						traceData.start = v + upVec
-						traceData.endpos = v + Vector(Vector(cos*adaptSpacing, sin*adaptSpacing, ceiling))
+						traceData.endpos = v + Vector(cos*adaptSpacing, sin*adaptSpacing, ceiling)
 						util.TraceHull(traceData)
 
 						if traceRes.StartSolid or traceRes.HitNoDraw then
@@ -894,12 +899,12 @@
 						util.TraceLine(traceData)
 						
 						--Are we on a valid surface?
-						if traceRes.HitSky or traceRes.HitNoDraw or not(traceRes.Hit and (traceRes.MatType ~= MAT_SLOSH) and traceRes.HitNormal:Dot(vUp) >= dotTolerance) then
+						if traceRes.HitSky or traceRes.HitNoDraw or not(traceRes.Hit and (traceRes.MatType ~= MAT_SLOSH) and traceRes.HitNormal:Dot(jcms.vectorUp) >= dotTolerance) then
 							continue
 						end
 						
 						--Check if we're obstructed
-						traceData.start = traceRes.HitPos + Vector(0,0,hullMaxs.z)
+						traceData.start = traceRes.HitPos + hullMaxsZ
 						traceData.endpos = traceRes.HitPos
 						local nv = traceRes.HitPos
 
@@ -909,7 +914,7 @@
 						end
 
 						--We've passed all checks
-						worked = true 
+						worked = true
 
 						if not vectorFits(nv) then
 							--debugoverlay.Cross(nv, 4, 4, Color( 255, 0, 0 ), true)

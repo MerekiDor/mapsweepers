@@ -627,6 +627,8 @@ jcms.MAPGEN_CONSTRUCT_DIAMETER = math.sqrt(82411875)
 		print("[MapSweepers] Map analysed in: " .. tostring( math.Round(SysTime() - analyseStart, 3) ) .. " seconds")
 
 		hook.Run("MapSweepers_MapAnalysisDone")
+
+		collectgarbage("collect")
 	end
 
 	function jcms.mapgen_ExpandedAreaList(areas)

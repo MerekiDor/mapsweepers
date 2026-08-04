@@ -206,6 +206,7 @@
 				jcms.mission_Randomize()
 			end
 
+			collectgarbage("collect")
 			game.GetWorld():SetNWFloat("jcms_mapgen_progress", 1)
 			game.GetWorld():SetNWFloat("jcms_missionStartTime", CurTime())
 			return true

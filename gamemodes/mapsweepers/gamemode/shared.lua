@@ -1268,17 +1268,19 @@ local nmt = FindMetaTable("NPC")
 		return minus .. int:reverse():gsub("^,", "") .. fraction
 	end
 
-	function jcms.util_GetSky(from)
-		local lastpos = from
+	do
 		local up = Vector(0, 0, 32768)
+		function jcms.util_GetSky(from)
+			local lastpos = from
 
-		for i=1, 48 do
-			local trace = util.TraceLine { start = lastpos + jcms.vectorUp, endpos = lastpos + up, mask = MASK_SOLID_BRUSHONLY }
+			for i=1, 48 do
+				local trace = util.TraceLine { start = lastpos + jcms.vectorUp, endpos = lastpos + up, mask = MASK_SOLID_BRUSHONLY }
 
-			if trace.HitSky then
-				return trace.HitPos, i == 1
-			else
-				lastpos = trace.HitPos
+				if trace.HitSky then
+					return trace.HitPos, i == 1
+				else
+					lastpos = trace.HitPos
+				end
 			end
 		end
 	end
