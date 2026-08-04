@@ -114,29 +114,8 @@ if SERVER then
 			return
 		end
 
-		if dmg > 0 then
-			if bit.band( dmgInfo:GetDamageType(), bit.bor(DMG_BLAST,DMG_BLAST_SURFACE) ) > 0 then
-				dmgInfo:ScaleDamage(2)
-			end
-
-			--TODO: SFX
-
-			self.jcms_flinchProgress = self.jcms_flinchProgress + dmg 
-			self:SetHealth(self:Health() - dmg)
-			
-			if self.jcms_flinchProgress > 25 then
-
-				self:SetSequence( math.random() < 0.5 and "flinch02" or "flinch01" )
-				local dur = self:SequenceDuration()
-				timer.Simple(dur, function()
-					if IsValid(self) and self:GetSequenceName( self:GetSequence() ):match("flinch") then
-						self:SetSequence("idle")
-						self:SetCycle(0)
-					end
-				end)
-
-				self.jcms_flinchProgress = 0
-			end
+		if bit.band( dmgInfo:GetDamageType(), bit.bor(DMG_BLAST,DMG_BLAST_SURFACE) ) > 0 then
+			dmgInfo:ScaleDamage(2)
 		end
 
 		if self:Health() <= 0 then
