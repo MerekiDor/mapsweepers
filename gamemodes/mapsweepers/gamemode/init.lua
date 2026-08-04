@@ -1709,7 +1709,8 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		["gm_born"] = true,				--This one has packed content which means it just outright doesn't show up at all.
 		["gm_shattered_reality"] = true,
 		["gm_hillfoot_construct"] = true,
-		["gm_coast_bridge_prewar"] = true
+		["gm_coast_bridge_prewar"] = true,
+		["gm_lockdown"] = true
 	}
 
 	jcms.mapWeights = { --Let people weight towards certain maps showing up in the end-of-mission vote.

@@ -236,8 +236,11 @@ if SERVER then
 			
 			local upgradeDur = 30
 			self:SetModelScale( 1 + (upgradeLvl+1)/2, upgradeDur)
+			self:SetCollisionGroup(COLLISION_GROUP_DEBRIS) --Our Collisions get messed up while scaling, this is the best I can do to fix that.
 			timer.Simple(upgradeDur, function()
 				if not IsValid(self) then return end
+
+				self:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE)
 
 				self:SetHealth(self:Health() * 1.25)
 				self:SetMaxHealth(self:GetMaxHealth() * 1.25)

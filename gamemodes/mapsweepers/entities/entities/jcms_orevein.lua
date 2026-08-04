@@ -127,9 +127,27 @@ if SERVER then
 				-- // }}}
 
 				-- // Chunk {{{
+					chunkSetup = function(ent)
+						ent.jcms_jcorpiumImmuneUntil = CurTime() + 0.1
+					end,
+
 					chunkPhysCollide = function(ent, colData, collider) --Spark on impact, explode if velocity's too high.
 						if CurTime() - (ent.jcms_lastPickedUpTime or 0) < 0.5 then
 							return --Forgiveness for the first 0.25s after pickup, we can often get jammed into things in a way that isn't really the player's fault.
+						end
+
+						local hitEnt = colData.HitEntity
+
+						--Don't explode on crates
+						if IsValid(hitEnt) and hitEnt:GetClass() == "jcms_orecrate" then
+							ent.jcms_jcorpiumImmuneUntil = math.max(ent.jcms_jcorpiumImmuneUntil, CurTime() + 0.25)
+							return
+						end
+
+						--Inherit collision immunity from other jcorpium
+						if IsValid(hitEnt) and hitEnt.jcms_jcorpiumImmuneUntil and hitEnt.jcms_jcorpiumImmuneUntil > CurTime() then
+							ent.jcms_jcorpiumImmuneUntil = math.max(ent.jcms_jcorpiumImmuneUntil, hitEnt.jcms_jcorpiumImmuneUntil)
+							return
 						end
 
 						local velSqr = colData.HitSpeed:LengthSqr()

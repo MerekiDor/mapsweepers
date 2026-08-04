@@ -261,23 +261,23 @@ if CLIENT then
 		-- // }}}
 
 		-- // Particles {{{
-		
-			--TODO: Move vectors out of this think if it's notably expensive. Idk yet because it doesn't run *that* often, but still somewhat often.
-			--local part = self.emitter:Add( "particle/particle_noisesphere", self:WorldSpaceCenter() + VectorRand(-10, 10) + Vector(-0,-5,50))
-			local part = self.emitter:Add( "particle/particle_noisesphere", self:WorldSpaceCenter())
-			part:SetStartSize(60)
-			part:SetEndSize(100)
-			part:SetDieTime(4)
+			if IsValid(self.emitter) then
+				--TODO: Move vectors out of this think if it's notably expensive. Idk yet because it doesn't run *that* often, but still somewhat often.
+				--local part = self.emitter:Add( "particle/particle_noisesphere", self:WorldSpaceCenter() + VectorRand(-10, 10) + Vector(-0,-5,50))
+				local part = self.emitter:Add( "particle/particle_noisesphere", self:WorldSpaceCenter())
+				part:SetStartSize(60)
+				part:SetEndSize(100)
+				part:SetDieTime(4)
 
-			part:SetStartAlpha(175)
-			part:SetEndAlpha(0)
+				part:SetStartAlpha(175)
+				part:SetEndAlpha(0)
 
-			part:SetColor( 70 + math.random(0,10), 0, 0 )
+				part:SetColor( 70 + math.random(0,10), 0, 0 )
 
-			part:SetVelocity(Vector(0,0,175) + VectorRand(-40,40))
+				part:SetVelocity(Vector(0,0,175) + VectorRand(-40,40))
 
-			part:SetGravity(Vector(0,50, 0)) --"Wind" effect
-			
+				part:SetGravity(Vector(0,50, 0)) --"Wind" effect
+			end
 		-- // }}}
 
 		self:SetNextClientThink(CurTime() + 0.05)

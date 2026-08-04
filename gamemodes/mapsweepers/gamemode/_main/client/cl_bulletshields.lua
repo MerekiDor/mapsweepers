@@ -133,7 +133,7 @@ local function drawBubbleShield(ent, i) --Renamed from bulletshield, as the old 
 	local pos = ent:WorldSpaceCenter()
 	local rad = ent:BoundingRadius() --TODO: Maybe cache this
 	local jcorp = entTbl.jcms_shieldJCorp
-	local color = entTbl.jcms_shieldColor
+	local color = entTbl.jcms_shieldColor or Color(0,0,0)
 	
 	local time = jcorp and CurTime()*(shield+2) or CurTime()*8
 	local imInside = ent == jcms.locPly and not ent:ShouldDrawLocalPlayer()
@@ -146,9 +146,9 @@ local function drawBubbleShield(ent, i) --Renamed from bulletshield, as the old 
 		end
 		entTbl.jcms_shieldLastCount = shield
 	else
-		entTbl.jcms_shieldDamageAnim = math.max(0, entTbl.jcms_shieldDamageAnim - FrameTime() * (imInside and 1 or 4))
+		entTbl.jcms_shieldDamageAnim = math.max(0, (entTbl.jcms_shieldDamageAnim or 0) - FrameTime() * (imInside and 1 or 4))
 	end
-	local damageAnim = entTbl.jcms_shieldDamageAnim --Not changef beyond this point
+	local damageAnim = entTbl.jcms_shieldDamageAnim or 0 --Not changef beyond this point
 
 	--Local Player shield render
 	if imInside then
