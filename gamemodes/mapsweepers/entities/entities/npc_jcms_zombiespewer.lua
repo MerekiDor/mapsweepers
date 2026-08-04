@@ -108,8 +108,6 @@ if SERVER then
 	end
 
 	function ENT:OnTakeDamage(dmgInfo)
-		local dmg = dmgInfo:GetDamage()
-
 		if self.dying then
 			return
 		end
@@ -117,6 +115,9 @@ if SERVER then
 		if bit.band( dmgInfo:GetDamageType(), bit.bor(DMG_BLAST,DMG_BLAST_SURFACE) ) > 0 then
 			dmgInfo:ScaleDamage(2)
 		end
+
+		local dmg = dmgInfo:GetDamage()
+		self:SetHealth(self:Health() - dmg)
 
 		if self:Health() <= 0 then
 			self.dying = true
