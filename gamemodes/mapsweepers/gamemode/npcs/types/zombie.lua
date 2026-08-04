@@ -1070,7 +1070,7 @@ jcms.npc_types.zombie_spawner = {
 			table.insert(positions, v:GetPos())
 		end
 
-		local validZones = jcms.director_GetAreasAwayFrom(jcms.mapgen_MainZone(), positions, 1000, math.huge)
+		local validZones = jcms.director_GetAreasAwayFrom(jcms.mapgen_MainZone(), positions, 1000, 6000)
 		if #validZones == 0 then return end
 		table.Shuffle(validZones)
 
@@ -1097,14 +1097,34 @@ jcms.npc_types.zombie_spewer = {
 
 	class = "npc_jcms_zombiespewer",
 	bounty = 350,
-	
+
 	anonymous = true, --Don't contribute to the softcap / director.
-	isStatic = true, 
+	isStatic = true,
 
 	check = function(director)
 		--More than 3 has no effect (and I wouldn't want it to anyway, if it scaled dynamically it'd blind you eventually)
 		return jcms.npc_capCheck("npc_jcms_zombiespewer", 3)
-	end
+	end,
+
+	postSpawn = function(npc)
+		-- Teleport to somewhere away from sweepers.
+		local positions = {}
+		for i, v in ipairs(jcms.GetAliveSweepers()) do
+			table.insert(positions, v:GetPos())
+		end
+
+		local validZones = jcms.director_GetAreasAwayFrom(jcms.mapgen_MainZone(), positions, 1000, 6000)
+		if #validZones == 0 then return end
+		table.Shuffle(validZones)
+
+		for i, area in ipairs(validZones) do
+			if area:GetSizeX() > 128 and area:GetSizeY() > 128 then
+				npc:SetPos(area:GetCenter())
+				break
+			end
+		end
+	end,
+
 }
 
 jcms.npc_types.zombie_charple = {

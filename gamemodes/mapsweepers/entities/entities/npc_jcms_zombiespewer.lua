@@ -36,13 +36,13 @@ jcms.zombieSpewer_FogDistValues = {
 	[3] = 1000
 }
 
-if SERVER then 
+if SERVER then
 	function ENT:Initialize()
 		self:SetModel("models/props_wasteland/antlionhill.mdl")
 		self:SetMaterial("models/jcms/zombiespewer/body")
 
 		self:SetModelScale(0.5)
-		
+
 		self:PhysicsInitBox( Vector(-56,-56,0),Vector(56,56,512) ) --NOTE: This is also set in Think as a bandaid fix for the below comment.
 		self:SetMoveType(MOVETYPE_NONE)
 
@@ -56,16 +56,13 @@ if SERVER then
 		self.jcms_flinchProgress = 0
 		self.jcms_ignoreStraggling = true
 
-		self:SetSequence("idle")
-		self:SetCycle(math.random())
 		self:SetBloodColor(BLOOD_COLOR_ANTLION)
 
 		self:SetAngles( Angle(math.Rand(-2, 2), math.random()*360, math.Rand(-2, 2)) )
-		
-		self:SetNWString("jcms_boss", "zombie_spewer")
 
+		self:SetNWString("jcms_boss", "zombie_spewer")
 		self:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE)
-		
+
 		self.jcms_DontCollideWithNPCs = true
 		self:SetCustomCollisionCheck(true)
 
