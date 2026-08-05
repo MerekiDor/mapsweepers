@@ -515,7 +515,7 @@ jcms.offgame = jcms.offgame or NULL
 				pnl.controlPanel.bReady.Paint = jcms.paint_ButtonFilled
 				pnl.controlPanel.bReady.jFont = lowres and "jcms_small_bolder" or "jcms_medium"
 				function pnl.controlPanel.bReady:DoClick()
-					if next(LocalPlayer():GetWeapons(), 1) == nil then -- warn the player if they have no weapons
+					if jcms.locPly:GetNWInt("jcms_desiredteam") == 1 and next(LocalPlayer():GetWeapons(), 1) == nil then -- warn the player if they have no weapons (and arent an npc)
 						jcms.offgame_ModalReadyNoWeapons(pnl.tabPnl)
 					else RunConsoleCommand("jcms_ready")
 					end
