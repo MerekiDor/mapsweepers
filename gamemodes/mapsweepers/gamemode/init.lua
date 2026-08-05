@@ -398,6 +398,25 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 	end)
 -- // }}}
 
+-- // Re-routes {{{
+	if not jcms.reroutesSetup then
+		jcms.reroutesSetup = true
+
+		local ogBlastDamage = util.BlastDamage
+		util.BlastDamage = function(inflictor, attacker, damageOrigin, damageRadius, damage)
+			hook.Run("jcms_LuaBlastDamage", inflictor, attacker, damageOrigin, damageRadius, damage)
+			ogBlastDamage(inflictor, attacker, damageOrigin, damageRadius, damage)
+		end
+		
+		local ogBlastDamageInfo = util.BlastDamageInfo
+		util.BlastDamageInfo = function(dmgInfo, damageOrigin, damageRadius)
+			hook.Run("jcms_LuaBlastDamageInfo", dmgInfo, damageOrigin, damageRadius)
+			ogBlastDamageInfo(dmgInfo, damageOrigin, damageRadius)
+		end
+	end
+-- // }}}
+
+
 -- // Friendly-Fire Tracking / other player data {{{
 	jcms.playerData = jcms.playerData or {
 		playerFFKills = {},
@@ -897,6 +916,8 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 				end
 			elseif not jcms.inSpecialMap then
 				-- Misses tracker for the announcer
+				--TODO: Re-implement accounting for creep
+				--[[
 				local time = CurTime()
 				if (not ent.jcms_lastMissTime) or (time - ent.jcms_lastMissTime > 0.75) then
 					ent.jcms_consecMisses = (ent.jcms_consecMisses or 0) + 1
@@ -906,7 +927,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 						ent.jcms_consecMisses = -math.random(4, 5)
 						jcms.announcer_Speak(jcms.ANNOUNCER_AMMO_WASTE, ent)
 					end
-				end
+				end--]]
 			end
 		end
 	end)

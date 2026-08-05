@@ -328,6 +328,7 @@ jcms.MAPGEN_CONSTRUCT_DIAMETER = math.sqrt(82411875)
 
 	jcms.mapdata = jcms.mapdata or { analyzed = false, vaild = false }
 
+	local upVec = Vector(0,0,32768)
 	function jcms.mapgen_AnalyzeMap(dontAddToValidList)
 		local analyseStart = SysTime()
 
@@ -362,6 +363,8 @@ jcms.MAPGEN_CONSTRUCT_DIAMETER = math.sqrt(82411875)
 		md.validAreaDict = {} --Dict for valid areas
 		
 		md.usefulness = 0 -- Tells us how much of the navmesh is actually valid. 0 = none, 1 = all of it.
+
+		md.areaSkyVis = {}
 		
 		md.valid = md.areaCountUnrestricted > 1
 		if md.valid then
@@ -416,6 +419,15 @@ jcms.MAPGEN_CONSTRUCT_DIAMETER = math.sqrt(82411875)
 					depthAreaCounter = depthAreaCounter + 1
 				end
 				
+				
+				local centre = area:GetCenter() 
+				local skyTrace = util.TraceLine({
+					start = centre,
+					endpos = centre + upVec,
+					mask = MASK_SOLID_BRUSHONLY
+				})
+				md.areaSkyVis[area] = skyTrace.hitSky
+
 				local v1, v2 = area:GetCorner(0), area:GetCorner(2)
 				xMinU = math.min(xMinU or v1.x, v1.x, v2.x)
 				xMaxU = math.max(xMaxU or v1.x, v1.x, v2.x)

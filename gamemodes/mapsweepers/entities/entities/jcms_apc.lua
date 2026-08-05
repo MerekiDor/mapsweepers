@@ -406,7 +406,7 @@ if SERVER then
 				--debugoverlay.SweptBox(tr1pos, tr1.HitPos, mins, maxs, Angle(0,0,0), 0.1, Color(255, 0, 0))
 				
 				local cell = jcms.zombieCreep_GetCell( tr1.HitPos )
-				if jcms.zombieCreepCells[cell] then
+				if IsValid(jcms.zombieCreepCells[cell]) then
 					creepedRatio = creepedRatio + 1/#self.vectorOffsets
 				end
 
@@ -490,7 +490,7 @@ if SERVER then
 		-- }}}
 
 		-- Final {{{
-			local speedScalar = Lerp(creepedRatio, 1, 0.4)
+			local speedScalar = Lerp(creepedRatio, 1, 0.6)
 
 			local vecAngular = Vector(0, 0, 0)
 			vecAngular:Add(vecAngularSum)

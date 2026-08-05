@@ -315,7 +315,7 @@ if SERVER then
 		local entIndices = {}
 		for _, ent in ipairs(ents.FindInSphere(origin, radius)) do 
 			--if ent ~= self and ent:Health() > 0 then
-			if jcms.team_GoodTarget(ent) and jcms.turret_IsDifferentTeam_Optimised(isHacked, ent, selfPvpTeam) and (selfTbl.TurretVisible(self, ent) or (IsValid(ent:GetNWEntity("jcms_vehicle", NULL)) and selfTbl.TurretVisible(self, ent:GetNWEntity("jcms_vehicle", NULL)))) then
+			if jcms.team_GoodTarget(ent) and not ent.jcms_turretImmune and jcms.turret_IsDifferentTeam_Optimised(isHacked, ent, selfPvpTeam) and (selfTbl.TurretVisible(self, ent) or (IsValid(ent:GetNWEntity("jcms_vehicle", NULL)) and selfTbl.TurretVisible(self, ent:GetNWEntity("jcms_vehicle", NULL)))) then
 				table.insert(selfTbl.targetsCache, ent)
 				entIndices[ent] = ent:EntIndex()
 			end

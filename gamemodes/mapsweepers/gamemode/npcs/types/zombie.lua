@@ -1047,7 +1047,7 @@ jcms.npc_types.zombie_spawner = {
 	swarmWeight = 1,
 
 	class = "npc_jcms_zombiespawner",
-	bounty = 350,
+	bounty = 450,
 	
 	isStatic = true, 
 
@@ -1075,7 +1075,7 @@ jcms.npc_types.zombie_spawner = {
 		table.Shuffle(validZones)
 
 		for i, area in ipairs(validZones) do
-			if area:GetSizeX() > 128 and area:GetSizeY() > 128 then
+			if area:GetSizeX() > 128 and area:GetSizeY() > 128 and jcms.mapdata.areaSkyVis[area] then
 				npc:SetPos(area:GetCenter())
 				break
 			end
@@ -1096,7 +1096,7 @@ jcms.npc_types.zombie_spewer = {
 	swarmWeight = 0.65,
 
 	class = "npc_jcms_zombiespewer",
-	bounty = 350,
+	bounty = 450,
 
 	anonymous = true, --Don't contribute to the softcap / director.
 	isStatic = true,
@@ -1118,7 +1118,7 @@ jcms.npc_types.zombie_spewer = {
 		table.Shuffle(validZones)
 
 		for i, area in ipairs(validZones) do
-			if area:GetSizeX() > 128 and area:GetSizeY() > 128 then
+			if area:GetSizeX() > 128 and area:GetSizeY() > 128 and jcms.mapdata.areaSkyVis[area] then
 				npc:SetPos(area:GetCenter())
 				break
 			end

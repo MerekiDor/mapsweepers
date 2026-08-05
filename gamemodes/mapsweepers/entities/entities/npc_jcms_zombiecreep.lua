@@ -77,7 +77,7 @@ ENT.RenderGroup = RENDERGROUP_OPAQUE
 	-- // }}}
 
 	-- // Setters {{{
-		function jcms.zombieCreep_OccupyCell( cell )
+		function jcms.zombieCreep_OccupyCell( cell, occupier )
 			--Update min/max cells
 			if cell > jcms.zombieCreepMaxCell then
 				jcms.zombieCreepMaxCell = cell
@@ -87,7 +87,8 @@ ENT.RenderGroup = RENDERGROUP_OPAQUE
 			end
 
 			--Mark us
-			jcms.zombieCreepCells[cell] = true
+			jcms.zombieCreepCells[cell] = occupier
+
 		end
 
 		function jcms.zombieCrep_ClearCell( cell )
@@ -98,7 +99,7 @@ ENT.RenderGroup = RENDERGROUP_OPAQUE
 
 	hook.Add("SetupMove", "jcms_ZombieCreep_Snare", function(ply, mv, cmd)
 		local cell = jcms.zombieCreep_GetCell( ply:GetPos() )
-		if not jcms.zombieCreepCells[cell] then return end
+		if not IsValid(jcms.zombieCreepCells[cell]) then return end
 		if not ply:IsOnGround() then return end
 
 		mv:SetMaxClientSpeed(100)
@@ -175,7 +176,7 @@ end)
 --Footsteps
 hook.Add( "jcms_PlayerFootsteps", "0jcms_ZombieCreep_Footstep", function( ply, pos, foot, sound, volume, rf )
 	local cell = jcms.zombieCreep_GetCell( pos )
-	if not jcms.zombieCreepCells[cell] then return end
+	if not IsValid(jcms.zombieCreepCells[cell]) then return end
 
 	if foot == 0 then 	--Left
 		ply:EmitSound("Mud.StepLeft")
@@ -211,10 +212,11 @@ if SERVER then
 		end
 		self:SetBloodColor(BLOOD_COLOR_ANTLION)
 		
-		self:SetMaxHealth(150)
-		self:SetHealth(150)
+		self:SetMaxHealth(300)
+		self:SetHealth(300)
 
 		self.jcms_ignoreStraggling = true
+		self.jcms_turretImmune = true
 
 		self:AddEFlags(EFL_FORCE_CHECK_TRANSMIT)
 
@@ -228,7 +230,7 @@ if SERVER then
 	
 		-- // Cell & Expansion
 			local cell = jcms.zombieCreep_GetCell( self:GetPos() )
-			if jcms.zombieCreepCells[cell] then							--We're in an occupied cell, don't want to double up, get rid of us.
+			if IsValid(jcms.zombieCreepCells[cell]) then							--We're in an occupied cell, don't want to double up, get rid of us.
 				self:Remove()
 				return
 			end
@@ -240,7 +242,7 @@ if SERVER then
 			
 			--Set our cell and occupy it.
 			self.jcms_zombieCreep_cell = cell
-			jcms.zombieCreep_OccupyCell(self.jcms_zombieCreep_cell)
+			jcms.zombieCreep_OccupyCell(self.jcms_zombieCreep_cell, self)
 
 			-- // Expansion Cells {{{
 				self.adjacentCells = {}
@@ -259,7 +261,9 @@ if SERVER then
 				table.insert(self.adjacentCells, jcms.zombieCreep_GetCellByIndices(x,y,z+1))
 			-- // }}}
 
-			self.nextExpansion = CurTime() + 10 + math.Rand(0, 10) /// ((jcms.zombieCreep_cellDepths[cell] or 0) + 1 )
+			local nearest, dist = jcms.GetNearestSweeper(self:GetPos())
+
+			self.nextExpansion = CurTime() + 10 + math.Rand(0, 10) + dist / 400 /// ((jcms.zombieCreep_cellDepths[cell] or 0) + 1 )
 			self:SetPos(self:GetPos() + Vector(0,0,1)) --Explosives don't work right without this
 		-- // }}}
 
@@ -287,7 +291,7 @@ if SERVER then
 			selfTbl.nextExpansion = cTime + expansionTime--]]
 
 			local depth = jcms.zombieCreep_cellDepths[self.jcms_zombieCreep_cell] or 0
-			local expansionTime = (25 / (self.scaleSpeed * (depth+1))) 
+			local expansionTime = (20 / (self.scaleSpeed * (depth+1)^2)) 
 			selfTbl.nextExpansion = cTime + expansionTime
 
 
@@ -297,12 +301,12 @@ if SERVER then
 				if not cellPoints or #cellPoints == 0 then continue end --Nowhere to put us
 
 				--Not occupied, >30s since it was last cleared.
-				if not jcms.zombieCreepCells[cell] and (jcms.zombieCreepCell_LastDestroyed[cell] or 0) + 30 < cTime then 
+				if not IsValid(jcms.zombieCreepCells[cell]) and (jcms.zombieCreepCell_LastDestroyed[cell] or 0) + 30 < cTime then 
 
 					--Stop expanding if we're too close to the player. Having creep intrude *into* your nest is annoying, and serves no gameplay purpose.
 					local cellPos = jcms.zombieCreep_GetCellPos( cell )
 					local nearest, dist = jcms.GetNearestSweeper(cellPos)
-					if dist > 1000 then
+					if dist > 1000 and dist < 3250 then
 						local tr = util.TraceHull({
 							mins = npcMins,
 							maxs = npcMaxs,
@@ -315,6 +319,8 @@ if SERVER then
 							jcms.npc_Spawn("zombie_creep", cellPoints[math.random(#cellPoints)])
 							break
 						end
+
+						selfTbl.nextExpansion = selfTbl.nextExpansion + dist / 400
 					end
 				end
 			end
@@ -378,6 +384,72 @@ if SERVER then
 			hook.Call("OnNPCKilled", GAMEMODE, self, dmgInfo:GetAttacker(), dmgInfo:GetInflictor())
 		end
 	end
+
+
+	--Damage Transfer (Bullets)
+	hook.Add("PostEntityFireBullets", "jcms_CreepDamage", function(ent, data)
+		if data.Trace.Entity:IsWorld() then
+			local cell = jcms.zombieCreep_GetCell( data.Trace.HitPos )
+			local cellOccupier = jcms.zombieCreepCells[cell]
+		
+			if IsValid(cellOccupier) then 
+				local dmgInfo = DamageInfo()
+
+				local dmg = data.Damage ~= 0 and data.Damage or game.GetAmmoNPCDamage(game.GetAmmoID( data.AmmoType ))
+				dmgInfo:SetDamage(dmg)
+				dmgInfo:SetDamageType(DMG_BULLET)
+				dmgInfo:SetAttacker(ent)
+				--dmgInfo:SetInflictor()
+				cellOccupier:TakeDamageInfo(dmgInfo)
+
+				local ed = EffectData()
+				ed:SetColor(0)
+				ed:SetNormal(data.Trace.HitNormal)
+				ed:SetOrigin(data.Trace.HitPos)
+				ed:SetScale(100)
+				util.Effect("bloodImpact", ed)
+
+				cellOccupier:EmitSound("physics/flesh/flesh_squishy_impact_hard"..math.random(1,4)..".wav", 100, math.random(80, 90), 1)
+			end
+		end
+	end)
+
+	--Damage Transfer (Explosion)
+	hook.Add("jcms_LuaBlastDamage", "jcms_CreepDamage", function(inflictor, attacker, damageOrigin, damageRadius, damage)
+		local cell = jcms.zombieCreep_GetCell( damageOrigin )
+		local cellOccupier = jcms.zombieCreepCells[cell]
+	
+		if IsValid(cellOccupier) then 
+			local ed = EffectData()
+			ed:SetRadius(damageRadius)
+			ed:SetOrigin(damageOrigin)
+			ed:SetMagnitude(0.3)
+			ed:SetFlags(0)
+			util.Effect("jcms_bigblast", ed)
+
+			local dmgInfo = DamageInfo()
+			dmgInfo:SetDamage(damage)
+			dmgInfo:SetDamageType(DMG_BLAST)
+			dmgInfo:SetAttacker(attacker)
+			dmgInfo:SetInflictor(inflictor)
+			cellOccupier:TakeDamageInfo(dmgInfo)
+		end
+	end)
+	hook.Add("jcms_LuaBlastDamageInfo", "jcms_CreepDamage", function(dmgInfo, damageOrigin, damageRadius)
+		local cell = jcms.zombieCreep_GetCell( damageOrigin )
+		local cellOccupier = jcms.zombieCreepCells[cell]
+	
+		if IsValid(cellOccupier) then 
+			cellOccupier:TakeDamageInfo(dmgInfo)
+			
+			local ed = EffectData()
+			ed:SetRadius(damageRadius)
+			ed:SetOrigin(damageOrigin)
+			ed:SetMagnitude(0.3)
+			ed:SetFlags(0)
+			util.Effect("jcms_bigblast", ed)
+		end
+	end)
 end
 
 
@@ -387,11 +459,11 @@ if CLIENT then
 
 	function ENT:Initialize()
 		local cell = jcms.zombieCreep_GetCell( self:GetPos() )
-		if jcms.zombieCreepCells[cell] then	return end --Occupied, we're about to be deleted
+		if IsValid(jcms.zombieCreepCells[cell]) then return end --Occupied, we're about to be deleted
 
 		--Set our cell and occupy it.
 		self.jcms_zombieCreep_cell = cell
-		jcms.zombieCreep_OccupyCell(self.jcms_zombieCreep_cell)
+		jcms.zombieCreep_OccupyCell(self.jcms_zombieCreep_cell, self)
 
 		hook.Call("jcms_ZombieCreep_RebuildMesh")
 		
@@ -451,7 +523,7 @@ if CLIENT then
 			while i <= jcms.zombieCreepMaxCell and debugSafety > 0 do
 				debugSafety = debugSafety - 1
 
-				if jcms.zombieCreepCells[i] and not meshedCells[i] then --Hit something
+				if IsValid(jcms.zombieCreepCells[i]) and not meshedCells[i] then --Hit something
 					local chunkStart = i --Cell our box starts at
 					local chunkEnd
 
@@ -462,7 +534,7 @@ if CLIENT then
 						--NOTE: "x" and "y" are still just indices, not coordinates. I'm using them to indicate direction of travel.
 						local xEnd = chunkStart
 						for x=i+1, curRowEnd do --Expand until hitting empty, end of row, or another mesh.
-							if not jcms.zombieCreepCells[x] or meshedCells[x] then
+							if not IsValid(jcms.zombieCreepCells[x]) or meshedCells[x] then
 								break
 							end
 
@@ -481,7 +553,7 @@ if CLIENT then
 						for y=i+rowLength, curLayerEnd, rowLength do --Iterate by y, starting on the next row.
 							local hit = false
 							for x=y, y+xSpan do --Iterate to the edge of the x selection
-								if not jcms.zombieCreepCells[x] or meshedCells[x] then
+								if not IsValid(jcms.zombieCreepCells[x]) or meshedCells[x] then
 									hit = true
 									break
 								end

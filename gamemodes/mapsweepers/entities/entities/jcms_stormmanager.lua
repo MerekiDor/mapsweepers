@@ -231,7 +231,8 @@ if CLIENT then
 		-- // }}}
 
 		-- // Red colormod {{{
-			jcms.colormod_Hold("toxicrain", Color(64, 0, 0), rFac * (1 - self.indoorFade*0.6), 1, 2)
+			local intensity = math.min(rFac * (1 - self.indoorFade*0.6), 1)
+			jcms.colormod_Hold("toxicrain", Color(64, 0, 0), intensity, 1, 2)
 		-- // }}}
 
 		if self.nextThunder < CurTime() then 
