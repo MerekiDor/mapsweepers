@@ -3,6 +3,9 @@
     "$basetexture" "models/jcms/rgg_female"
     "$bumpmap" "models/humans/female/group03/citizen_sheet_normal"
     "$halflambert" "1"
+
+    "$selfillum" "1"
+    "$selfillummask" "models/jcms/rgg_female_illum"
     
     "$phong" "1"
     "$phongexponent" "6"

@@ -119,6 +119,15 @@
 		ed:SetMaterialIndex(1)
 		util.Effect("jcms_electricarcs", ed)
 	end
+
+	function jcms.npc_RebelSetMaterial(npc, mat)
+		for i, ogMat in ipairs(npc:GetMaterials()) do 
+			if string.EndsWith(ogMat, "citizen_sheet") then
+				npc:SetSubMaterial(i-1, mat)
+				break
+			end
+		end
+	end
 -- // }}}
 
 -- // [FODDER/GRUNT ENEMIES] Rebel-Specific Functions {{{
@@ -754,6 +763,12 @@ jcms.npc_types.rebel_fighter = {
 		npc.jcms_flinchAccum = 0
 		npc.jcms_lastFlinchAccum = CurTime()
 		npc.jcms_lastMiniFlinch = CurTime()
+
+		if npc.jcms_rebelVoiceAffix == "m" then
+			jcms.npc_RebelSetMaterial(npc, "models/jcms/rgg_male")
+		else
+			jcms.npc_RebelSetMaterial(npc, "models/jcms/rgg_female")
+		end
 	end,
 
 	--128 - shot freeze
@@ -901,6 +916,12 @@ jcms.npc_types.rebel_breacher = {
 		npc.jcms_flinchAccum = 0
 		npc.jcms_lastFlinchAccum = CurTime()
 		npc.jcms_lastMiniFlinch = CurTime()
+		
+		if npc.jcms_rebelVoiceAffix == "m" then
+			jcms.npc_RebelSetMaterial(npc, "models/jcms/rgg_male")
+		else
+			jcms.npc_RebelSetMaterial(npc, "models/jcms/rgg_female")
+		end
 	end,
 
 	takeDamage = function(npc, dmgInfo) --Clean up our mask on death
