@@ -218,6 +218,8 @@ if SERVER then
 
 		self:AddEFlags(EFL_FORCE_CHECK_TRANSMIT)
 
+		self.jcms_flinchProgress = 0
+
 		local ed = EffectData()
 			ed:SetStart(self:GetPos())
 			ed:SetOrigin(self:GetPos())
@@ -326,6 +328,19 @@ if SERVER then
 			jcms.zombieCreepCell_LastDestroyed[self.jcms_zombieCreep_cell] = CurTime()
 			jcms.zombieCrep_ClearCell(self.jcms_zombieCreep_cell)
 		end
+
+		local ed = EffectData()
+		ed:SetRadius(75)
+		ed:SetOrigin(self:WorldSpaceCenter())
+		ed:SetMagnitude(0.3)
+		ed:SetFlags(0)
+		util.Effect("jcms_bigblast", ed)
+
+		local ed = EffectData()
+			ed:SetStart(self:GetPos())
+			ed:SetOrigin(self:GetPos())
+			ed:SetMagnitude(2)
+		util.Effect("jcms_creepexpand", ed)
 	end
 	
 	function ENT:OnTakeDamage(dmgInfo)
@@ -342,7 +357,21 @@ if SERVER then
 
 		--Health deduction & Animation
 		local dmg = dmgInfo:GetDamage()
-		self:SetHealth(self:Health() - dmg)
+		if dmg > 0 then
+			self.jcms_flinchProgress = self.jcms_flinchProgress + dmg 
+			self:SetHealth(self:Health() - dmg)
+			
+			if self.jcms_flinchProgress > 10 then 
+				self:SetSequence( (math.random() > 0.5 and "flinch2") or "flinch1" )
+				local dur = self:SequenceDuration()
+				timer.Simple(dur, function()
+					if IsValid(self) then 
+						self:SetSequence("idle01")
+					end
+				end)
+				self.jcms_flinchProgress = 0
+			end
+		end
 
 		if self:Health() <= 0 then 
 			self:Remove()
