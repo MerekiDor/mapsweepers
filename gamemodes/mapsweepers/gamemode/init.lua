@@ -734,7 +734,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 				totalVotes = totalVotes + 1
 			end
 
-			if (game.SinglePlayer() and totalVotes > 0) or (CurTime() >= jcms.director.vote_time) then
+			if (game.SinglePlayer() and totalVotes > 0) or (totalVotes == player.GetCount()) or (CurTime() >= jcms.director.vote_time) then
 				local winningVoteCount, winningMap = -1, nil
 				for map in pairs(jcms.director.vote_maps) do
 					if (counts[ map ] or 0) > winningVoteCount then

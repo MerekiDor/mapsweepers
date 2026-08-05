@@ -168,7 +168,7 @@ function jcms.mapgen_MainframeGenerateTrack(missionObjects, sectorDistances, are
 			prevArea = targetArea
 			
 			local terminal = ents.Create("jcms_terminal")
-			terminal:SetPos(targetArea:GetCenter())
+			terminal:SetPos(targetArea:GetCenter()) -- TODO rare nil error on targetArea is probably caused by `targetArea = jcms.util_ChooseByWeight(areaWeights)` returning null, which happens when areaWeights is null. didn't look into when that happens
 
 			table.insert(missionObjects, terminal)
 			table.insert(terminals, terminal)
