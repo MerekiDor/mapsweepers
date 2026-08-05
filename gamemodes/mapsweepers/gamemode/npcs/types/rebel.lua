@@ -807,18 +807,33 @@ jcms.npc_types.rebel_fighter = {
 	end,
 
 	takeDamage = function(npc, dmgInfo) --Ammo drop for the carrier variant
-		if not npc.jcms_rebel_carrierVariant then return end
+		local attacker = dmgInfo:GetAttacker()
 
 		timer.Simple(0, function()
-			if IsValid(npc) and npc:Health() < 0 and not npc.jcms_died then 
+			if not(IsValid(npc) and npc:Health() < 0 and not npc.jcms_died) then return end 
+
+			if npc.jcms_rebel_carrierVariant then
 				local resup = ents.Create("jcms_dynamicsupply")
 				resup:SetPos(npc.jcms_rebel_carrierBackpack:GetPos())
 				resup:Spawn()
 
 				npc.jcms_rebel_carrierBackpack:Remove()
 
-				npc.jcms_died = true
+			elseif IsValid(attacker) and attacker:IsPlayer() and attacker:WorldSpaceCenter():DistToSqr(npc:WorldSpaceCenter()) < 200^2 and attacker:Health() < attacker:GetMaxHealth() then
+				attacker:SetHealth(math.min(attacker:Health() + 5, attacker:GetMaxHealth()) )
+
+				attacker:EmitSound("items/medshot4.wav", 75, 120, 1)
+
+				local ed = EffectData()
+				ed:SetEntity(attacker)
+				ed:SetOrigin(attacker:WorldSpaceCenter())
+				ed:SetMagnitude(1)
+				ed:SetScale(5)
+				ed:SetFlags(5)
+				util.Effect("jcms_chargebeam", ed)
 			end
+
+			npc.jcms_died = true
 		end)
 	end,
 
