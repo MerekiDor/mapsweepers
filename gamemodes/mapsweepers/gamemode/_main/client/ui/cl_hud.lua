@@ -2941,10 +2941,10 @@
 		-- // }}}
 
 		-- // Respawn Queue {{{
+			local queuePos = me:GetNWInt("jcms_respawnQueuePos", 1)
 
 			--This causes HUD elements to overlap
-			--[[local queuePos = me:GetNWInt("jcms_respawnQueuePos", 1)
-
+			--[[
 			local str
 			if queuePos == 1 then
 				str = language.GetPhrase("jcms.respawnqueuepos_next")
