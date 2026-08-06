@@ -212,6 +212,14 @@ if CLIENT then
 	ENT.mat_ring_hq = Material "jcms/ring"
 	ENT.mat_tesla = Material "effects/tool_tracer"
 	
+	function ENT:Initialize()
+		self:SetRenderBounds( self:GetRenderBounds() ) --Thank you Rubat very cool
+
+		self.boneIdRotator = self:LookupBone("rotator")
+	end
+	
+	local rotatorAng = Angle(0,0,0)
+	local bladeAng = Angle(0,0,0)
 	function ENT:Think()
 		local selfTbl = self:GetTable()
 		local rotatorSpeed, bladesOpen = selfTbl:GetIsComplete() and 1000 or Lerp(selfTbl.chargeFraction, 0, 100), selfTbl:GetIsComplete() and 0.9 or selfTbl.chargeFraction*0.33
@@ -220,15 +228,13 @@ if CLIENT then
 		selfTbl.bladesOpen = math.Approach(selfTbl.bladesOpen, bladesOpen, dt * 0.63)
 		selfTbl.rotatorAngle = (selfTbl.rotatorAngle + rotatorSpeed*dt) % 360
 		
-		local boneIdRotator = self:LookupBone("rotator")
-		
-		if boneIdRotator then
-			self:ManipulateBoneAngles(boneIdRotator, Angle(selfTbl.rotatorAngle, 0, 0))
-		end
+		rotatorAng.p = selfTbl.rotatorAngle
+		self:ManipulateBoneAngles(self.boneIdRotator, rotatorAng)
 		
 		for i=1, 2 do
 			local boneIdBlade = self:LookupBone("blade" .. i)
-			self:ManipulateBoneAngles(boneIdBlade, Angle(0, selfTbl.bladesOpen * 90 * (i==1 and -1 or 1), 0))
+			bladeAng.y = selfTbl.bladesOpen * 90 * (i==1 and -1 or 1)
+			self:ManipulateBoneAngles(boneIdBlade, bladeAng, 0)
 		end
 
 		local W = 7

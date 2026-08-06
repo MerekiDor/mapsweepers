@@ -300,6 +300,11 @@ if SERVER then
 end
 
 if CLIENT then 
+	function ENT:Initialize()
+		self:SetRenderBounds( self:GetRenderBounds() ) --Thank you Rubat very cool
+	end
+
+	local offsPos = Vector(0,0,0)
 	function ENT:Think()
 		self.closeAnim = self.closeAnim or 0
 
@@ -323,7 +328,8 @@ if CLIENT then
 			frac = self.closeAnim
 		end
 
-		self:ManipulateBonePosition(1, Vector(0, 0, 15*frac))
+		offsPos.z = 15*frac
+		self:ManipulateBonePosition(1, offsPos)
 	end
 
 	function ENT:DrawTranslucent(flags)
