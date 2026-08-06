@@ -2303,7 +2303,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 
 	concommand.Add("jcms_redeemwinstreaktoken", function(ply, cmd, args)
 		jcms.leaderboard_UpdateCanUseWinstreakToken()
-		if not(jcms.leaderboard_CanUseWinstreakToken() and ply:GetNWInt("jcms_winstreakTokens", -1 ) > 0) then return end
+		if not(jcms.leaderboard_CanUseWinstreakToken() and ply:GetNWInt("jcms_winstreakTokens", -1 ) > 0 and not jcms.director) then return end
 
 		jcms.util_playSoundGlobal("ambient/levels/labs/coinslot1.wav")
 
