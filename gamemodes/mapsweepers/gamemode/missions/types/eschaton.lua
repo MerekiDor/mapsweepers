@@ -138,7 +138,7 @@ jcms.missions.eschaton = {
 			local time = jcms.director_GetMissionTime()
 			
 			if time >= 60 then
-				return baseCost + 4 + 3*math.floor( (time-60)/60 )
+				return baseCost + 6 + 3.5*math.floor( (time-60)/60 )
 			else
 				return 0
 			end
