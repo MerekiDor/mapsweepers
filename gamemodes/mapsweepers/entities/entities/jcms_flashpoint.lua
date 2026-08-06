@@ -41,6 +41,9 @@ function ENT:Initialize()
 		self.bladesOpen = 0
 		self.rotatorAngle = 0
 		self.chargeFraction = 0
+		
+		self:SetRenderBounds( self:GetRenderBounds() ) --Thank you Rubat very cool
+		self.boneIdRotator = self:LookupBone("rotator")
 	end
 end
 
@@ -211,12 +214,6 @@ if CLIENT then
 	ENT.mat_ring = Material "effects/select_ring"
 	ENT.mat_ring_hq = Material "jcms/ring"
 	ENT.mat_tesla = Material "effects/tool_tracer"
-	
-	function ENT:Initialize()
-		self:SetRenderBounds( self:GetRenderBounds() ) --Thank you Rubat very cool
-
-		self.boneIdRotator = self:LookupBone("rotator")
-	end
 	
 	local rotatorAng = Angle(0,0,0)
 	local bladeAng = Angle(0,0,0)
