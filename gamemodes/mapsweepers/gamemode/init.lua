@@ -2318,6 +2318,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 
 			jcms.runprogress_AddStartingCash(sid64, evacCash + winCash)
 		end
+		jcms.runprogress_UpdateAllPlayers()
 
 		jcms.leaderboard_TakeWinstreakToken(ply)
 		jcms.leaderboard_UpdatePlayerWinstreakTokens(ply)
