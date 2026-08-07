@@ -108,7 +108,9 @@ ENT.RenderGroup = RENDERGROUP_OTHER
 		if not(SERVER and IsValid(cellVal) or CLIENT and cellVal) then return end
 		if not ply:IsOnGround() then return end
 
-		jcms.director_TryShowTip(ply, jcms.HINT_CREEP)
+		if SERVER then
+			jcms.director_TryShowTip(ply, jcms.HINT_CREEP)
+		end
 
 		mv:SetMaxClientSpeed(100)
 	end)

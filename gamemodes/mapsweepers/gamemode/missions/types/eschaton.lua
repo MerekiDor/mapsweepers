@@ -125,6 +125,8 @@ jcms.missions.eschaton = {
 		local npcTypeBlacklist = {
 			["zombie_spewer"] = true,
 			["zombie_creeper"] = true,
+			["zombie_creep"] = true,
+			["zombie_creep_natural"] = true,
 		}
 		return (npcData.danger <= dangerCap) and (not npcData.check or npcData.check(director)) and not npcTypeBlacklist[npcType]
 	end,
