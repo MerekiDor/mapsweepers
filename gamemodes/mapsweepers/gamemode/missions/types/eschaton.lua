@@ -61,7 +61,7 @@ jcms.missions.eschaton = {
 				evacWeightedAreas[area] = 1 / (jcms.mapdata.areaDepths[area]+1)^2
 
 				--Prefer visible (Avoids fully indoor spaces)
-				evacWeightedAreas[area] = evacWeightedAreas[area] * math.sqrt(#area:GetVisibleAreas())
+				evacWeightedAreas[area] = evacWeightedAreas[area] * math.sqrt(math.max(#area:GetVisibleAreas(), 1))
 			end
 
 			local chosenArea = jcms.util_ChooseByWeight(evacWeightedAreas)
