@@ -46,6 +46,7 @@ local bits_ply, bits_ent, bits_wld = 2, 2, 4
 		local WLD_SPAWNEFFECTS = 12
 		local WLD_PVPVOTE = 13
 		local WLD_LEADERBOARD = 14
+		local WLD_CREEP = 15
 
 	-- // }}}
 
@@ -977,6 +978,18 @@ if SERVER then
 			net.WriteBool(false) --Is Bubble Shield
 		net.SendPVS(ent:GetPos()) --Non-PVS shields handled by the shield system itself.
 	end
+
+	function jcms.net_SendCreep(index, isFilling)
+		net.Start("jcms_msg")
+			net.WriteBool(false)
+			net.WriteEntity(game.GetWorld())
+			net.WriteUInt(WLD_CREEP, bits_wld)
+
+			net.WriteBool(isFilling)
+			net.WriteUInt(index, jcms.zombieCreep_BitCount)
+			net.WriteUInt(#ents.FindByClass("npc_jcms_zombiecreep"), jcms.zombieCreep_BitCount)
+		net.Broadcast()
+	end
 end
 
 if CLIENT then
@@ -1558,6 +1571,28 @@ if CLIENT then
 				table.sort(tbl, function(first, last)
 					return first.wins > last.wins
 				end)
+			end
+		end,
+
+		[ WLD_CREEP ] = function()
+			local isFilling = net.ReadBool() --Are we creating or clearing?
+			local cell = net.ReadUInt(jcms.zombieCreep_BitCount)
+			local cellCount = net.ReadUInt(jcms.zombieCreep_BitCount)
+
+			if isFilling then
+				jcms.zombieCreep_OccupyCell(cell)
+				hook.Call("jcms_ZombieCreep_RebuildMesh")
+				
+				hook.Add("RenderScene", "jcms_DrawZombieCreep", jcms.zombieCreep_DrawWorld)
+				hook.Add("PreDrawOpaqueRenderables", "jcms_ZombieCreep_Render", jcms.ZombieCreep_Render)
+			else
+				jcms.zombieCrep_ClearCell(cell)
+				hook.Call("jcms_ZombieCreep_RebuildMesh")
+				
+				if cellCount <= 1 then 
+					hook.Remove("RenderScene", "jcms_DrawZombieCreep")
+					hook.Remove("PreDrawOpaqueRenderables", "jcms_ZombieCreep_Render")
+				end
 			end
 		end
 	}

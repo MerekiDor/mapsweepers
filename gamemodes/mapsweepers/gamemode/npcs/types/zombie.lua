@@ -548,6 +548,24 @@ jcms.npc_types.zombie_creep = {
 	check = function() return false end --Stop us from spawning naturally
 }
 
+-- Naturally spawning version of creep (relocate on spawn)
+jcms.npc_types.zombie_creep_natural = table.Copy(jcms.npc_types.zombie_creep)
+jcms.npc_types.zombie_creep_natural.preSpawn = function(npc)
+	-- Teleport to somewhere away from sweepers.
+	local positions = {}
+	for i, v in ipairs(jcms.GetAliveSweepers()) do
+		table.insert(positions, v:GetPos())
+	end
+
+	local validZones = jcms.director_GetAreasAwayFrom(jcms.mapgen_MainZone(), positions, 1000, 3000)
+	if #validZones == 0 then return end
+
+	npc:SetPos( validZones[math.random(#validZones)]:GetCenter() )
+end
+jcms.npc_types.zombie_creep_natural.check = nil
+
+
+--[[
 jcms.npc_types.zombie_creeper = {
 	faction = "zombie",
 	noArenaMode = true,
@@ -559,11 +577,7 @@ jcms.npc_types.zombie_creeper = {
 
 	class = "npc_jcms_creeper",
 	bounty = 15,
-	
-	--[[check = function(director)
-		return jcms.npc_capCheck("npc_jcms_zombiecreep", 20)
-	end--]]
-}
+}--]]
 
 
 jcms.npc_types.zombie_husk = {

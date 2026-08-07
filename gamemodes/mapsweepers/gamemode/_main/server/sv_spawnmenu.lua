@@ -894,7 +894,7 @@
 		
 		mine_c4 = {
 			category = jcms.SPAWNCAT_MINES,
-			cost = 300,
+			cost = 200,
 			cooldown = 40,
 			slotPos = 4,
 			argparser = "mine",

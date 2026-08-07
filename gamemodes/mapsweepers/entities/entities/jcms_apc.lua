@@ -490,7 +490,7 @@ if SERVER then
 		-- }}}
 
 		-- Final {{{
-			local speedScalar = Lerp(creepedRatio, 1, 0.6)
+			local speedScalar = Lerp(creepedRatio, 1, 0.4)
 
 			local vecAngular = Vector(0, 0, 0)
 			vecAngular:Add(vecAngularSum)
