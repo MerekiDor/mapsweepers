@@ -487,15 +487,6 @@ if CLIENT then
 								table.insert(foundEnts, ply)
 							end
 						end
-					else
-						for i, ent in ipairs(ents.FindInSphere(self:WorldSpaceCenter(), selfTbl.ShieldRadius)) do 
-							if ent:IsNPC() then 
-								local maxShield = ent:GetNWInt("jcms_sweeperShield_max", -1)
-								if not(maxShield == -1) and (ent:GetNWInt("jcms_sweeperShield", -1) < maxShield) then
-									table.insert(foundEnts, ent)
-								end
-							end
-						end
 					end
 
 					for i, ent in ipairs(foundEnts) do 
