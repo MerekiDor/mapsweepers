@@ -570,6 +570,8 @@ jcms.missions.mainframe = {
 						local npcTypeBlacklist = {
 							["zombie_spewer"] = true,
 							["zombie_creeper"] = true,
+							["zombie_creep"] = true,
+							["zombie_creep_natural"] = true,
 						}
 
 						if (math.random() < zombieRatio) and missionData.completedTracks[1] then
