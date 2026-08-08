@@ -31,6 +31,8 @@ ENT.RenderGroup = RENDERGROUP_BOTH
 ENT.SlowChargeRate = 5
 ENT.CanStunstickAccelerate = true
 
+ENT.SentinelAnchor = true
+
 function ENT:Initialize()
 	self:SetModel("models/jcms/jcorp_evac.mdl")
 

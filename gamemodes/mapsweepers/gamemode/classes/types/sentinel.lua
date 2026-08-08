@@ -369,7 +369,7 @@ if SERVER then
 		
 			if charge > 0 then
 				local oldArmor = ply:Armor()
-				local newArmor = math.min( oldArmor + charge, ply:GetMaxArmor() * 2 ) -- Can charge past max armour.
+				local newArmor = oldArmor + charge
 
 				if newArmor > oldArmor then
 					ply:SetArmor( newArmor )
