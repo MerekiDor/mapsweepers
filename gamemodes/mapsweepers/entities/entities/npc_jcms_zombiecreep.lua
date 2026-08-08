@@ -262,7 +262,7 @@ if SERVER then
 		-- // }}}
 
 		self.lastNearPlayer = CurTime()
-		self.decayTime = 45 + math.Rand(0,30)
+		self.decayTime = 45 / math.sqrt(#team.GetPlayers(1)) + math.Rand(0,30)
 	end
 
 	function ENT:UpdateTransmitState()
@@ -270,8 +270,8 @@ if SERVER then
 	end
 
 	--Expansion pulse
-	local pulseDuration = 30
-	local pulseDelay = 100
+	local pulseDuration = 26
+	local pulseDelay = 130
 	jcms.zombieCreep_isPulsing = false
 	timer.Create("jcms_zombieCreep_pulse", pulseDelay, 0, function()
 		if jcms.zombieCreep_isPulsing then 
@@ -303,7 +303,7 @@ if SERVER then
 					--Stop expanding if we're too close to the player. Having creep intrude *into* your nest is annoying, and serves no gameplay purpose.
 					local cellPos = jcms.zombieCreep_GetCellPos( cell )
 					local nearest, dist = jcms.GetNearestSweeper(cellPos)
-					if dist > 850 and dist < 2500 then
+					if dist > 850 and dist < 2000 then
 						--[[local tr = util.TraceHull({
 							mins = npcMins,
 							maxs = npcMaxs,
