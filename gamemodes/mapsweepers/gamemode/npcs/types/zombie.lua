@@ -538,7 +538,7 @@ jcms.npc_types.zombie_creep = {
 	swarmLimit = 4,
 
 	class = "npc_jcms_zombiecreep",
-	bounty = 10,
+	bounty = 25,
 
 	anonymous = true, --Don't contribute to the softcap / director.
 	isStatic = true,

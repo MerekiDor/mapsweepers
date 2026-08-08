@@ -189,6 +189,10 @@ hook.Add( "jcms_PlayerFootsteps", "0jcms_ZombieCreep_Footstep", function( ply, p
 	local cellVal = jcms.zombieCreepCells[cell] --Different on client/server ):
 	if not(SERVER and IsValid(cellVal) or CLIENT and cellVal) then return end
 
+	if SERVER then
+		jcms.director_TryShowTip(ply, jcms.HINT_CREEP)
+	end
+
 	if foot == 0 then 	--Left
 		ply:EmitSound("Mud.StepLeft")
 	else				--Right
@@ -298,7 +302,7 @@ if SERVER then
 				if not cellPoints or #cellPoints == 0 then continue end --Nowhere to put us
 
 				--Not occupied, >30s since it was last cleared.
-				if not IsValid(jcms.zombieCreepCells[cell]) then 
+				if not IsValid(jcms.zombieCreepCells[cell]) and (jcms.zombieCreepCell_LastDestroyed[cell] or 0) + 30 < cTime then 
 
 					--Stop expanding if we're too close to the player. Having creep intrude *into* your nest is annoying, and serves no gameplay purpose.
 					local cellPos = jcms.zombieCreep_GetCellPos( cell )
