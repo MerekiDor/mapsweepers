@@ -270,7 +270,7 @@ if SERVER then
 		self.alarmSound:SetSoundLevel(90)
 		self.alarmSound:PlayEx(1, 90)
 
-		self:SetMaxHealth( jcms.util_IsPVP() and 1000 or 500 ) --double HP for pvp mode since it's harder to defend there.
+		self:SetMaxHealth( jcms.util_IsPVP() and 1500 or 500 ) --3x HP for pvp mode since it's harder to defend there.
 		self:SetHealth(self:GetMaxHealth())
 
 		--self:RemoveFlags(FL_NOTARGET)
