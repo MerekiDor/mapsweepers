@@ -100,7 +100,7 @@ jcms.missions.eschaton = {
 				missionData.nukeAreaDefaultWeights[area] = math.sqrt(area:GetSizeX() * area:GetSizeY())
 			end
 		-- // }}}
-		missionData.nextNuke = CurTime() + 120
+		missionData.nextNuke = CurTime() + 100
 	end,
 	
 	getObjectives = function(missionData)
@@ -209,7 +209,7 @@ jcms.missions.eschaton = {
 
 				jcms.util_skyNuke(chosenArea:GetCenter())
 
-				missionData.nextNuke = CurTime() + 60
+				missionData.nextNuke = CurTime() + 50
 			end
 		end
 	end
