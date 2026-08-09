@@ -1042,6 +1042,8 @@ if CLIENT then
 
 	local ent_messages = {
 		[ ENT_AMMORECYCLE ] = function(ent)
+			if not IsValid(jcms.locPly) then return end
+
 			local curWeapon = jcms.locPly:GetActiveWeapon()
 
 			if curWeapon == ent then
