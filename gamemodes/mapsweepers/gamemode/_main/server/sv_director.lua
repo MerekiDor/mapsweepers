@@ -1215,7 +1215,9 @@
 							d.strongestPlayer = ply
 						end
 					elseif not ply:Alive() and (ply:GetObserverMode() == OBS_MODE_NONE or ply:GetObserverMode() == OBS_MODE_CHASE) then
-						table.insert(deadPlayers, ply)
+						if ply:GetNWInt("jcms_desiredteam", 0) == 1 or jcms.util_IsPVP() then
+							table.insert(deadPlayers, ply)
+						end
 
 						if CurTime() - ply:GetNWFloat("jcms_lastDeathTime", 0) > 6 then
 							jcms.playerspawn_RespawnAs(ply, "spectator")
