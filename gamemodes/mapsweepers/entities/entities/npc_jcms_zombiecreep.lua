@@ -107,6 +107,7 @@ ENT.RenderGroup = RENDERGROUP_OTHER
 		local cellVal = jcms.zombieCreepCells[cell] --Different on client/server ):
 		if not(SERVER and IsValid(cellVal) or CLIENT and cellVal) then return end
 		if not ply:IsOnGround() then return end
+		if not jcms.team_JCorp_player_valid(ply) then return end
 
 		if SERVER then
 			jcms.director_TryShowTip(ply, jcms.HINT_CREEP)

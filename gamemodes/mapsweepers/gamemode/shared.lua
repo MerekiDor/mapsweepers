@@ -920,6 +920,10 @@ local nmt = FindMetaTable("NPC")
 			return IsValid(ply) and pmt.Team(ply) == 1
 		end
 
+		function jcms.team_JCorp_player_valid(ply) --Ditto
+			return pmt.Team(ply) == 1
+		end
+
 		function jcms.team_JCorp_ent(ent) --If we already know it isn't a player. (And is valid)
 			local entTbl = ent:GetTable()
 			return (entTbl.GetHackedByRebels and not entTbl.GetHackedByRebels(ent)) or not not jcms.team_jCorpClasses[emt.GetClass(ent)]
