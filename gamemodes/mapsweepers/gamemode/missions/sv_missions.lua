@@ -51,7 +51,7 @@
 	
 	jcms.missions = {}
 	function jcms.mission_IsBossMission(winstreak)
-		return jcms.runprogress.winstreak > 0 and jcms.runprogress.winstreak % 5 == 0
+		return (jcms.runprogress.winstreak > 0 and jcms.runprogress.winstreak % 5 == 0) and not jcms.util_IsPVP()
 	end
 
 	function jcms.mission_GetWeightedTypes(pvpOnly, isBoss) --Gets weights for all missions based on previous missions/factions
