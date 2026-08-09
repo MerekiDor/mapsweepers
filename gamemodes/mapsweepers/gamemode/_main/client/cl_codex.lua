@@ -246,7 +246,9 @@
 				local dataTxt = file.Read(codexLogs, "DATA")
 				local dataTbl = util.JSONToTable(util.Decompress(dataTxt))
 
-				table.Merge(jcms.codex_logsUnlocked, dataTbl, true)
+				if dataTbl and jcms.codex_logsUnlocked then
+					table.Merge(jcms.codex_logsUnlocked, dataTbl, true)
+				end
 			end
 		end)
 
