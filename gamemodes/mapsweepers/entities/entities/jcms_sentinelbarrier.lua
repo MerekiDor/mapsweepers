@@ -214,10 +214,10 @@ if CLIENT then
 
 	function ENT:DrawTranslucent()
 		self:RemoveAllDecals()
-		self:SetupBones()
 		
 		if not self:GetIsAntlionShield() then
 			self:SetPosToSentinel()
+			self:SetupBones()
 
 			local damageDelta = 1 - 100 / (100 + self.damageDelta)
 			local shieldPowerExp = (1 - self.popupTime/3) / (self.popupTime*24 + 1) + 0.13 + damageDelta
