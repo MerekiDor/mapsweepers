@@ -40,7 +40,7 @@ jcms.runprogress = jcms.runprogress or {
 	difficulty = 0.9,
 	winstreak = 0,
 	totalWins = 0,
-	playerStartingCash = {}, -- key is Steam ID 64, value is starting cash. 
+	playerBonusStartingCash = {}, -- key is Steam ID 64, value is starting cash. 
 
 	lastMission = "", --DEPRECATED
 	lastFaction = "", --DEPRECATED
@@ -87,25 +87,25 @@ function jcms.runprogress_AddStartingCash(ply_or_sid64, amount)
 	end
 	sid64 = "_" .. sid64 --Stop JSONToTable from obliterating us.
 
-	local startingCashTable = jcms.runprogress.playerStartingCash
-	if startingCashTable[ sid64 ] then
-		startingCashTable[ sid64 ] = math.ceil( startingCashTable[ sid64 ] + ( tonumber(amount) or 0 ) )
+	local bonusCashTable = jcms.runprogress.playerBonusStartingCash
+	if bonusCashTable[ sid64 ] then
+		bonusCashTable[ sid64 ] = math.ceil( bonusCashTable[ sid64 ] + ( tonumber(amount) or 0 ) )
 	else
-		startingCashTable[ sid64 ] = math.ceil( jcms.runprogress_GetDefaultCash() + ( tonumber(amount) or 0 ) )
+		bonusCashTable[ sid64 ] = math.ceil( tonumber(amount) or 0 )
 	end
 end
 
-function jcms.runprogress_ResetStartingCash(ply_or_sid64)
+function jcms.runprogress_ResetStartingCash(ply_or_sid64) -- remove evac/clerk bonuses
 	local sid64 = tostring(ply_or_sid64)
 	if type(ply_or_sid64) == "Player" then
 		sid64 = ply_or_sid64:SteamID64()
 	end
 	sid64 = "_" .. sid64 --Stop JSONToTable from obliterating us.
 
-	jcms.runprogress.playerStartingCash[ sid64 ] = jcms.runprogress_GetDefaultCash()
+	jcms.runprogress.playerBonusStartingCash[ sid64 ] = 0
 end
 
-function jcms.runprogress_GetStartingCash(ply_or_sid64)
+function jcms.runprogress_GetStartingCash(ply_or_sid64) -- get starting cash with evac/clerk bonuses
 	if jcms.util_IsPVP() then 
 		return jcms.cvar_cash_start_pvp:GetInt()
 	end
@@ -116,14 +116,15 @@ function jcms.runprogress_GetStartingCash(ply_or_sid64)
 	end
 	sid64 = "_" .. sid64 --Stop JSONToTable from obliterating us.
 
-	return jcms.runprogress.playerStartingCash[ sid64 ] or jcms.runprogress_GetDefaultCash()
+	local bonusCash = jcms.runprogress.playerBonusStartingCash[ sid64 ] or 0
+	return jcms.runprogress_GetDefaultCash() + bonusCash
 end
 
-function jcms.runprogress_GetDefaultCash()
+function jcms.runprogress_GetDefaultCash() -- get the default cash without any evac/clerk bonuses
 	return jcms.cvar_cash_start:GetInt() + jcms.runprogress.winstreak * jcms.cvar_cash_victory:GetInt()
 end
 
-function jcms.runprogress_UpdateAllPlayers()
+function jcms.runprogress_UpdateAllPlayers() -- set everyone's current cash to starting cash
 	for i, ply in player.Iterator() do 
 		ply:SetNWInt("jcms_cash", jcms.runprogress_GetStartingCash(ply))
 	end
@@ -140,7 +141,7 @@ function jcms.runprogress_Reset()
 
 	rp.winstreak = 0
 	rp.difficulty = jcms.runprogress_CalculateDifficultyFromWinstreak(rp.winstreak, rp.totalWins)
-	table.Empty(jcms.runprogress.playerStartingCash)
+	table.Empty(jcms.runprogress.playerBonusStartingCash)
 	game.GetWorld():SetNWInt("jcms_winstreak", rp.winstreak)
 	game.GetWorld():SetNWInt("jcms_difficulty", rp.difficulty)
 end

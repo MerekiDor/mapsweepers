@@ -382,8 +382,8 @@
 
 		-- Rewards & Progress {{{
 			if victory and not(jcms.serverExtension_forcedEvac or jcms.util_IsPVP()) then
-				jcms.runprogress_Victory()
 
+				local reward = 0
 				for i, pd in ipairs( postMissionStats.players ) do
 					local sid64 = pd.sid64
 
@@ -394,28 +394,33 @@
 						})
 						
 						if pd.evacuated then
+							local earned = jcms.cvar_cash_evac:GetInt()
 							table.insert(bonuses, {
-								name = "evac", cash = jcms.cvar_cash_evac:GetInt()
+								name = "evac", cash = earned
 							})
+							reward = reward + earned
 						end
 
 						if jcms.director.npcrecruits and jcms.director.npcrecruits > 0 then
+							local earned = math.min( jcms.director.npcrecruits, jcms.cvar_cash_maxclerks:GetInt())
 							table.insert(bonuses, {
-								name = "clerks", cash = math.min( jcms.director.npcrecruits, jcms.cvar_cash_maxclerks:GetInt() ), format = jcms.director.npcrecruits
+								name = "clerks", cash = earned, format = jcms.director.npcrecruits
 							})
+							reward = reward + earned
 						end
 					end
-
-					local reward = jcms.cash_CashFromBonuses(bonuses)
 					local oldStartingCash = jcms.runprogress_GetStartingCash(sid64)
 					jcms.runprogress_AddStartingCash(sid64, reward)
-					local newStartingCash = jcms.runprogress_GetStartingCash(sid64)
+					local newStartingCash = oldStartingCash + jcms.cash_CashFromBonuses(bonuses)
 
 					local ply = player.GetBySteamID64(sid64)
 					if IsValid(ply) then
 						jcms.net_SendCashBonuses(ply, bonuses, oldStartingCash, newStartingCash)
 					end
 				end
+
+				jcms.runprogress_Victory()
+
 			elseif not(jcms.serverExtension_forcedEvac and victory) and not jcms.util_IsPVP() then
 				for i, pd in ipairs( postMissionStats.players ) do
 					local sid64 = pd.sid64

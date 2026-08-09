@@ -284,7 +284,7 @@
 	end
 
 	function jcms.leaderboard_CanUseWinstreakToken()
-		return game.IsDedicated() and not jcms.mission_IsBossMission(jcms.runprogress.winstreak) and jcms.runprogress.winstreak < jcms.leaderboard_highestWinstreak
+		return not game.IsDedicated() and not jcms.mission_IsBossMission(jcms.runprogress.winstreak) and jcms.runprogress.winstreak < jcms.leaderboard_highestWinstreak
 	end
 
 	function jcms.leaderboard_WinstreakTokenEligble( playerPostMissionStats )

@@ -2314,9 +2314,8 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 			local sid64 = ply:SteamID64()
 
 			local evacCash = jcms.cvar_cash_evac:GetInt()
-			local winCash = jcms.cvar_cash_victory:GetInt()
 
-			jcms.runprogress_AddStartingCash(sid64, evacCash + winCash)
+			jcms.runprogress_AddStartingCash(sid64, evacCash)
 		end
 		jcms.runprogress_UpdateAllPlayers()
 
