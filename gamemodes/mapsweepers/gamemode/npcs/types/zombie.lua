@@ -533,6 +533,7 @@ jcms.npc_types.zombie_creep = {
 	noArenaMode = true,
 
 	danger = jcms.NPC_DANGER_STRONG,
+	suppressSwarmPortalEffect = true,
     cost = 0.15,
     swarmWeight = 0.3,
 	swarmLimit = 4,
