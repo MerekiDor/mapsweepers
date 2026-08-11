@@ -261,6 +261,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		jcms.net_SendFogData(ply) --Currently doesn't update/assumes the fog stays static. Might cause weird behaviour on maps that edit their fog. 
 		jcms.net_SendManyOrders(jcms.orders, ply)
 		jcms.net_SendWeaponPrices(jcms.weapon_prices, ply)
+		jcms.net_SendAllCreep(ply)
 
 		local currentObjectives = jcms.mission_GetObjectives()
 		if #currentObjectives > 0 then

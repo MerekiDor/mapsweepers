@@ -19,7 +19,7 @@
 	Contact E-Mail: merekidorian@gmail.com
 --]]
 
-local bits_ply, bits_ent, bits_wld = 2, 2, 4
+local bits_ply, bits_ent, bits_wld = 2, 2, 5
 
 -- // Message IDs {{{
 
@@ -47,6 +47,7 @@ local bits_ply, bits_ent, bits_wld = 2, 2, 4
 		local WLD_PVPVOTE = 13
 		local WLD_LEADERBOARD = 14
 		local WLD_CREEP = 15
+		local WLD_CREEP_INITIAL = 16
 
 	-- // }}}
 
@@ -990,6 +991,19 @@ if SERVER then
 			net.WriteUInt(#ents.FindByClass("npc_jcms_zombiecreep"), jcms.zombieCreep_BitCount)
 		net.Broadcast()
 	end
+
+	function jcms.net_SendAllCreep(toPly)
+		net.Start("jcms_msg")
+			net.WriteBool(false)
+			net.WriteEntity(game.GetWorld())
+			net.WriteUInt(WLD_CREEP_INITIAL, bits_wld)
+
+			net.WriteUInt(table.Count(jcms.zombieCreepCells), jcms.zombieCreep_BitCount)
+			for cell, ent in pairs(jcms.zombieCreepCells) do
+				net.WriteUInt(cell, jcms.zombieCreep_BitCount)
+			end
+		net.Send(toPly)
+	end
 end
 
 if CLIENT then
@@ -1596,6 +1610,19 @@ if CLIENT then
 					hook.Remove("PreDrawOpaqueRenderables", "jcms_ZombieCreep_Render")
 				end
 			end
+		end,
+
+		[ WLD_CREEP_INITIAL ] = function()
+			local cellCount = net.ReadUInt(jcms.zombieCreep_BitCount)
+			if cellCount <= 0 then return end
+
+			hook.Add("RenderScene", "jcms_DrawZombieCreep", jcms.zombieCreep_DrawWorld)
+			hook.Add("PreDrawOpaqueRenderables", "jcms_ZombieCreep_Render", jcms.ZombieCreep_Render)
+
+			for i=1, cellCount do 
+				jcms.zombieCreep_OccupyCell(net.ReadUInt(jcms.zombieCreep_BitCount))
+			end
+			hook.Call("jcms_ZombieCreep_RebuildMesh")
 		end
 	}
 
