@@ -336,7 +336,7 @@ if CLIENT then
 		local strFAmmo = language.GetPhrase("jcms.restocktip")
 		local strFAntirad = language.GetPhrase("jcms.antiradtip"):format(antiradInside)
 
-		local binding = (input.LookupBinding("+use") or "USE"):upper()
+		local binding = tostring(input.LookupBinding("+use") or "USE"):upper()
 
 		cam.Start3D2D(v, a, 1 / 8)
 			if #nick > 0 then

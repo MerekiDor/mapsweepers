@@ -501,7 +501,7 @@ if CLIENT then
 		local accumulated = math.ceil( accumulatedFactor * jcms.locPly:GetMaxArmor() )
 		local isAtMaxDamage = active and (barrierEnt:GetDamageTaken() >= barrierEnt:GetMaxDamageTaken())
 
-		local str1 = ("[%s]"):format( (input.LookupBinding("+walk") or "N/A"):upper() )
+		local str1 = ("[%s]"):format( tostring(input.LookupBinding("+walk") or "???"):upper() )
 		local str2 = language.GetPhrase("jcms.bulletbarrier")
 		local str3 = language.GetPhrase("jcms.bulletbarrier_accum"):format(accumulated)
 

@@ -448,8 +448,8 @@ end
 				local _, th2 = draw.SimpleText("#jcms.orderscrolltip", "jcms_medium", tipx, tipy - 4, jcms.color_bright_alt, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 				
 				surface.SetAlphaMultiplier(0.5*blend2)
-				local binding = input.LookupBinding("+reload") or "???"
-				local str = language.GetPhrase("jcms.orderscrolltip_alt"):format( binding:upper() )
+				local binding = tostring(input.LookupBinding("+reload") or "???"):upper()
+				local str = language.GetPhrase("jcms.orderscrolltip_alt"):format( binding )
 				draw.SimpleText(str, "jcms_small_bolder", tipx, tipy + th2/2 + 2, jcms.color_bright_alt, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 				surface.SetAlphaMultiplier(1)
 			end

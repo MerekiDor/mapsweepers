@@ -2311,7 +2311,8 @@
 			local isPushable = ent:GetMoveType() ~= MOVETYPE_NONE
 			local useText = ""
 			if isPushable then
-				useText = string.format(language.GetPhrase("jcms.pushtip"), string.upper(input.LookupBinding( "USE" )))
+				local binding = tostring(input.LookupBinding("+use") or "USE"):upper()
+				useText = string.format(language.GetPhrase("jcms.pushtip"), binding)
 				draw.SimpleText(useText, "jcms_hud_small", x1, -256, jcms.color_dark, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 			end
 
@@ -3026,8 +3027,8 @@
 			timer.Simple(15, function()
 				if jcms.locPly:Alive() then
 					local str = tostring(jcms.hints[jcms.HINT_SPAWNMENU]) or "???"
-					local boundKey = input.LookupBinding("+menu") or "???"
-					str = language.GetPhrase(str):gsub("!BIND!", boundKey:upper())
+					local binding = tostring(input.LookupBinding("+menu") or "???"):upper()
+					str = language.GetPhrase(str):gsub("!BIND!", binding)
 					jcms.hud_UpdateTip(false, str)
 				end
 			end)
@@ -3193,9 +3194,9 @@
 							surface.DrawRect(-128, h - off, 256, 256)
 						render.OverrideBlend( false )
 						
-						local bind = input.LookupBinding("+use")
+						local binding = tostring(input.LookupBinding("+use") or "???"):upper()
 						draw.SimpleText("#jcms.exitdroppod", "jcms_hud_big", 0, -off + h/2 - h/3, jcms.color_dark_alt, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-						draw.SimpleText("["..bind.."]", "jcms_hud_huge", 0, h + 128 - off, jcms.color_dark_alt, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+						draw.SimpleText("["..binding.."]", "jcms_hud_huge", 0, h + 128 - off, jcms.color_dark_alt, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 					cam.End3D2D()
 				else
 					jcms.hud_beginsequenceBlip = false

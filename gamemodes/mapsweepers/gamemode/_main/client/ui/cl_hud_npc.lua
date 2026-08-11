@@ -169,8 +169,8 @@
 			local specials = weapon:GetNWInt("jcms_npcspecial", 0)
 			if specials > 0 then
 				surface.SetAlphaMultiplier(1)
-				local bind = input.LookupBinding("+menu")
-				draw.SimpleText("["..tostring(bind).."] x" .. specials, "jcms_medium", sw/2, sh/2 + 24, colSpecial, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+				local binding = tostring(input.LookupBinding("+menu") or "???"):upper()
+				draw.SimpleText("["..binding.."] x" .. specials, "jcms_medium", sw/2, sh/2 + 24, colSpecial, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 			end
 		end
 
@@ -194,8 +194,8 @@
 			local specials = weapon:GetNWInt("jcms_npcspecial", 0)
 			if specials > 0 then
 				surface.SetAlphaMultiplier(1)
-				local bind = input.LookupBinding("+menu")
-				draw.SimpleText("["..tostring(bind).."] x" .. specials, "jcms_medium", sw/2, sh/2 + 48, col, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+				local binding = tostring(input.LookupBinding("+menu") or "???"):upper()
+				draw.SimpleText("["..binding.."] x" .. specials, "jcms_medium", sw/2, sh/2 + 48, col, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 			end
 		end
 
