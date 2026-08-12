@@ -117,6 +117,14 @@ if SERVER then
 
 		if not jcms.team_SameTeam(sentinel, attacker) then
 			self:SetDamageTaken( self:GetDamageTaken() + dmg:GetDamage() )
+
+			local ed = EffectData()
+			ed:SetFlags(0)
+			ed:SetColor(jcms.util_colorIntegerSweeperShield)
+			ed:SetOrigin(dmg:GetDamagePosition())
+			ed:SetNormal(self:GetAngles():Forward())
+			ed:SetScale(2)
+			util.Effect("jcms_shieldeffect", ed)
 		end
 	end
 
