@@ -82,18 +82,24 @@
 
 		{
 			level = 25,
+			name = "#jcms.codex_npcs_name",
+			text = "#jcms.codex_npcs"
+		},
+
+		{
+			level = 29,
 			name = "#jcms.codex_respawnsystem_name",
 			text = "#jcms.codex_respawnsystem"
 		},
 
 		{
-			level = 27,
+			level = 31,
 			name = "#jcms.codex_jenergy_name",
 			text = "#jcms.codex_jenergy"
 		},
 
 		{
-			level = 35,
+			level = 36,
 			name = "#jcms.codex_theevent_name",
 			text = "#jcms.codex_theevent"
 		}
