@@ -2582,6 +2582,59 @@
 					draw.SimpleText(str, "jcms_hud_small", 0, 100+off, jcms.color_bright, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 				render.OverrideBlend(false)
 			surface.SetAlphaMultiplier(1)
+		end,
+
+		["jcms_jammer"] = function(ent, blend)
+			surface.SetAlphaMultiplier(blend)
+			local healthFrac = ent:GetHealthFraction()
+			local x1 = Lerp(blend, 255, 300)
+			local x2 = Lerp(blend, 270, 357)
+			local title = "#jcms_jammer"
+			local desc1 = language.GetPhrase("jcms.integritypercent"):format(healthFrac*100)
+			local desc2 = language.GetPhrase("jcms.rggjammerdesc")
+			draw.SimpleText(title, "jcms_hud_big", x1, -348, jcms.color_dark, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+			draw.SimpleText(desc2, "jcms_hud_medium", x1, -300, jcms.color_dark, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+			draw.SimpleText(desc1, "jcms_hud_medium", x1, -200, jcms.color_dark_alt, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+			local healthWidth = 300*blend
+			
+			surface.SetDrawColor(jcms.color_dark_alt)
+			surface.DrawRect(x2, -190, healthWidth, 24)
+
+			render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
+				local off = 2
+				draw.SimpleText(title, "jcms_hud_big", x1+off, -348-off, jcms.color_bright, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+				draw.SimpleText(desc2, "jcms_hud_medium", x1+off, -300-off, jcms.color_bright, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+				draw.SimpleText(desc1, "jcms_hud_medium", x1+off, -200-off, jcms.color_bright_alt, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+
+				surface.SetDrawColor(jcms.color_bright_alt)
+				surface.DrawRect(x2 + off, -190 - off, healthWidth*healthFrac, 24)
+				jcms.hud_DrawStripedRect(x2 + healthWidth*healthFrac, -190, healthWidth*(1-healthFrac), 24-4)
+			render.OverrideBlend(false)
+
+			surface.SetAlphaMultiplier(1)
+		end,
+
+		["jcms_jammerstatic"] = function(ent, blend)
+			surface.SetAlphaMultiplier(blend)
+			local x1 = Lerp(blend, 255, 300)
+			local x2 = Lerp(blend, 270, 357)
+			local title = "#jcms_jammerstatic"
+			local desc1 = language.GetPhrase("jcms.rggjammerdesc")
+			local desc2 = language.GetPhrase("jcms.rggjammerstaticdesc")
+			draw.SimpleText(title, "jcms_hud_big", x1, -256, jcms.color_dark, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+			draw.SimpleText(desc1, "jcms_hud_medium", x1, -200, jcms.color_dark, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+			draw.SimpleText(desc2, "jcms_hud_medium", x1, -200+48, jcms.color_dark, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+			
+			surface.SetDrawColor(jcms.color_dark_alt)
+
+			render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
+				local off = 2
+				draw.SimpleText(title, "jcms_hud_big", x1+off, -256-off, jcms.color_bright, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+				draw.SimpleText(desc1, "jcms_hud_medium", x1+off, -200-off, jcms.color_bright, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+				draw.SimpleText(desc2, "jcms_hud_medium", x1+off, -200+48-off, jcms.color_alert, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+			render.OverrideBlend(false)
+
+			surface.SetAlphaMultiplier(1)
 		end
 	}
 	jcms.hud_infoTargetFuncs.jcms_turret_smrls = jcms.hud_infoTargetFuncs.jcms_turret

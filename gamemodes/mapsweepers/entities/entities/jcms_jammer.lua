@@ -31,6 +31,13 @@ ENT.RenderGroup = RENDERGROUP_BOTH
 ENT.JammingRadius = 750
 ENT.JammingTime = 2
 
+function ENT:SetupDataTables()
+	self:NetworkVar("Float", 0, "HealthFraction")
+	if SERVER then
+		self:SetHealthFraction(1)
+	end
+end
+
 if SERVER then
 	function ENT:Initialize()
 		self:SetModel("models/jcms/rgg_dish.mdl")
@@ -102,6 +109,8 @@ if SERVER then
 		util.Effect("MetalSpark", ed)
 
 		self:EmitSound("Computer.BulletImpact")
+
+		self:SetHealthFraction(self:Health()/self:GetMaxHealth())
 		
 		if self:Health() <= 0 then
 			local pos = self:WorldSpaceCenter()
