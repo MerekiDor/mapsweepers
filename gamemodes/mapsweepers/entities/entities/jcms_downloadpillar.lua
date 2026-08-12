@@ -167,8 +167,9 @@ if CLIENT then
 	ENT.mat_elec = Material("sprites/physbeama")
 	ENT.mat_flare = Material("sprites/orangeflare1_gmod")
 	ENT.mat_lamp = Material("effects/lamp_beam.vmt")
-	ENT.mat_cloud = CreateMaterial("jcms_downloadpillar_cloud", "UnlitGeneric", {
+	ENT.mat_cloud = CreateMaterial("jcms_downloadpillar_cloud", "UnlitTwoTexture", {
 		["$basetexture"] = "models/props_combine/cit_cloud003",
+		["$texture2"] = "effects/flashlight/soft",
 		["$nofog"] = 1,
 		["$additive"] = 1
 	})
