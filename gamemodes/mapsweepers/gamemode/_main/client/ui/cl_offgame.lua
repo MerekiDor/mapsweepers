@@ -1974,13 +1974,16 @@ jcms.offgame = jcms.offgame or NULL
 					for j, part in ipairs(parts) do
 						local part_type = "text"
 						local part_text = ""
-						local _, b_index, part_num, part_beginning = part:find("^%s*(%d*)([%-%#%?%.%s]+) ")
+						local _, b_index, part_num, part_beginning = part:find("^%s*(%d*)([%-%#%?%.%s%!]+) ")
 
 						if part_beginning == "-#" then
 							part_type = "caption"
 							part_text = part:sub(b_index, -1)
 						elseif part_beginning == "-?" then
 							part_type = "subtitle"
+							part_text = part:sub(b_index, -1)
+						elseif part_beginning == "-!" then
+							part_type = "huge"
 							part_text = part:sub(b_index, -1)
 						elseif part_beginning == "#" then
 							part_type = "title"
@@ -2003,6 +2006,13 @@ jcms.offgame = jcms.offgame or NULL
 							elem:SetTextColor(jcms.color_bright)
 							elem:DockMargin(0, i==1 and 2 or 12, 0, 6)
 							elem:SetTall(32)
+						elseif part_type == "huge" then
+							elem = parent:Add("DLabel")
+							elem:SetFont("jcms_hud_big")
+							elem:SetText(part_text)
+							elem:SetTextColor(jcms.color_bright)
+							elem:DockMargin(0, 2, 0, 6)
+							elem:SetTall(64)
 						elseif part_type == "caption" then
 							elem = parent:Add("DLabel")
 							elem:SetFont("jcms_medium")
@@ -2064,6 +2074,7 @@ jcms.offgame = jcms.offgame or NULL
 				if IsValid(parent.VBar) then
 					parent.VBar.Paint = BLANK_DRAW
 					parent.VBar:SetHideButtons(true)
+					parent.VBar:SetScroll(0)
 					parent.VBar.btnGrip.Paint = jcms.paint_ScrollGrip
 				end
 			end
@@ -2103,9 +2114,10 @@ jcms.offgame = jcms.offgame or NULL
 						btn:Dock(TOP)
 						btn:DockMargin(0, 0, 0, 4)
 						btn:SetTall(32)
-						btn:SetEnabled(mylevel >= (cdx.level or 0))
+						btn:SetEnabled( (not cdx.wip) and (mylevel >= (cdx.level or 0)) )
 						btn.index = i
 						btn.level = cdx.level
+						btn.wip = cdx.wip
 						btn.cdx = cdx
 						btn.Paint = jcms.offgame_paint_CodexButton
 						btn.DoClick = cdxBtnFunc

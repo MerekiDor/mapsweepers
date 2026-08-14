@@ -39,9 +39,8 @@
 			name = "#jcms.codex_factions_name",
 			pages = { 
 				"#jcms.codex_factions1", 
-				"#jcms.codex_factions2", 
-				"#jcms.codex_factions3", 
-				"#jcms.codex_factions4"
+				"#jcms.codex_factions2",
+				"#jcms.codex_factions3"
 			}
 		},
 
@@ -65,13 +64,15 @@
 		{
 			level = 16,
 			name = "#jcms.codex_sweepers_name",
-			text = "#jcms.codex_sweepers"
+			text = "#jcms.codex_sweepers",
+			wip = true,
 		},
 
 		{
 			level = 21,
 			name = "#jcms.codex_jcorparmy_name",
-			text = "#jcms.codex_jcorparmy"
+			text = "#jcms.codex_jcorparmy",
+			wip = true,
 		},
 
 		{
@@ -109,6 +110,18 @@
 	jcms.codex_logsUnlocked = jcms.codex_logsUnlocked or {} -- key: id, value: true
 	-- TODO save unlocked logs
 	jcms.codex_logs = {
+		{
+			unlock_id = "habitat",
+			name = "#jcms.codexlogs_habitat_name",
+			text = "#jcms.codexlogs_habitat"
+		},
+
+		{
+			unlock_id = "spacemining",
+			name = "#jcms.codexlogs_spacemining_name",
+			text = "#jcms.codexlogs_spacemining"
+		},
+
 		{
 			unlock_id = "fantlions",
 			name = "#jcms.codexlogs_fantlions_name",

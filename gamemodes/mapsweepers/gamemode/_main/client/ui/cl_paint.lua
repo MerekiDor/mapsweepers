@@ -2313,15 +2313,22 @@
 			draw.SimpleText(p.cdx.name, "jcms_medium", h*3/2, h/2, col, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 			if not unlocked then
-				draw.SimpleText(language.GetPhrase("jcms.unlocklvl"):format(p.level), "jcms_small_bolder", w - h, h/2, col, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
-
-				if not p.lock then
-					p.lock = p:Add("DImage")
-					p.lock:SetPos(w-8-16, 8)
-					p.lock:SetSize(16, 16)
-					p.lock:SetImage("jcms/lock.png")
+				local underConstruction = p.wip
+				if underConstruction then
+					-- Entry is not done yet
+					draw.SimpleText("#jcms.upcoming", "jcms_small_bolder", w - h/2, h/2, col, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+				else
+					-- Locked due to level
+					draw.SimpleText(language.GetPhrase("jcms.unlocklvl"):format(p.level), "jcms_small_bolder", w - h, h/2, col, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+	
+					if not p.lock then
+						p.lock = p:Add("DImage")
+						p.lock:SetPos(w-8-16, 8)
+						p.lock:SetSize(16, 16)
+						p.lock:SetImage("jcms/lock.png")
+					end
+					p.lock:SetImageColor(col)
 				end
-				p.lock:SetImageColor(col)
 			end
 
 			return true
