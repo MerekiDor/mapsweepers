@@ -213,12 +213,12 @@ jcms.bestiary = {}
 	}
 
 	jcms.bestiary.zombie_spawner = {
-		faction = "zombie", bounty = 350, health = 900,
+		faction = "zombie", bounty = 450, health = 900,
 		mdl = "models/jcms/zombiespawner.mdl", scale = 0.5,
 	}
 
 	jcms.bestiary.zombie_spewer = {
-		faction = "zombie", bounty = 350, health = 1250,
+		faction = "zombie", bounty = 450, health = 1250,
 		mdl = "models/props_wasteland/antlionhill.mdl", scale = 0.15,
 	}
 
