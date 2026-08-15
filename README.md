@@ -1,4 +1,4 @@
-![Map Sweepers Header Image](https://media.discordapp.net/attachments/778220642210152460/1393239976615084153/image.png?ex=68727357&is=687121d7&hm=ea7ea5df08f65925ee38ae270677db1220fc94b525f5edef84e313c8badd4386&=&format=webp&quality=lossless "Map Sweepers Header Image")
+![Map Sweepers Header Image](https://cdn.discordapp.com/attachments/1372481970306551869/1538267450016137226/logo.png?ex=6a820eb3&is=6a80bd33&hm=5c55994175009a4f180451c47ad48fae810cd3299d75883c31bfcd58ef54d730 "Map Sweepers Header Image")
 
 Map Sweepers
 ===========
@@ -27,7 +27,7 @@ Features List
 - **Use ANY weapon addons and bases!** [🛈](## "Features automatic price calculation for all weapons based on their stats. As long as the weapon isn't something wacky, it should be usable.")
 	- Examples: *M9K, TFA, ArcCW, Arc9, FA:S 2.0, CW 2.0, Darken217's SciFi Weapons*
 - **Procedural generation** [🛈](## "Points of interests and objectives are procedurally generated around the map: hackable terminals full of money, hidden supplies, and so on")
-- **7 unique mission types** 
+- **10 unique mission types (7 on release)** 
 - **4 enemy factions**
 	- Antlions [🛈](## "Swarmer faction that overwhelms you with numbers")
 	- Combine  [🛈](## "Glass-cannon, heavy hitters with deadly weapons")
