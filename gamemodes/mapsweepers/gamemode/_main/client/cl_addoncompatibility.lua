@@ -22,9 +22,26 @@
 -- The following code adds compatibility with various 3rd-party addons (with Steam Workshop links attached) to Map Sweepers.
 hook.Add("InitPostEntity", "jcms_addonCompatibility", function()
 	
+	jcms.hasMusicAddon = false
+
+	-- // Nombat {{{
+		-- https://steamcommunity.com/sharedfiles/filedetails/?id=270169947
+		if NOMBAT then
+			jcms.hasMusicAddon = true
+		end
+	-- // }}}
+
+	-- // ULTRAKILL Dynamic Music Base {{{
+		-- https://steamcommunity.com/sharedfiles/filedetails/?id=3675486719
+		if ULTRAKILL_MUSIC then
+			jcms.hasMusicAddon = true
+		end
+	-- // }}}
+
 	-- // DOOM Dynamic Music System {{{
 		-- https://steamcommunity.com/sharedfiles/filedetails/?id=3371358666
 		if MUSIC_SYSTEM then
+			jcms.hasMusicAddon = true
 			jcms.cvar_doomdms_randomize = CreateClientConVar("doom_music_mapsweepers_randomize_song", "1", true, false, "If set to 1, the track will automatically get randomized at the start of each mission")
 
 			local function chooseRandomSong()

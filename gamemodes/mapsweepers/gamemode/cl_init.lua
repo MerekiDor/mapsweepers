@@ -694,7 +694,7 @@ end)
 	end
 
 	function jcms.shouldPlayMusic()
-		return not ( NOMBAT or MUSIC_SYSTEM or jcms.cvar_nomusic:GetBool() )
+		return not ( jcms.hasMusicAddon or jcms.cvar_nomusic:GetBool() )
 	end
 
 -- // }}}
