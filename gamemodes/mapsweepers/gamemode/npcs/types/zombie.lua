@@ -1027,12 +1027,14 @@ jcms.npc_types.zombie_spirit = {
 	cost = 1.5,
 	swarmWeight = 0.35,
 
+	swarmLimit = 2,
+
 	class = "npc_jcms_spirit",
 	bounty = 60,
 
 	check = function(director)
 		--Reliant on other npcs to be useful, and can end up stalling them more than helping them if too many are present.
-		return jcms.npc_capCheck("npc_jcms_spirit", 4)
+		return jcms.npc_capCheck("npc_jcms_spirit", math.ceil(jcms.cvar_softcap:GetInt() / 15 ) )
 	end
 }
 
