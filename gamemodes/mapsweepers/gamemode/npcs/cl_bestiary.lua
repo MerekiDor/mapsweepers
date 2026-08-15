@@ -50,6 +50,11 @@ jcms.bestiary = {}
 		mdl = "models/antlion.mdl", mats = { "metal2" }, color = Color(195, 150, 38)
 	}
 
+	jcms.bestiary.antlion_cyberbug = {
+		faction = "antlion", bounty = 35, health = 75,
+		mdl = "models/antlion.mdl", mats = { "models/jcms/cyberbug", "models/jcms/cyberbug", "models/jcms/cyberbug", "models/jcms/cyberbug" }
+	}
+
 	jcms.bestiary.antlion_ultracyberguard = {
 		faction = "antlion", bounty = 600, health = 785,
 		mdl = "models/jcms/ultracyberguard.mdl", camlookvector = Vector(0, 0, 50)
