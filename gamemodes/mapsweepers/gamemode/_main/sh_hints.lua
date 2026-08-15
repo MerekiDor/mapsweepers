@@ -61,8 +61,7 @@ if CLIENT then
 		[jcms.HINT_UNIQUEORDERS] = "#jcms.hint_uniqueorders",
 		[jcms.HINT_STUCK] = "#jcms.hint_stuck",
 		[jcms.HINT_FLIPOVER] = "#jcms.hint_flipover",
-
-		[jcms.HINT_CREEP] = [=[Flesh Creep can be cleared using explosives]=]
+		[jcms.HINT_CREEP] = "#jcms.hint_creep"
 	}
 end
 
