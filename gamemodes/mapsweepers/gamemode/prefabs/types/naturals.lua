@@ -261,6 +261,10 @@ local prefabs = jcms.prefabs
 
 			if not jcms.director or math.random() < 0.1 or jcms.director.faction == "everyone" then
 				local factionNames = jcms.factions_GetOrder()
+				if not jcms.cvar_customfactions_hell:GetBool() and (jcms.director.missionType == "hell" or jcms.director.missionType == "escathon")  then -- restrict spawners to only vanilla factions on hell/escathon if the cvar for that is on.
+					factionNames = table.GetKeys(jcms.vanillaFactions)
+					table.sort(factionNames)
+				end
 				ent:SetSpawnerType(factionNames[ math.random(1, #factionNames) ])
 			else
 				ent:SetSpawnerType(jcms.director.faction)

@@ -43,6 +43,11 @@
 		}
 	}
 
+	jcms.vanillaFactions = {}
+	for k,v in pairs(jcms.factions) do
+		jcms.vanillaFactions[k] = v
+	end
+
 -- // }}}
 
 -- // Misc {{{

@@ -42,7 +42,9 @@ jcms.missions.eschaton = {
 		
 		--Prefabs from all factions
 		for k, commander in pairs(jcms.npc_commanders) do 
-			if commander.placePrefabs then
+			local skip
+			if not jcms.cvar_customfactions_hell:GetBool() then if not jcms.vanillaFactions[k] then skip = true end end -- disables prefabs from custom factions if the cvar for that is set -- i only tested that it doesnt stop vanilla prefabs from spawning but it should work.
+			if not skip and commander.placePrefabs then
 				commander:placePrefabs(missionData)
 			end
 		end
@@ -128,7 +130,7 @@ jcms.missions.eschaton = {
 			["zombie_creep"] = true,
 			["zombie_creep_natural"] = true,
 		}
-		return (npcData.danger <= dangerCap) and (not npcData.check or npcData.check(director)) and not npcTypeBlacklist[npcType]
+		return (npcData.danger <= dangerCap) and (not npcData.check or npcData.check(director)) and not npcTypeBlacklist[npcType] and (jcms.cvar_customfactions_hell:GetBool() or jcms.vanillaFactions[npcData.faction])
 	end,
 	
 	swarmCalcCost = function(director, baseCost)
