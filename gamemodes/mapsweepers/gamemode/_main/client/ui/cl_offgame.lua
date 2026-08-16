@@ -1951,12 +1951,34 @@ jcms.offgame = jcms.offgame or NULL
 				end
 				
 				local strings = {}
+
+				local function getMultiPartString(key)
+					local result = language.GetPhrase(key)
+					if result ~= key then
+						result = result:sub(2, -2)
+					end
+
+					for i=2, 16 do
+						local key_pt = key.."_pt"..i
+						local str_pt = language.GetPhrase(key_pt)
+						if str_pt ~= key_pt then
+							local bytes1, bytes2 = #result, #str_pt
+							result = result .. str_pt:sub(2, -2)
+							jcms.printf("merging a multi-part codex string %s (pt. %d) [%d B + %d B -> %d B]", key, i, bytes1, bytes2, bytes1+bytes2)
+						else
+							break
+						end
+					end
+
+					return result
+				end
+
 				if entry.pages then
 					for i, text in ipairs(entry.pages) do
-						table.insert(strings, language.GetPhrase(text):sub(2, -2))
+						table.insert(strings, getMultiPartString(text))
 					end
 				elseif entry.text then
-					table.insert(strings, language.GetPhrase(entry.text):sub(2, -2))
+					table.insert(strings, getMultiPartString(entry.text))
 				end
 
 				local accumulatedZPos = 0

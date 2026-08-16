@@ -21,6 +21,18 @@
 
 -- Entries {{{
 	-- entries
+
+	-- ===== !!! TRANSLATION NOTE !!! =====
+	-- GMod only allows localization strings as long as 4000 bytes long. Some languages have more than 1 byte per symbol
+	-- (e.g. Russian uses 2 bytes per character, Chinese uses 3 bytes per character) and because of this the entries may not fit.
+
+	-- In case you want to split a codex entry because it is over the 4000 character limit imposed by gmod,
+	-- add extra localization keys with a _pt2, _pt3, ... suffix to them. (pt stands for "part")
+
+	-- E.g. if '#jcms.codex_jcms' turns out to be too long in your language, split the entry
+	-- by adding both '#jcms.codex_jcms' and '#jcms.codex_jcms_pt1' (and so on, in case you need more).
+	-- They will get merged automatically.
+
 	jcms.codex = {
 		{
 			level = 1,
@@ -210,6 +222,7 @@
 			}
 		}
 	}
+
 -- }}}
 
 -- Unlocking logs {{{
@@ -281,4 +294,49 @@
 		hook.Add("client_disconnect", "jcms_storeFoundLogs", storeFoundLogs)
 		hook.Add("ShutDown", "jcms_storeFoundLogs", storeFoundLogs)
 	end
+-- }}}
+
+-- Validating entries on runtime {{{
+do
+	-- There's a fucking 4,000 character limit so we have to make sure no entries spill over that.
+	local limit = 4000
+	local limit_warn = 3800
+
+	local function validate_str(key, namekey, pageindex)
+		local str = language.GetPhrase(key)
+		local name = language.GetPhrase(namekey)
+
+		if pageindex then
+			name = name .. " pt." .. tostring(pageindex)
+		end
+
+		local pass = #str <= limit
+		local warn = #str >= limit_warn
+		
+		if not pass then
+			local msg = string.format("codex entry '%s' doesn't fit into %d byte limit! (%d bytes)", name, limit, #str)
+			ErrorNoHalt(msg)
+		elseif warn then
+			jcms.printf("codex entry '%s' is getting dangerously close to the %d byte limit (%d bytes)", name, limit, #str)
+		else
+			--jcms.printf("%s - all good", name)
+		end
+	end
+
+	local function validate(t)
+		for k, v in pairs(t) do
+			if v.text then
+				validate_str(v.text, v.name)
+			elseif v.pages then
+				for i, page in ipairs(v.pages) do
+					validate_str(page, v.name, i)
+				end
+			end
+		end
+	end
+
+	pcall(validate, jcms.codex)
+	pcall(validate, jcms.codex_legacy)
+	pcall(validate, jcms.codex_logs)
+end
 -- }}}
