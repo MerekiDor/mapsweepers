@@ -168,7 +168,13 @@ if SERVER then
 		end
 
 		-- // Find the furthest valid target to go grab {{{
-			local npcs = jcms.director.npcs --ents.FindByClass("npc_*") --director table's more optimised, and we don't transport any anonymous npcs
+			local npcs
+			if jcms.director then
+				npcs = jcms.director.npcs --director table's more optimised, and we don't transport any anonymous npcs
+			else
+				npcs = ents.FindByClass("npc_*") -- for arena mode and where director isn't normally present
+			end
+
 			local bestDist2, furthest = selfTbl.MinGrabDist^2
 			
 			local selfIsJCorp, selfIsNPC = jcms.team_JCorp_ent(self), jcms.team_NPC_optimised(self)
