@@ -459,7 +459,7 @@ if CLIENT then
 				local off = 6
 				local str1 = language.GetPhrase("jcms.sentinelanchored_title")
 				local str2 = language.GetPhrase("jcms.sentinelanchored_desc1")
-				local str3 = anchoredBy and language.GetPhrase("jcms.sentinelanchored_desc2"):format(anchoredBy.PrintName or anchoredBy:GetClass()) or jcms.hud_sentinelAnchorLastString or ""
+				local str3 = anchoredBy and language.GetPhrase("jcms.sentinelanchored_desc2"):format( language.GetPhrase(anchoredBy:GetClass()) ) or jcms.hud_sentinelAnchorLastString or ""
 				jcms.hud_sentinelAnchorLastString = str3
 				
 				surface.SetAlphaMultiplier(anim)
