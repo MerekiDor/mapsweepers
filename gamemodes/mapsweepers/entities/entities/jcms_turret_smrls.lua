@@ -152,12 +152,9 @@ end
 if SERVER then
 	-- Thinking {{{
 	function jcms.turret_GlobalMissilePlatformSlowThink()
-		local d = jcms.director
-		if not d then return end
-
 		local ct = CurTime()
-		if ct - (d.missileplatform_lastSlowThink or 0) < 1 then return end
-		d.missileplatform_lastSlowThink = ct
+		if ct - (jcms.missileplatform_lastSlowThink or 0) < 1 then return end
+		jcms.missileplatform_lastSlowThink = ct
 
 		local turrets = ents.FindByClass("jcms_turret_smrls")
 		if #turrets <= 0 then return end
