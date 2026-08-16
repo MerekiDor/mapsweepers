@@ -6,6 +6,10 @@
 	[
 		"*.kateproject",
 		"*.git*",
-		"*.gitignore"
+		"*.gitignore",
+		".vscode/settings.json",
+		"LICENSE",
+		"LICENSE_OFL",
+		"README.md"
 	]
 }
