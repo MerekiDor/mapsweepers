@@ -2028,6 +2028,32 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		end
 	end, nil, "End the mission and instantly boot into a new one", FCVAR_CHEAT)
 
+	concommand.Add("jcms_debug_makebots", function(ply, cmd, args)
+		if not(not ply:IsPlayer() or ply:IsAdmin()) then
+			print(ply:Nick() .. ", this command is admin only")
+			return
+		end
+
+		local bots = player.GetBots()
+		for i, ply in ipairs( bots ) do
+			ply:Kick("USELESS. DEMOTED.")
+		end
+
+		if #bots > 0 then return end
+
+		for i=1, tonumber(args[1]) or 4 do
+			local bot = player.CreateNextBot(i)
+
+			if IsValid(bot) then
+				bot:SetNWInt("jcms_desiredteam", tonumber(args[2]) or 1)
+				bot:SetNWInt("jcms_desiredclass", jcms.classesOrder[ math.random(1, #jcms.classesOrder) ])
+				bot:SetNWBool("jcms_ready", true)
+			else
+				break
+			end
+		end
+	end)
+
 	concommand.Add("jcms_debug_enable", function(ply, cmd, args)
 		if not(not ply:IsPlayer() or ply:IsAdmin()) then
 			print(ply:Nick() .. ", this command is admin only")
