@@ -50,8 +50,9 @@ SWEP.SlotPos = 2
 SWEP.DrawAmmo = true
 SWEP.DrawCrosshair = true
 
-SWEP.ViewModel = "models/weapons/v_pistol.mdl"
+SWEP.ViewModel = "models/weapons/cstrike/c_smg_p90.mdl"
 SWEP.WorldModel = "models/weapons/w_smg_p90.mdl"
+SWEP.UseHands = true
 
 SWEP.ShootSound = Sound("Weapon_XM1014.Single")
 
@@ -95,7 +96,20 @@ end
 		self:ShootEffects()
 
 		--Spawning
-		local startPos = (self.Owner:WorldSpaceCenter() + self.Owner:EyePos())/2
+		local startPos
+		if self.Owner:IsPlayer() then
+			local ea = self.Owner:EyeAngles()
+			startPos = self.Owner:EyePos()
+
+			local v1 = ea:Right()
+			local v2 = ea:Up()
+			v1:Mul(4.5)
+			v2:Mul(-4.5)
+			startPos:Add(v1)
+			startPos:Add(v2)
+		else
+			startPos = (self.Owner:WorldSpaceCenter() + self.Owner:EyePos())/2
+		end
 		local bomb = ents.Create("jcms_firebomb")
 		bomb:SetPos(startPos)
 		bomb:SetOwner(self.Owner)
@@ -108,7 +122,7 @@ end
 		local firingAng = math.pi/4 --Designer value (Radians), could be made to get harsher at a distance
 
 		local aimVec = self.Owner:GetAimVector()
-		local target = self.Owner:GetEnemy()
+		local target = self.Owner:IsNPC() and self.Owner:GetEnemy() or NULL
 		if IsValid(target) then
 			local targetPos = target:GetPos() --We want their feet, not their body.
 			--target:BodyTarget(startPos)
@@ -144,18 +158,20 @@ end
 			velocityVector:Rotate(AngleRand(-aimcone, aimcone))
 			bomb:GetPhysicsObject():SetVelocity(velocityVector)
 		else 
-			aimVec:Mul(600)
+			aimVec:Mul(800)
 			aimVec:Rotate(AngleRand(-aimcone, aimcone))
 
 			bomb:GetPhysicsObject():SetVelocity(aimVec)
 		end
 		
 		--MuzzleFlash
-		local ed = EffectData()
-		ed:SetEntity(self)
-		ed:SetFlags(3)
-		ed:SetAttachment(1)
-		util.Effect("MuzzleFlash", ed)
+		if not self.Owner:IsPlayer() then
+			local ed = EffectData()
+			ed:SetEntity(self)
+			ed:SetFlags(3)
+			ed:SetAttachment(1)
+			util.Effect("MuzzleFlash", ed)
+		end
 	end
 
 	function SWEP:GetTracerOrigin()

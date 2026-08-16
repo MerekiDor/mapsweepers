@@ -50,8 +50,9 @@ SWEP.SlotPos = 2
 SWEP.DrawAmmo = true
 SWEP.DrawCrosshair = true
 
-SWEP.ViewModel = "models/weapons/v_pistol.mdl"
+SWEP.ViewModel = "models/weapons/cstrike/c_mach_m249para.mdl"
 SWEP.WorldModel = "models/weapons/w_mach_m249para.mdl"
+SWEP.UseHands = true
 
 if SERVER then
 	sound.Add( {
@@ -117,14 +118,17 @@ SWEP.ShootSound = Sound("Weapon.jcms_mg")
         self.Owner:FireBullets(bullet)
         self:ShootEffects()
         
-        local ed = EffectData()
-        ed:SetEntity(self)
-        ed:SetFlags(7)
-        ed:SetAttachment(1)
-        util.Effect("MuzzleFlash", ed)
+        if not self.Owner:IsPlayer() then
+            local ed = EffectData()
+            ed:SetEntity(self)
+            ed:SetFlags(7)
+            ed:SetAttachment(1)
+            util.Effect("MuzzleFlash", ed)
+        end
     end
 
     function SWEP:GetTracerOrigin()
+        if IsValid(self.Owner) and self.Owner:IsPlayer() then return end
         local att = self:GetAttachment(self:LookupAttachment("muzzle")) or self:GetAttachment(self:LookupAttachment("1"))
         return (att and att.Pos or self:GetPos())
     end

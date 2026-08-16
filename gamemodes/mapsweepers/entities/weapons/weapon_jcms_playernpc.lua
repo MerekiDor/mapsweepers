@@ -20,7 +20,7 @@
 --]]
 AddCSLuaFile()
 
-SWEP.PrintName = "Machinegun"
+SWEP.PrintName = "Player NPC Weapon"
 SWEP.Author = "Octantis Addons"
 SWEP.Purpose = "Map Sweepers"
 SWEP.Instructions = "Kill"

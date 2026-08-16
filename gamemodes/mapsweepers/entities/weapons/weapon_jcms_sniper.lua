@@ -50,10 +50,15 @@ SWEP.SlotPos = 2
 SWEP.DrawAmmo = true
 SWEP.DrawCrosshair = true
 
-SWEP.ViewModel = "models/weapons/v_pistol.mdl"
+SWEP.ViewModel = "models/weapons/cstrike/c_snip_scout.mdl"
 SWEP.WorldModel = "models/weapons/w_snip_scout.mdl"
+SWEP.UseHands = true
 
 SWEP.ShootSound = Sound("NPC_Sniper.FireBullet")
+
+function SWEP:Initialize()
+    self:SetHoldType("ar2")
+end
 
 -- // Basics, attacking {{{
 
@@ -119,18 +124,36 @@ SWEP.ShootSound = Sound("NPC_Sniper.FireBullet")
 	function SWEP:ShootBullet(damage, numbullets, aimcone, ammotype, force, tracerX)
 		self:ShootEffects()
 		local bullet = ents.Create("jcms_sniperround")
-		bullet:SetPos( (self.Owner:WorldSpaceCenter() + self.Owner:EyePos())/2 )
+
+		local startPos
+		if self.Owner:IsPlayer() then
+			local ea = self.Owner:EyeAngles()
+			startPos = self.Owner:EyePos()
+
+			local v1 = ea:Right()
+			local v2 = ea:Up()
+			v1:Mul(2)
+			v2:Mul(-2)
+			startPos:Add(v1)
+			startPos:Add(v2)
+		else
+			startPos = (self.Owner:WorldSpaceCenter() + self.Owner:EyePos())/2
+		end
+
+		bullet:SetPos( startPos )
 		bullet:SetOwner(self.Owner)
 		bullet:Spawn()
 		bullet.Damage = damage
 		bullet.Attacker = self.Owner
 		bullet:SniperShoot(self.Owner:GetAimVector(), self.Owner)
 		
-		local ed = EffectData()
-		ed:SetEntity(self)
-		ed:SetFlags(5)
-		ed:SetAttachment(1)
-		util.Effect("MuzzleFlash", ed)
+		if not self.Owner:IsPlayer() then
+			local ed = EffectData()
+			ed:SetEntity(self)
+			ed:SetFlags(5)
+			ed:SetAttachment(1)
+			util.Effect("MuzzleFlash", ed)
+		end
 	end
 
 	function SWEP:DrawWorldModel()
@@ -239,53 +262,6 @@ SWEP.ShootSound = Sound("NPC_Sniper.FireBullet")
 			render.SetMaterial(spriteLaser)
 			render.DrawBeam(tr.StartPos, tr.HitPos, superDot*math.Rand(0.5, 0.95)*scale, 0, 1, beamCol)
 		end
-	end
-
--- // }}}
-
--- // Animations and activities {{{
-
-	local actTrans = {
-		[ACT_MP_RELOAD_STAND] = ACT_HL2MP_GESTURE_RELOAD_AR2,
-		[ACT_MP_STAND_IDLE] = ACT_HL2MP_IDLE_SHOTGUN,
-		[ACT_MP_WALK] = ACT_HL2MP_WALK_SHOTGUN,
-		[ACT_MP_RUN] = ACT_HL2MP_RUN_SHOTGUN,
-		[ACT_MP_ATTACK_STAND_PRIMARYFIRE] = ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2,
-		[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE] = ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2,
-		[ACT_MP_JUMP] = ACT_HL2MP_JUMP_CROSSBOW,
-		[ACT_MP_AIRWALK] = ACT_HL2MP_JUMP_AR2,
-		[ACT_MP_SWIM] = ACT_HL2MP_SWIM_AR2,
-		[ACT_MP_RELOAD_CROUCH] = ACT_HL2MP_GESTURE_RELOAD_AR2,
-		[ACT_MP_CROUCH_IDLE] = ACT_HL2MP_IDLE_CROUCH_AR2,
-		[ACT_MP_CROUCHWALK] = ACT_HL2MP_WALK_CROUCH_AR2,
-		[ACT_MP_SWIM_IDLE] = ACT_HL2MP_SWIM_AR2
-	}
-
-	local actTransNPC = {
-		[ACT_IDLE] = ACT_IDLE_SMG1_STIMULATED,
-		[ACT_IDLE_STIMULATED] = ACT_IDLE_SMG1_STIMULATED,
-		[ACT_IDLE_ANGRY] = ACT_IDLE_ANGRY_SMG1,
-		[ACT_IDLE_AGITATED] = ACT_IDLE_ANGRY_SMG1,
-		[ACT_IDLE_RELAXED] = ACT_IDLE_SMG1_RELAXED,
-		[ACT_RANGE_ATTACK1] = ACT_RANGE_ATTACK_AR2,
-		[ACT_RANGE_ATTACK1_LOW] = ACT_RANGE_ATTACK_AR2_LOW,
-		[ACT_WALK] = ACT_WALK_RIFLE,
-		[ACT_WALK_AIM] = ACT_WALK_AIM_RIFLE,
-		[ACT_RUN] = ACT_RUN_RIFLE,
-		[ACT_RUN_AIM] = ACT_RUN_AIM_RIFLE,
-		[ACT_RUN_RELAXED] = ACT_RUN_AIM_RIFLE_STIMULATED,
-		[ACT_RUN_AGITATED] = ACT_RUN_AIM_RIFLE_STIMULATED,
-		[ACT_RELOAD] = ACT_RELOAD_SMG1,
-		[ACT_GESTURE_RANGE_ATTACK1] = ACT_GESTURE_RANGE_ATTACK_AR2
-	}
-
-	function SWEP:TranslateActivity(act)
-		if self:GetOwner():IsNPC() then
-			return actTransNPC[act] or actTrans[act] or act
-		elseif self:GetOwner():IsPlayer() then
-			return actTrans[act] or act
-		end
-		return -1
 	end
 
 -- // }}}
