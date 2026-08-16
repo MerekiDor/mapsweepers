@@ -147,7 +147,7 @@ if SERVER then
 	function ENT:OnTakeDamage(dmg)
 		self:TakePhysicsDamage(dmg)
 	end
-	
+
 	function ENT:Think()
 		local selfTbl = self:GetTable()
 		if selfTbl.expiration and (CurTime() > selfTbl.expiration) then
@@ -167,7 +167,11 @@ if SERVER then
 					end
 				end
 			end
-			
+
+			if IsValid( jcms.zombieCreepCells[jcms.zombieCreep_GetCell(mypos)] ) then
+				goodTargets = goodTargets + 1
+			end
+
 			if (goodTargets >= selfTbl.RequiredTargets) and (selfTbl.blasts < selfTbl.BlastCount) and (CurTime() >= selfTbl.blastTime+selfTbl.BlastCooldown) then
 				self:Detonate()
 			elseif selfTbl.expiration then
