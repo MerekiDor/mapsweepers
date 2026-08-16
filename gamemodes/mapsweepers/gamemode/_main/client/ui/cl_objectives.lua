@@ -104,7 +104,7 @@
 					end
 					render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
 					surface.SetDrawColor(color)
-					for i=1, x do
+					for i=1, math.min(n, x) do
 						surface.DrawRect(24 + tw + (subBarW+6)*(i-1) + off, 16 + off, subBarW, 8)
 					end
 				end

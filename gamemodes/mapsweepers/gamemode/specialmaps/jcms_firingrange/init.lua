@@ -423,7 +423,7 @@ end
         end
         
         if arena_data.npcsToKill > 0 then
-            table.insert(objectives, { type = "j", progress = arena_data.npcsToKill - #arena_data.npcs, total = arena_data.npcsToKill })
+            table.insert(objectives, { type = "j", progress = math.max(0, arena_data.npcsToKill - #arena_data.npcs), total = arena_data.npcsToKill })
         end
         
         local nextwave = arena_settings.nextwave
