@@ -2944,7 +2944,7 @@
 			surface.DrawRect(-2,-2,jcms.scrW+4,jcms.scrH+4)
 		cam.End2D()
 
-		if not game.SinglePlayer() and not jcms.locPly:GetNWBool("jcms_evacuated") then 
+		if (not game.SinglePlayer()) and (not jcms.locPly:GetNWBool("jcms_evacuated")) and (jcms.locPly:GetNWInt("jcms_desiredteam") == 1) then 
 			jcms.setup3d2dCentral("top")
 				jcms.hud_SpectatorDraw_RespawnInfo()
 			cam.End3D2D()
@@ -3093,6 +3093,25 @@
 		
 		local t = jcms.hud_beginsequencet
 		local last = jcms.hud_beginsequenceLast
+
+		if jcms.locPly:GetNWInt("jcms_desiredteam") == 2 then
+			-- Draw NPC hud and a fade-in instead of the proper animation.
+			jcms.hud_beginsequencet = math.min(jcms.hud_beginsequencet + FrameTime(), 4.5)
+			if jcms.hud_beginsequencet >= 4.5 then
+				jcms.hud_beginsequencet = jcms.hud_beginsequenceLen + 1
+			end
+
+			cam.Start2D()
+				if t < 1.5 then
+					surface.SetDrawColor(0, 0, 0, 255)
+				else
+					surface.SetDrawColor(0, 0, 0, 255 * math.max(0, 1-(t-1.5)/3 ))
+				end
+				surface.DrawRect(-4, -4, jcms.scrW + 8, jcms.scrH + 8)
+			cam.End2D()
+
+			return
+		end
 		
 		local matrix = Matrix()
 		local function drawSeq(i, from, to, sound, func)
