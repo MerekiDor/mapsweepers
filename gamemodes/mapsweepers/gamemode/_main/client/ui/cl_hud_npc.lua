@@ -245,7 +245,7 @@
 					draw.SimpleText("NPC", "jcms_small_bolder", x, y + 16, colAlt, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 				else
 					local classmat = jcms.mat_GetClassMat(class)
-					if not classmat:IsError() then
+					if classmat:IsError() then
 						classmat = jcms.mat_GetClassMat("recon")
 					end
 					
