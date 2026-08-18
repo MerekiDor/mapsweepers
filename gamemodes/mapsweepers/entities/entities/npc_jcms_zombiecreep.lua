@@ -43,7 +43,7 @@ ENT.RenderGroup = RENDERGROUP_OTHER
 	-- // }}}
 	local vecCellSize = Vector(cellWidth, cellWidth, cellHeight)
 	jcms.zombieCreep_cellSize = vecCellSize
-	
+
 	--Optimisation - tracking the start/end so we don't have to check a ton of empty spots each rebuild.
 	jcms.zombieCreepMinCell = jcms.zombieCreepMinCell or totalLength
 	jcms.zombieCreepMaxCell = jcms.zombieCreepMaxCell or 1
@@ -178,7 +178,7 @@ hook.Add("MapSweepers_MapAnalysisDone", "jcms_ZombieCreep_CalcCellData", functio
 			end
 		end
 
-		for cell, total in pairs(areaDepths) do 
+		for cell, total in pairs(areaDepths) do
 			jcms.zombieCreep_cellDepths[cell] = total / areaDepthCounts[cell]
 		end
 	end
@@ -225,7 +225,7 @@ if SERVER then
 			ed:SetOrigin(self:GetPos())
 			ed:SetMagnitude(2)
 		util.Effect("jcms_creepexpand", ed)
-	
+
 		-- // Cell & Expansion
 			local cell = jcms.zombieCreep_GetCell( self:GetPos() )
 			if IsValid(jcms.zombieCreepCells[cell]) then							--We're in an occupied cell, don't want to double up, get rid of us.
@@ -261,13 +261,13 @@ if SERVER then
 
 			jcms.net_SendCreep(cell, true)
 
-			local nearest, dist = jcms.GetNearestSweeper(self:GetPos())
+			--local nearest, dist = jcms.GetNearestSweeper(self:GetPos())
 
-			self.nextExpansion = CurTime() + math.Rand(0, 2)
+			self.nextExpansion = CurTime() + ( 0.2 + math.Rand(0,0.2) ) / math.sqrt(jcms.zombieCreep_cellDepths[self.jcms_zombieCreep_cell])
 		-- // }}}
 
 		self.lastNearPlayer = CurTime()
-		self.decayTime = 45 / math.sqrt(#team.GetPlayers(1)) + math.Rand(0,30)
+		self.decayTime = 35 / math.sqrt(#team.GetPlayers(1)) + math.Rand(0,25)
 	end
 
 	function ENT:UpdateTransmitState()
@@ -275,7 +275,7 @@ if SERVER then
 	end
 
 	--Expansion pulse
-	local pulseDuration = 26
+	local pulseDuration = 8
 	local pulseDelay = 130
 	jcms.zombieCreep_isPulsing = false
 	timer.Create("jcms_zombieCreep_pulse", pulseDelay, 0, function()
@@ -294,16 +294,16 @@ if SERVER then
 		local cTime = CurTime()
 
 		--Rapid expansion during pulses
-		if jcms.zombieCreep_isPulsing and selfTbl.nextExpansion < cTime then --TODO: This gets *crazy* expensive now
-			selfTbl.nextExpansion = cTime + 1
+		if jcms.zombieCreep_isPulsing and selfTbl.nextExpansion < cTime then
+			selfTbl.nextExpansion = cTime + 1 / math.sqrt(jcms.zombieCreep_cellDepths[self.jcms_zombieCreep_cell])
 
 			table.Shuffle(self.adjacentCells)
-			for i, cell in ipairs(self.adjacentCells) do 
+			for i, cell in ipairs(self.adjacentCells) do
 				local cellPoints = jcms.zombieCreep_cellGroundPoints[cell]
 				if not cellPoints or #cellPoints == 0 then continue end --Nowhere to put us
 
 				--Not occupied, >30s since it was last cleared.
-				if not IsValid(jcms.zombieCreepCells[cell]) and (jcms.zombieCreepCell_LastDestroyed[cell] or 0) + 30 < cTime then 
+				if not IsValid(jcms.zombieCreepCells[cell]) and (jcms.zombieCreepCell_LastDestroyed[cell] or 0) + 30 < cTime then
 
 					--Stop expanding if we're too close to the player. Having creep intrude *into* your nest is annoying, and serves no gameplay purpose.
 					local cellPos = jcms.zombieCreep_GetCellPos( cell )
@@ -325,7 +325,9 @@ if SERVER then
 				end
 			end
 
-		else
+			self:NextThink(cTime + 0.2 + math.Rand(0,0.1))
+			return true
+		elseif not jcms.zombieCreep_isPulsing then
 			local nearest, dist = jcms.GetNearestSweeper(self:GetPos())
 
 			if dist < 2500 then
@@ -333,9 +335,10 @@ if SERVER then
 			elseif CurTime() - self.lastNearPlayer > self.decayTime then
 				self:Remove()
 			end
-		end
 
-		self:NextThink(cTime + 2 + math.Rand(0,1)) --Slower update rate, default of 10 times per second is extreme for what we're doing.
+			self:NextThink(cTime + 2.5 + math.Rand(0, 2.5))
+			return true
+		end
 	end
 
 	function ENT:OnRemove()

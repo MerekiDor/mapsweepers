@@ -229,7 +229,7 @@
 
 	jcms.hud_pulsingAlpha = 100
 
-	jcms.hud_target = NULL 
+	jcms.hud_target = nil
 	jcms.hud_targetLast = NULL 
 	jcms.hud_targetAnim = 0
 	jcms.hud_dead = 0
@@ -279,10 +279,10 @@
 			jcms.hud_dead = math.max(0, jcms.hud_dead) + dt
 		end
 
-		if jcms.hud_targetAnim > 1 and not IsValid(jcms.hud_target) then
+		if jcms.hud_targetAnim > 1 and jcms.hud_target == nil then
 			jcms.hud_targetAnim = jcms.hud_targetAnim - dt
 		else
-			jcms.hud_targetAnim = (jcms.hud_targetAnim * 8 + (not IsValid(me:GetNWEntity("jcms_vehicle")) and IsValid(jcms.hud_target) and 1.5 or 0)) / 9
+			jcms.hud_targetAnim = (jcms.hud_targetAnim * 8 + (not IsValid(me:GetNWEntity("jcms_vehicle")) and jcms.hud_target ~= nil and 1.5 or 0)) / 9
 		end
 
 		jcms.hud_spawnmenuAnim = (jcms.hud_spawnmenuAnim * 6 + (jcms.spawnmenu_isOpen and 1 or 0)) / 7
@@ -2639,6 +2639,40 @@
 	}
 	jcms.hud_infoTargetFuncs.jcms_turret_smrls = jcms.hud_infoTargetFuncs.jcms_turret
 
+	jcms.hud_worldInfoTargets = {
+		["creep_hint"] = {
+			condition = function(tr)
+				return not not jcms.zombieCreepCells[jcms.zombieCreep_GetCell( tr.HitPos )]
+			end,
+			renderFunc = function(blend)
+				local str1 = [=[Flesh Creep]=]
+				local str2 = [=[Can be cleared with explosives]=]
+				local str3 = [=[C4, Multiblasts, Shelling, etc]=]
+
+				surface.SetAlphaMultiplier(blend)
+				local x1 = Lerp(blend, -255, -0)
+				local x2 = Lerp(blend, -225, -0)
+				draw.SimpleText(str1, "jcms_hud_big", x1, 0, jcms.color_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+				draw.SimpleText(str2, "jcms_hud_medium", x2, 70, jcms.color_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+				draw.SimpleText(str3, "jcms_hud_small", x2, 105, jcms.color_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+
+				render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
+					local off = 2
+					draw.SimpleText(str1, "jcms_hud_big", x1+off, 0-off, jcms.color_bright, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+					draw.SimpleText(str2, "jcms_hud_medium", x2+off, 70-off, jcms.color_alert, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+					draw.SimpleText(str3, "jcms_hud_small", x2+off, 105-off, jcms.color_bright, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+				render.OverrideBlend(false)
+
+				surface.SetAlphaMultiplier(1)
+			end
+		}
+	}
+	jcms.hud_worldInfoTarget_List = {}
+	for name, data in pairs(jcms.hud_worldInfoTargets) do
+		table.insert(jcms.hud_worldInfoTarget_List, data)
+		data.name = name
+	end
+
 	function jcms.render_TargetInfo(ent)
 		local origin = ent:WorldSpaceCenter()
 		local blend = math.min(jcms.hud_targetAnim, 1)
@@ -2687,10 +2721,38 @@
 		surface.SetAlphaMultiplier(1)
 	end
 
-	function jcms.hud_GetInfoTargetData(ent)
-		local f = jcms.hud_infoTargetFuncs[ ent:GetClass() ]
-		local isBoss = ent:GetNWString("jcms_boss", "") ~= ""
-		return not not (f or isBoss), isBoss
+	function jcms.render_WorldInfoTarget(tr, name)
+		local data = jcms.hud_worldInfoTargets[name]
+		local blend = math.min(jcms.hud_targetAnim, 1)
+
+		local upAng = math.deg(math.acos(tr.HitNormal:Dot(jcms.vectorUp))) --degrees to top
+
+		local ang = EyeAngles()
+		ang.p = 0
+		ang.y = math.Round(ang.y/45)*45 - 90
+		ang.r = math.Clamp(math.Round(upAng/45)*45, 45, 135)
+
+		cam.Start3D2D(tr.HitPos, ang, 0.1)
+			data.renderFunc(blend)
+		cam.End3D2D()
+	end
+
+	function jcms.hud_GetInfoTargetData(trace)
+		local ent = trace.Entity
+		if not ent:IsWorld() then
+			local f = jcms.hud_infoTargetFuncs[ ent:GetClass() ]
+			local isBoss = ent:GetNWString("jcms_boss", "") ~= ""
+			return not not (f or isBoss), isBoss
+		else
+			--NOTE: Assumes infotarget conditions are mutually exclusive (which they should always be). *also make sure whatever you're doing is very cheap*.
+			for i, data in ipairs(jcms.hud_worldInfoTarget_List) do
+				if data.condition(trace) then
+					return true, false, data.name
+				end
+			end
+		end
+
+		return false, false, nil
 	end
 
 -- // }}}
@@ -2708,11 +2770,15 @@
 
 		local trace = locPly:GetEyeTrace()
 
-		if IsValid(trace.Entity) then
-			local isInfoTarget, longRange = jcms.hud_GetInfoTargetData(trace.Entity)
+		if IsValid(trace.Entity) or trace.Entity == game.GetWorld() then
+			local isInfoTarget, longRange, worldTargetName = jcms.hud_GetInfoTargetData(trace)
 			if isInfoTarget and trace.StartPos:DistToSqr(trace.HitPos) < (longRange and 25000000 or 90000) then -- 300 HU for short-range, 5000 HU for long range
 				jcms.hud_target = trace.Entity
 				jcms.hud_targetLast = trace.Entity
+				
+				-- For info targets shown on the world.
+				jcms.hud_targetLastTr = trace
+				jcms.hud_targetWorldName = worldTargetName
 			else
 				jcms.hud_target = nil
 			end
@@ -2728,8 +2794,12 @@
 			cam.End2D()
 		end
 		
-		if jcms.hud_targetAnim > 0.01 and IsValid(jcms.hud_targetLast) then
-			jcms.render_TargetInfo(jcms.hud_targetLast)
+		if jcms.hud_targetAnim > 0.01 then
+			if IsValid(jcms.hud_targetLast) then
+				jcms.render_TargetInfo(jcms.hud_targetLast)
+			elseif jcms.hud_targetLast == game.GetWorld() then
+				jcms.render_WorldInfoTarget(jcms.hud_targetLastTr, jcms.hud_targetWorldName)
+			end
 		end
 		
 		if jcms.hud_spawnmenuAnim <= 0.05 then
