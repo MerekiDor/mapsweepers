@@ -224,7 +224,14 @@ jcms.bestiary = {}
 
 	jcms.bestiary.zombie_spewer = {
 		faction = "zombie", bounty = 450, health = 1250,
-		mdl = "models/props_wasteland/antlionhill.mdl", scale = 0.15,
+		mdl = "models/props_wasteland/antlionhill.mdl",
+		mats = { "models/jcms/zombiespewer/body" }, scale = 0.15,
+	}
+
+	jcms.bestiary.zombie_creep = {
+		faction = "zombie", bounty = 25, health = 150,
+		mdl = "models/props_debris/concrete_spawnplug001a.mdl",
+		mats = { "models/flesh" }, camlookvector = Vector(0, 0, 15),
 	}
 
 	jcms.bestiary.zombie_spirit = {
