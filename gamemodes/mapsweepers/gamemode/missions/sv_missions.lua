@@ -383,10 +383,10 @@
 		-- Rewards & Progress {{{
 			if victory and not(jcms.serverExtension_forcedEvac or jcms.util_IsPVP()) then
 
-				local reward = 0
 				for i, pd in ipairs( postMissionStats.players ) do
 					local sid64 = pd.sid64
 
+					local reward = 0
 					local bonuses = {}
 					if pd.wasSweeper then
 						table.insert(bonuses, {

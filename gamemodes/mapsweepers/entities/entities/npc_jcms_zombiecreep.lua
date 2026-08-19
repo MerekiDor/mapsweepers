@@ -263,7 +263,7 @@ if SERVER then
 
 			--local nearest, dist = jcms.GetNearestSweeper(self:GetPos())
 
-			self.nextExpansion = CurTime() + ( 0.2 + math.Rand(0,0.2) ) / math.sqrt(jcms.zombieCreep_cellDepths[self.jcms_zombieCreep_cell])
+			self.nextExpansion = CurTime() + ( 0.13 + math.Rand(0,0.15) ) / math.sqrt(jcms.zombieCreep_cellDepths[self.jcms_zombieCreep_cell])
 		-- // }}}
 
 		self.lastNearPlayer = CurTime()
@@ -295,7 +295,7 @@ if SERVER then
 
 		--Rapid expansion during pulses
 		if jcms.zombieCreep_isPulsing and selfTbl.nextExpansion < cTime then
-			selfTbl.nextExpansion = cTime + 1 / math.sqrt(jcms.zombieCreep_cellDepths[self.jcms_zombieCreep_cell])
+			selfTbl.nextExpansion = cTime + 0.8 / math.sqrt(jcms.zombieCreep_cellDepths[self.jcms_zombieCreep_cell])
 
 			table.Shuffle(self.adjacentCells)
 			for i, cell in ipairs(self.adjacentCells) do
