@@ -485,8 +485,10 @@ jcms.missions.datadownload = {
 						--Attack it
 						if IsValid(nearest) then
 							local choice = nearest.bullseyes[math.random(#nearest.bullseyes)]
-							npc:SetEnemy(choice)
-							npc:UpdateEnemyMemory(choice, choice:GetPos())
+							if IsValid(choice) then -- Bandaid, this shouldn't happen but it's rare so I can't be bothered to figure out why it does.
+								npc:SetEnemy(choice)
+								npc:UpdateEnemyMemory(choice, choice:GetPos())
+							end
 						end
 					end
 				end
