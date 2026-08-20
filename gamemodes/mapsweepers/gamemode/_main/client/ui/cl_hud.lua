@@ -2645,22 +2645,34 @@
 				return not not jcms.zombieCreepCells[jcms.zombieCreep_GetCell( tr.HitPos )]
 			end,
 			renderFunc = function(blend)
-				local str1 = [=[Flesh Creep]=]
-				local str2 = [=[Can be cleared with explosives]=]
+				local str1 = [=[Flesh Creep | ]=]
+				local strBounty = tostring(jcms.bestiary.zombie_creep.bounty)
+				local str2 = [=[Can be killed with explosives]=]
 				local str3 = [=[C4, Multiblasts, Shelling, etc]=]
+
+				surface.SetFont("jcms_hud_big")
+				local adj = (surface.GetTextSize(str1) - (surface.GetTextSize(strBounty) + 120/2))/2 --Adjustment to centre the title
 
 				surface.SetAlphaMultiplier(blend)
 				local x1 = Lerp(blend, -255, -0)
 				local x2 = Lerp(blend, -225, -0)
-				draw.SimpleText(str1, "jcms_hud_big", x1, 0, jcms.color_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+				draw.SimpleText(str1, "jcms_hud_big", x1+adj, 0, jcms.color_dark, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
+				draw.SimpleText(strBounty, "jcms_hud_big", x1+adj, 0, jcms.color_dark_alt, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
 				draw.SimpleText(str2, "jcms_hud_medium", x2, 70, jcms.color_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
 				draw.SimpleText(str3, "jcms_hud_small", x2, 105, jcms.color_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
 
+				surface.SetDrawColor(jcms.color_dark_alt)
+				jcms.draw_IconCash_optimised(x1+adj+120, -32)
+
 				render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
 					local off = 2
-					draw.SimpleText(str1, "jcms_hud_big", x1+off, 0-off, jcms.color_bright, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+					draw.SimpleText(str1, "jcms_hud_big", x1+adj+off, 0-off, jcms.color_bright, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
+					draw.SimpleText(strBounty, "jcms_hud_big", x1+adj+off, 0-off, jcms.color_bright_alt, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
 					draw.SimpleText(str2, "jcms_hud_medium", x2+off, 70-off, jcms.color_alert, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
 					draw.SimpleText(str3, "jcms_hud_small", x2+off, 105-off, jcms.color_bright, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+					
+					surface.SetDrawColor(jcms.color_bright_alt)
+					jcms.draw_IconCash_optimised(x1+adj+120+off, -32-off)
 				render.OverrideBlend(false)
 
 				surface.SetAlphaMultiplier(1)
