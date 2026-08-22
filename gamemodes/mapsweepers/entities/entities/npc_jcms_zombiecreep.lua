@@ -407,7 +407,9 @@ if SERVER then
 end
 
 
-if CLIENT then 
+if CLIENT then
+	jcms.debug_zombiecreep_prints = false
+
 	jcms.zombieCreepBoxes = jcms.zombieCreepBoxes or {}
 	jcms.zombieCreep_Material = CreateMaterial("jcms_zombieCreep_flesh", "LightmappedGeneric", {
 		["$basetexture"] = "models/flesh",
@@ -501,6 +503,12 @@ if CLIENT then
 		function jcms.ZombieCreep_Render(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
 			if bDrawingDepth or bDrawingSkybox or isDraw3DSkyBox or render.GetRenderTarget() or drawing then return end
 
+			if jcms.debug_zombiecreep_prints then
+				print(" ------ Rendering ZombieCreep boxes")
+				print(rt)
+				print(IsValid(rt))
+			end
+
 			render.SetStencilEnable(true)
 			render.ClearStencil()
 			render.SetStencilTestMask(255)
@@ -549,6 +557,12 @@ if CLIENT then
 		function jcms.zombieCreep_DrawWorld()
 			if drawing then return end
 
+			if jcms.debug_zombiecreep_prints then
+				print(" ------ Rendering ZombieCreep world")
+				print(rt)
+				print(IsValid(rt))
+			end
+
 			render.PushRenderTarget(rt)
 			render.WorldMaterialOverride(jcms.zombieCreep_Material)
 			render.BrushMaterialOverride(jcms.zombieCreep_Material)
@@ -559,9 +573,9 @@ if CLIENT then
 
 				render.RenderView({
 					drawviewmodel = false,
-					drawhud = false, 
+					drawhud = false,
 					drawmonitors =  false,
-					drawviewer = false,	
+					drawviewer = false,
 				})
 
 				drawing = false
