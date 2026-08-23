@@ -444,6 +444,7 @@ end
 function jcms.specialmap_CustomRespawnFunc(ply)
 	ply.jcms_justSpawned = true
 	ply:SetNWString("class", "infantry")
+	ply:Spawn()
 	jcms.playerspawn_Sweeper(ply, jcms.tutorialPos, true)
 	ply:SetTeam(1)
 	ply.jcms_justSpawned = false
