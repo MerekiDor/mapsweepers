@@ -55,11 +55,7 @@ jcms.missions.hell = {
 			jcms.mapgen_PlaceNaturals(jcms.mapgen_AdjustCountForMapSize( 2 + math.ceil(1.5 * #jcms.GetLobbySweepers())), weightOverride)
 
 			--Higher starting respawns
-			for teamId=1, 2 do
-				for i=1, math.ceil(player.GetCount()/4) do --TODO: jcms.util_getUsedTeams
-					jcms.director_InsertRespawnVector(jcms.director_PvpDynamicRespawn, teamId)
-				end
-			end
+			jcms.mission_GivePVPRespawns( math.ceil(player.GetCount()/4) )
 		end
 	end,
 	

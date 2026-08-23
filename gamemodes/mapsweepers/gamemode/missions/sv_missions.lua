@@ -140,28 +140,18 @@
 				jcms.runprogress_SetLastMission()
 				jcms.director.fullyInited = true
 
-				if jcms.util_IsPVP() then
-					for teamId=1, 2 do
-						for i=1, math.ceil(player.GetCount()/2) do --TODO: jcms.util_getUsedTeams
-							jcms.director_InsertRespawnVector(jcms.director_PvpDynamicRespawn, teamId)
-						end
-					end
+				local isPVP = jcms.util_IsPVP()
 
-					for k, order in pairs(jcms.orders) do
-						if order.pvpBlacklisted then
-							jcms.net_RemoveOrder(k)
-						elseif order.pvpExclusive then
-							jcms.net_SendOrder(k, order)
-						end
-					end
-				else
-					--Suboptimal, but this works I guess.
-					for k, order in pairs(jcms.orders) do
-						if order.pvpBlacklisted then
-							jcms.net_SendOrder(k, order)
-						elseif order.pvpExclusive then
-							jcms.net_RemoveOrder(k)
-						end
+				if isPVP then
+					-- Give free respawns to both teams
+					jcms.mission_GivePVPRespawns( math.ceil(player.GetCount()/2) )
+				end
+				
+				for k, order in pairs(jcms.orders) do
+					if (isPVP and order.pvpBlacklisted) or (not isPVP and order.pvpExclusive) then
+						jcms.net_RemoveOrder(k)
+					elseif (isPVP and order.pvpExclusive) or (not isPVP and order.pvpBlacklisted) then
+						jcms.net_SendOrder(k, order)
 					end
 				end
 				
@@ -480,6 +470,15 @@
 
 	function jcms.mission_ResetStartTimer()
 		game.GetWorld():SetNWFloat("jcms_missionStartTime", 0)
+	end
+
+	function jcms.mission_GivePVPRespawns(count)
+		print("Giving PVP respawns", count)
+		for teamId=1, 2 do
+			for i=1, count do --TODO: jcms.util_getUsedTeams
+				jcms.director_InsertRespawnVector(jcms.director_PvpDynamicRespawn, teamId)
+			end
+		end
 	end
 
 	hook.Add("Think", "jcms_PreGameLogic", function()
