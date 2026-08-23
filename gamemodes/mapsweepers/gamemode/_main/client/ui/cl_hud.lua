@@ -2645,10 +2645,10 @@
 				return not not jcms.zombieCreepCells[jcms.zombieCreep_GetCell( tr.HitPos )]
 			end,
 			renderFunc = function(blend)
-				local str1 = [=[Flesh Creep | ]=]
+				local str1 = language.GetPhrase("jcms.bestiary_zombie_creep") .. " | "
 				local strBounty = tostring(jcms.bestiary.zombie_creep.bounty)
-				local str2 = [=[Can be killed with explosives]=]
-				local str3 = [=[C4, Multiblasts, Shelling, etc]=]
+				local str2 = "#jcms.fleshcreeptip1"
+				local str3 = "#jcms.fleshcreeptip2"
 
 				surface.SetFont("jcms_hud_big")
 				local adj = (surface.GetTextSize(str1) - (surface.GetTextSize(strBounty) + 120/2))/2 --Adjustment to centre the title
