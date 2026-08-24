@@ -3026,9 +3026,20 @@
 			surface.DrawRect(-2,-2,jcms.scrW+4,jcms.scrH+4)
 		cam.End2D()
 
-		if (not game.SinglePlayer()) and (not jcms.locPly:GetNWBool("jcms_evacuated")) and (jcms.locPly:GetNWInt("jcms_desiredteam") == 1) then 
+		if not game.SinglePlayer() then
+			-- Drawing respawn info (delay before respawn & queue position)
+			if jcms.locPly:GetNWBool("jcms_evacuated") then return end
+			if jcms.locPly:GetNWInt("jcms_desiredteam") ~= 1 then return end
+
+			local myPvpTeam = jcms.locPly:GetNWInt("jcms_pvpTeam", -1)
+			local respawns = jcms.util_GetRespawnCount(myPvpTeam, jcms.locPly)
+			
 			jcms.setup3d2dCentral("top")
+			if respawns > 0 then
 				jcms.hud_SpectatorDraw_RespawnInfo()
+			else
+				jcms.hud_SpectatorDraw_NoRespawnInfo()
+			end
 			cam.End3D2D()
 		end
 	end
@@ -3121,6 +3132,22 @@
 				surface.DrawRect(-strw/2 - 256, 200-off, 256, 6)
 				surface.DrawRect(strw/2, 200-off, 256, 6)
 		-- // }}}
+	end
+
+	function jcms.hud_SpectatorDraw_NoRespawnInfo()
+		local me = jcms.locPly
+		local off = 4
+		
+		local str1 = "#jcms.norespawns1"
+		local str2 = "#jcms.norespawns2"
+
+		draw.SimpleText(str1, "jcms_hud_big", 0, 100, jcms.color_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		draw.SimpleText(str1, "jcms_hud_big", 0, 100-off, jcms.color_bright, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+		if jcms.orders[ "respawnbeacon" ] then -- accounts for pvp as well
+			draw.SimpleText(str2, "jcms_hud_medium", 0, 180, jcms.color_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			draw.SimpleText(str2, "jcms_hud_medium", 0, 180-off, jcms.color_bright, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		end
 	end
 
 	function jcms.hud_DrawDeathBlackout()
