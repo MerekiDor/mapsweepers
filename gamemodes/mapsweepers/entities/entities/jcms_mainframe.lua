@@ -132,14 +132,18 @@ if SERVER then
 					crate:SetAmmoCashInside( 300 )
 					crate:SetHealthInside( 0 )
 					crate:SetLocalAngularVelocity( AngleRand(48, 128) )
+					crate:SetOwnerNickname("#jcms.mainframe")
 					crate:SetMaterial("models/jcms/".."jcorp".."_crate_ammo")
+					crate:SetColor(Color(255, 0, 0))
 					spawnedEnt = crate
 				elseif classChoice == "jcms_restock_heal" then 
 					local crate, flare = jcms.spawnmenu_Airdrop(pos, "jcms_restock", 10, "#jcms.firstaid", Color(143, 67, 229))
 					crate:SetAmmoCashInside( 0 )
 					crate:SetHealthInside( 100 )
 					crate:SetLocalAngularVelocity( AngleRand(48, 128) )
+					crate:SetOwnerNickname("#jcms.mainframe")
 					crate:SetMaterial("models/jcms/".."jcorp".."_crate_heal")
+					crate:SetColor(Color(96, 255, 124))
 					spawnedEnt = crate
 				end
 
