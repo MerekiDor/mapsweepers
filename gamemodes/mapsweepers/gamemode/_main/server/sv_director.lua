@@ -80,45 +80,8 @@
 				-- }}}
 			}
 
-			if jcms.util_IsPVP() then 
-				jcms.director.sweeperSpawnpoints = {} 
-
-				-- // Pre-generate spawns to be spaced out a bit {{{
-					local defaultWeights = {}
-					local areaPositions = {}
-					for i, area in ipairs( jcms.mapgen_MainZone() ) do 
-						defaultWeights[area] = math.sqrt(area:GetSizeX() * area:GetSizeY()) / math.max(#area:GetVisibleAreas(), 1)
-						areaPositions[area]  = area:GetCenter()
-					end
-					local avoidVectors = {}
-
-					for i, ply in player.Iterator() do 
-						local areaWeights = {}
-						for i, area in ipairs(jcms.mapgen_MainZone()) do
-							--Default weight
-							areaWeights[area] = defaultWeights[area] 
-
-							--Get closest avoidVec
-							local closestDist = math.huge
-							for i, otherPos in ipairs(avoidVectors) do
-								local dist = areaPositions[area]:Distance( otherPos )
-								closestDist = (closestDist < dist and closestDist) or dist
-							end
-							
-							--Avoid avoidVecs
-							if not(closestDist == math.huge) then 
-								areaWeights[area] = areaWeights[area] * closestDist
-							end
-						end
-
-						local area = jcms.util_ChooseByWeight(areaWeights)
-						table.insert(jcms.director.sweeperSpawnpoints, areaPositions[area])
-						table.insert(avoidVectors, areaPositions[area])
-					end
-				-- // }}}
-			end
-
 			jcms.director.missionStartTime = CurTime()
+			jcms.director_PlaceSpawnpoints()
 		end
 
 		function jcms.director_End()
@@ -133,6 +96,183 @@
 			end
 		end
 	
+	-- }}}
+
+	-- Spawnpoints {{{
+
+		function jcms.director_ChooseSpawnpointLocations_PVP()
+			-- Pre-generate spawns to be spaced out a bit
+			local locs = {}
+
+			local defaultWeights = {}
+			local areaPositions = {}
+			for i, area in ipairs( jcms.mapgen_MainZone() ) do 
+				defaultWeights[area] = math.sqrt(area:GetSizeX() * area:GetSizeY()) / math.max(#area:GetVisibleAreas(), 1)
+				areaPositions[area]  = area:GetCenter()
+			end
+			local avoidVectors = {}
+
+			for i, ply in player.Iterator() do 
+				local areaWeights = {}
+				for i, area in ipairs(jcms.mapgen_MainZone()) do
+					--Default weight
+					areaWeights[area] = defaultWeights[area] 
+
+					--Get closest avoidVec
+					local closestDist = math.huge
+					for i, otherPos in ipairs(avoidVectors) do
+						local dist = areaPositions[area]:Distance( otherPos )
+						closestDist = (closestDist < dist and closestDist) or dist
+					end
+					
+					--Avoid avoidVecs
+					if not(closestDist == math.huge) then 
+						areaWeights[area] = areaWeights[area] * closestDist
+					end
+				end
+
+				local area = jcms.util_ChooseByWeight(areaWeights)
+				table.insert(locs, areaPositions[area])
+				table.insert(avoidVectors, areaPositions[area])
+			end
+
+			return locs
+		end
+
+		function jcms.director_ChooseSpawnpointLocations_PVE()
+			if not jcms.mapdata then return end -- No point in any of this, then. Use the default algorithm.
+			local locs = {}
+
+			-- Distributing people into squads of 2-4 {{{
+				local remainingCount = player.GetCount()
+				local squadCounts = {}
+
+				local squadSizePatterns = {
+					[1] = { {1} },
+					[2] = { {2} },
+					[3] = { {3} },
+					[4] = { {4}, {2,2} },
+					[5] = { {3,2} },
+					[6] = { {3,3}, {4,2}, {2,2,2} },
+					[7] = { {4,3}, {2,2,3} },
+					[8] = { {4,4}, {2,2,4}, {3,3,2}, {2,2,2,2} }
+				}
+
+				while remainingCount > #squadSizePatterns do
+					local n = math.random() < 0.66 and math.random(3, 4) or 2 -- stronger preference for 3-4 sweeper squads
+					table.insert(squadCounts, n)
+					remainingCount = remainingCount - n
+				end
+
+				local patterns = squadSizePatterns[ remainingCount ]
+				if patterns then
+					local pattern = patterns[ math.random(1, #patterns) ]
+					table.Add(squadCounts, pattern)
+				else
+					table.insert(squadCounts, remainingCount) -- failsafe, shouldn't actually happen ever
+				end
+			-- }}}
+
+			-- Picking areas that aren't too exposed if possible {{{
+				local largestZoneAreas = jcms.mapdata.zoneList[jcms.mapdata.largestZone]
+				if #largestZoneAreas <= #squadCounts then return end -- Fuck it.
+				local goodAreas = {} 
+				
+				-- TODO Jonah I need to use your brain and improve the goodAreas list. 
+
+				local visdata = jcms.mapgen_GetVisData()
+				for i, area in ipairs(largestZoneAreas) do
+					if #area:GetVisibleAreas() <= visdata.avg then
+						table.insert(goodAreas, area)
+					end
+				end
+
+				if #goodAreas <= #squadCounts then
+					goodAreas = table.Copy(largestZoneAreas)
+				end
+
+				table.Shuffle(goodAreas)
+			-- }}}
+
+			-- Try to pick squad locations {{{
+				local function try(squadSize, area)
+					for attempt = 1, 4 do
+						local vectors, allFit = jcms.director_PackSquadVectors(jcms.mapgen_AreaPointAwayFromEdges(area, 96), squadSize, 120)
+						if type(vectors) == "table" and allFit then
+							local allClear = true
+							for i, v in ipairs(vectors) do
+								local _, isClear = jcms.util_GetSky(v)
+								if not isClear then
+									allClear = false
+									break
+								end
+							end
+
+							if allClear then
+								return vectors
+							end
+						end
+					end
+				end
+
+				local squadLocations = {}
+				for attempt = 1, 2 do
+					for i, area in ipairs(goodAreas) do
+						local currentSquadIndex = #squadLocations + 1
+						local currentSquadSize = squadCounts[ currentSquadIndex ]
+						if not currentSquadSize then break end
+
+						local vectors = try(currentSquadSize, area)
+						if vectors then
+							table.insert(squadLocations, vectors)
+							--jcms.printf("found %d vectors for a squad size of %d (attempt=%d)", #vectors, currentSquadSize, attempt)
+						end
+					end
+				end
+
+				if #squadLocations ~= #squadCounts then return end -- Use the default algorithm
+
+				for i, vectors in ipairs(squadLocations) do
+					table.Add(locs, vectors)
+				end
+
+			-- }}}
+
+			return locs
+		end
+
+		function jcms.director_ChooseSpawnpointLocations()
+			local locs
+
+			if jcms.util_IsPVP() then
+				locs = jcms.director_ChooseSpawnpointLocations_PVP()
+			else
+				locs = jcms.director_ChooseSpawnpointLocations_PVE()
+			end
+
+			hook.Run("MapSweepersChooseSpawnpointLocations", locs)
+
+			return locs
+		end
+
+		function jcms.director_PlaceSpawnpoints()
+			jcms.director.sweeperSpawnpoints = {}
+
+			local locs = jcms.director_ChooseSpawnpointLocations()
+			
+			if type(locs) ~= "table" then
+				jcms.printf("'jcms.director_ChooseSpawnpointLocations' did not return a table - using default algorithm instead")
+				jcms.director.sweeperSpawnpoints = nil
+				return
+			end
+
+			for i=1, math.min( #locs, player.GetCount() ) do
+				table.insert(jcms.director.sweeperSpawnpoints, locs[i])
+			end
+
+			hook.Run("MapSweepersPlaceSpawnpoints", jcms.director.sweeperSpawnpoints)
+		end
+
 	-- }}}
 
 	-- Big Swarm Phrases {{{
