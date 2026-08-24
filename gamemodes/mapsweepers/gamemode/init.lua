@@ -2047,6 +2047,11 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 			if IsValid(bot) then
 				bot:SetNWInt("jcms_desiredteam", tonumber(args[2]) or 1)
 				bot:SetNWInt("jcms_desiredclass", jcms.classesOrder[ math.random(1, #jcms.classesOrder) ])
+				
+				if jcms.util_IsPVP() then
+					bot:SetNWInt("jcms_pvpTeam", i%2+1)
+				end
+
 				bot:SetNWBool("jcms_ready", true)
 			else
 				break
