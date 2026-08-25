@@ -625,7 +625,7 @@ jcms.npc_types.zombie_husk = {
 
 			local sched = npc:GetCurrentSchedule()
 			if npc:WorldSpaceCenter():DistToSqr(enemy:WorldSpaceCenter()) < 70^2 then
-				if not(sched == 140) then 
+				if not(sched == 140 or sched == 103) then
 					npc:SetSchedule(SCHED_MELEE_ATTACK1)
 				else
 					npc:SetPlaybackRate(1.2)
