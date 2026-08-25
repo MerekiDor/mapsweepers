@@ -176,13 +176,10 @@
 			-- Picking areas that aren't too exposed if possible {{{
 				local largestZoneAreas = jcms.mapdata.zoneList[jcms.mapdata.largestZone]
 				if #largestZoneAreas <= #squadCounts then return end -- Fuck it.
-				local goodAreas = {} 
-				
-				-- TODO Jonah I need to use your brain and improve the goodAreas list. 
+				local goodAreas = {}
 
-				local visdata = jcms.mapgen_GetVisData()
 				for i, area in ipairs(largestZoneAreas) do
-					if #area:GetVisibleAreas() <= visdata.avg then
+					if #area:GetHidingSpots() > 0 then -- TODO: Would be better if we pre-calculated dists to cover (similar to depths) because I think this is a bit stringent - j
 						table.insert(goodAreas, area)
 					end
 				end

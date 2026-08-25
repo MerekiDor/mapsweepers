@@ -669,7 +669,7 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 	end
 
 	function jcms.npc_capCheck(class, maxCount)
-		local d = jcms.director
+		--[[local d = jcms.director
 		if not d then return true end
 
 		local npcCount = 0
@@ -677,11 +677,11 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 			if IsValid(npc) then
 				npcCount = npcCount + ( ( npc:GetClass() == class and 1 ) or 0 )
 			end
-		end
+		end--]]
 
-		return npcCount < maxCount
+		return #ents.FindByClass(class) < maxCount
 	end
-	
+
 -- // }}}
 
 -- // Tracking misc NPCs {{{
