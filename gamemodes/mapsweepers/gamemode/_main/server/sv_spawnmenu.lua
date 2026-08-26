@@ -1248,7 +1248,7 @@
 		end
 	end
 
-	if not jcms.inSpecialMap or jcms.specialmap_useOrderOverrides then
+	if not jcms.specialmap_dontUseOrderOverrides then
 		local orderOverridesFile = "mapsweepers/server/order_overrides.json"
 		hook.Add("InitPostEntity", "jcms_OrderOverrides", function(ply)
 			if file.Exists(orderOverridesFile, "DATA") then

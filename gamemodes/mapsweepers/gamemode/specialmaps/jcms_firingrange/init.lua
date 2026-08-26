@@ -20,6 +20,8 @@
 --]]
 
 jcms.specialmap_missionType = "arenamode"
+jcms.specialmap_dontUseWeaponPrices = true
+jcms.specialmap_dontUseOrderOverrides = true
 
 jcms.specialmap_arenaPos = Vector(-160, 3632, -256)
 jcms.specialmap_arenaRadius = 256

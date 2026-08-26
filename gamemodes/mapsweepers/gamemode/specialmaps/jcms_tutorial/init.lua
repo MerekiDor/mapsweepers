@@ -23,6 +23,8 @@
 -- it only ever loads on jcms_tutorial, though.
 
 jcms.specialmap_missionType = "tutorialmission"
+jcms.specialmap_dontUseWeaponPrices = true
+jcms.specialmap_dontUseOrderOverrides = true
 
 hook.Add("InitPostEntity", "jcms_TutorialBuild", function()
 	jcms.tutorialPhase = 0

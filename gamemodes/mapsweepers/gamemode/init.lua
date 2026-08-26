@@ -915,8 +915,6 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 				end
 			elseif not jcms.inSpecialMap then
 				-- Misses tracker for the announcer
-				--TODO: Re-implement accounting for creep
-				--[[
 				local time = CurTime()
 				if (not ent.jcms_lastMissTime) or (time - ent.jcms_lastMissTime > 0.75) then
 					ent.jcms_consecMisses = (ent.jcms_consecMisses or 0) + 1
@@ -926,7 +924,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 						ent.jcms_consecMisses = -math.random(4, 5)
 						jcms.announcer_Speak(jcms.ANNOUNCER_AMMO_WASTE, ent)
 					end
-				end--]]
+				end
 			end
 		end
 	end)
@@ -2916,7 +2914,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		["doom_bloodpunch"] = true
 	}
 	
-	if not jcms.inSpecialMap or jcms.specialmap_useWeaponPrices then
+	if not jcms.specialmap_dontUseWeaponPrices then
 		local weaponPricesFile = "mapsweepers/server/weapon_prices.json"
 		hook.Add("InitPostEntity", "jcms_WeaponPrices", function(ply)
 
