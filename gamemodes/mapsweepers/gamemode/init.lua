@@ -3274,20 +3274,20 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 	end
 
 	function jcms.ForceOpenFuncDoors()
-		for i, door in ipairs(ents.FindByClass("func_door")) do --NPCs usually can't open these so they pose a problem when used instead of prop_door_rotating
-			local mins, maxs = door:GetCollisionBounds()
-			local span = maxs - mins
-			if span.x < 200 and span.y < 200 and span.z < 200 then --Only smaller doors, leave big doors (like silo doors/gates) alone.
-				door:Remove() --Apparently we can't lock them in the open state so
-			end
-		end
-
-		
-		for i, door in ipairs(ents.FindByClass("func_door_rotating")) do --Ditto
-			local mins, maxs = door:GetCollisionBounds()
-			local span = maxs - mins
-			if span.x < 200 and span.y < 200 and span.z < 200 then --Only smaller doors, leave big doors (like silo doors/gates) alone.
-				door:Remove()
+		local door_classes = {"func_door","func_door_rotating"}
+		for _,door_class in ipairs(door_classes) do
+			for i, door in ipairs(ents.FindByClass(door_class)) do --NPCs usually can't open func_door so they pose a problem when used instead of prop_door_rotating
+				local mins, maxs = door:GetCollisionBounds()
+				local span = maxs - mins
+				if span.x < 200 and span.y < 200 and span.z < 200 then --Only smaller doors, leave big doors (like silo doors/gates) alone.
+					door:Fire("Unlock")
+					door:Fire("Open") --Opening the door right before removing it fixes areaportals
+					timer.Simple(0.05,function()
+						if IsValid(door) then
+							door:Remove() --Apparently we can't lock them in the open state so
+						end
+					end)
+				end
 			end
 		end
 	end
