@@ -125,11 +125,28 @@ local prefabs = jcms.prefabs
 		stamp = function(area, data)
 			local v = area:GetCenter() + area:GetRandomPoint()
 			v:Mul(0.5)
+
+			local smallModels = {
+				"models/props_junk/propane_tank001a.mdl",
+				"models/props_junk/gascan001a.mdl",
+				"models/props_explosive/explosive_butane_can.mdl",
+				"models/props_explosive/explosive_butane_can02.mdl"
+			}
+
+			local function getModel(smallChance, dudChance)
+				if math.random() < (smallChance or 0.2) then
+					return smallModels[ math.random(1, #smallModels) ]
+				elseif math.random() < (dudChance or 0.2) then
+					return "models/props_c17/oildrum001.mdl"
+				else
+					return "models/props_c17/oildrum001_explosive.mdl"
+				end
+			end
 			
 			local prop = ents.Create("prop_physics")
 			prop:SetPos(v)
 			prop:SetAngles(Angle(0, math.random()*360, 0))
-			prop:SetModel(math.random()<0.1 and "models/props_junk/propane_tank001a.mdl" or (math.random()<0.3 and "models/props_c17/oildrum001.mdl") or "models/props_c17/oildrum001_explosive.mdl")
+			prop:SetModel(getModel(0.1, 0.3))
 			prop:Spawn()
 			
 			if math.random() < 1.3 then
@@ -139,7 +156,7 @@ local prefabs = jcms.prefabs
 				local cos, sin = math.cos(a)*away, math.sin(a)*away
 				prop:SetPos(v + Vector(cos, sin, 0))
 				prop:SetAngles(Angle(0, math.random()*360, 0))
-				prop:SetModel(math.random()<0.1 and "models/props_junk/gascan001a.mdl" or (math.random()<0.4 and "models/props_c17/oildrum001.mdl") or "models/props_c17/oildrum001_explosive.mdl")
+				prop:SetModel(getModel(0.1, 0.4))
 				prop:Spawn()
 				
 				if math.random() < 1 then
@@ -149,7 +166,7 @@ local prefabs = jcms.prefabs
 					local cos, sin = math.cos(a)*away, math.sin(a)*away
 					prop:SetPos(v + Vector(cos, sin, 16))
 					prop:SetAngles(Angle(math.random()*360, math.random()*360, 90))
-					prop:SetModel(math.random()<0.25 and "models/props_junk/gascan001a.mdl" or (math.random()<0.5 and "models/props_c17/oildrum001.mdl") or "models/props_c17/oildrum001_explosive.mdl")
+					prop:SetModel(getModel(0.25, 0.5))
 					prop:Spawn()
 				end
 			end
