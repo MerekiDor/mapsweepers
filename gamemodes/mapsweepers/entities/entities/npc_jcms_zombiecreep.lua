@@ -501,13 +501,7 @@ if CLIENT then
 
 		local zCreepBoxCol = Color(255, 0, 0, 0)
 		function jcms.ZombieCreep_Render(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
-			if bDrawingDepth or bDrawingSkybox or isDraw3DSkyBox or render.GetRenderTarget() or drawing then return end
-
-			if jcms.debug_zombiecreep_prints then
-				print(" ------ Rendering ZombieCreep boxes")
-				print(rt)
-				print(IsValid(rt))
-			end
+			if bDrawingDepth or isDraw3DSkyBox or render.GetRenderTarget() or drawing then return end
 
 			render.SetStencilEnable(true)
 			render.ClearStencil()
@@ -537,7 +531,7 @@ if CLIENT then
 					local oMins, oMaxs = box[5], box[6]
 					render.SetStencilPassOperation(STENCIL_INCRSAT)
 					render.DrawBox(jcms.vectorOrigin, angle_zero, oMins, oMaxs, zCreepBoxCol)
-					
+
 					render.SetStencilPassOperation(STENCIL_DECRSAT)
 					render.DrawBox(jcms.vectorOrigin, angle_zero, oMaxs, oMins, zCreepBoxCol)
 				end
@@ -556,12 +550,6 @@ if CLIENT then
 	-- // World Render {{{
 		function jcms.zombieCreep_DrawWorld()
 			if drawing then return end
-
-			if jcms.debug_zombiecreep_prints then
-				print(" ------ Rendering ZombieCreep world")
-				print(rt)
-				print(IsValid(rt))
-			end
 
 			render.PushRenderTarget(rt)
 			render.WorldMaterialOverride(jcms.zombieCreep_Material)

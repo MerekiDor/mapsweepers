@@ -568,7 +568,7 @@ end)
 	end)
 	
 	hook.Add("PreDrawOpaqueRenderables", "jcms_ExtraHUD", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
-		if bDrawingDepth or bDrawingSkybox or isDraw3DSkybox or render.GetRenderTarget() then return end
+		if bDrawingDepth or isDraw3DSkybox or render.GetRenderTarget() then return end
 
 		local locPly = jcms.locPly
 		local data = jcms.class_GetData(locPly)
