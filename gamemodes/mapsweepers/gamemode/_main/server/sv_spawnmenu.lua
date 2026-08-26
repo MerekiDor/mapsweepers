@@ -274,6 +274,28 @@
 			ang:RotateAroundAxis(ang:Right(), -90)
 			
 			return true, tr.HitPos + tr.HitNormal, ang, tr.Entity, tr
+		end,
+
+		autohacker = function(ply, args)
+			local maxDist = 300
+			local tr = ply:GetEyeTrace()
+			
+			if tr.StartPos:DistToSqr(tr.HitPos) > maxDist*maxDist then
+				jcms.net_SendOrderMessage(ply, 2)
+				return false
+			end
+
+			local ent = tr.Entity
+
+			if not ( IsValid(ent) and ent.jcms_hackType ) then
+				jcms.net_SendOrderMessage(ply, 4)
+				return false
+			end
+			
+			local ang = tr.HitNormal:Angle()
+			ang:RotateAroundAxis(ang:Right(), -90)
+			
+			return true, tr.HitPos + tr.HitNormal, ang, tr.Entity, tr
 		end
 	}
 
@@ -1113,7 +1135,7 @@
 			cost = 500,
 			cooldown = 160,
 			slotPos = 2,
-			argparser = "mine",
+			argparser = "autohacker",
 			
 			func = function(ply, pos, angle, attachEnt, traceResult)
 				local boosted = jcms.isPlayerEngineer(ply)
