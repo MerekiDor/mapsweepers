@@ -177,11 +177,22 @@
 				local largestZoneAreas = jcms.mapdata.zoneList[jcms.mapdata.largestZone]
 				if #largestZoneAreas <= #squadCounts then return end -- Fuck it.
 				local goodAreas = {}
+				local goodAreasDict = {}
 
 				for i, area in ipairs(largestZoneAreas) do
 					if #area:GetHidingSpots() > 0 then -- TODO: Would be better if we pre-calculated dists to cover (similar to depths) because I think this is a bit stringent - j
-						table.insert(goodAreas, area)
+						goodAreasDict[area] = true
+
+						local inradius = navmesh.Find(area:GetCenter(), 1500, 128, 128)
+						for j, narea in ipairs(inradius) do
+							goodAreasDict[narea] = true
+						end
 					end
+				end
+
+				for area in pairs(goodAreasDict) do
+					table.insert(goodAreas, area)
+					goodAreasDict[ area ] = nil
 				end
 
 				if #goodAreas <= #squadCounts then
