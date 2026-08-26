@@ -711,15 +711,17 @@ jcms.offgame = jcms.offgame or NULL
 				end
 				y = y + 32 + 8
 
-				local bChangeMission = btnHouse:Add("DButton")
-				bChangeMission:SetText("#jcms.changemission_sp")
-				bChangeMission:SetPos(32+24, y)
-				bChangeMission:SetSize(400-64-24, 32)
-				bChangeMission.Paint = jcms.paint_Button
-				bChangeMission.jFont = "jcms_medium"
-				function bChangeMission:DoClick()
-					jcms.offgame_ModalChangeMission()
-					surface.PlaySound("buttons/button14.wav")
+				if not jcms.specialmap_missionType then
+					local bChangeMission = btnHouse:Add("DButton")
+					bChangeMission:SetText("#jcms.changemission_sp")
+					bChangeMission:SetPos(32+24, y)
+					bChangeMission:SetSize(400-64-24, 32)
+					bChangeMission.Paint = jcms.paint_Button
+					bChangeMission.jFont = "jcms_medium"
+					function bChangeMission:DoClick()
+						jcms.offgame_ModalChangeMission()
+						surface.PlaySound("buttons/button14.wav")
+					end
 				end
 			else
 				jcms.hud_SetThemeWithoutSaving(nil)
@@ -849,15 +851,18 @@ jcms.offgame = jcms.offgame or NULL
 				end
 
 				if LocalPlayer():IsAdmin() then
-					local bChangeMission = btnHouse:Add("DButton")
-					bChangeMission:SetText("#jcms.changemission_sp")
-					bChangeMission:SetPos(32, 264 + yOffs)
-					bChangeMission:SetSize(400-64-24, 32)
-					bChangeMission.Paint = jcms.paint_Button
-					bChangeMission.jFont = "jcms_medium"
-					function bChangeMission:DoClick()
-						jcms.offgame_ModalChangeMission()
-						surface.PlaySound("buttons/button14.wav")
+					
+					if not jcms.specialmap_missionType then
+						local bChangeMission = btnHouse:Add("DButton")
+						bChangeMission:SetText("#jcms.changemission_sp")
+						bChangeMission:SetPos(32, 264 + yOffs)
+						bChangeMission:SetSize(400-64-24, 32)
+						bChangeMission.Paint = jcms.paint_Button
+						bChangeMission.jFont = "jcms_medium"
+						function bChangeMission:DoClick()
+							jcms.offgame_ModalChangeMission()
+							surface.PlaySound("buttons/button14.wav")
+						end
 					end
 
 					local bTogglePVP = btnHouse:Add("DButton")

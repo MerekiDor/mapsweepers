@@ -1579,7 +1579,7 @@ local nmt = FindMetaTable("NPC")
 	end
 
 	function jcms.util_GetMissionType()
-		return game.GetWorld():GetNWString("jcms_missiontype", "hell")
+		return jcms.specialmap_missionType or game.GetWorld():GetNWString("jcms_missiontype", "hell")
 	end
 
 	function jcms.util_GetMissionFaction()
