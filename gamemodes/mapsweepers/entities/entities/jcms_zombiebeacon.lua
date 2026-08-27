@@ -144,14 +144,21 @@ if SERVER then
 		end
 
 		local attacker = dmgInfo:GetAttacker()
-		if IsValid(attacker) and jcms.team_JCorp(attacker) then 
+		if IsValid(attacker) and jcms.team_JCorp(attacker) then
 			dmgInfo:ScaleDamage(0.2) --Significantly reduced friendly-fire.
+
+			--A small minority of players assume nukes are repairable and don't get the memo when hitting it doesn't play the repair sound, this is to protect against them killing themselves.
+			local inflictor = dmgInfo:GetInflictor()
+			if IsValid(inflictor) and jcms.util_IsStunstick(inflictor) then
+				dmgInfo:ScaleDamage(0)
+
+				--Make it a bit more obvious by playing the damage sound
+				self:EmitSound("weapon.BulletImpact")
+				self:EmitSound("SolidMetal.BulletImpact")
+			end
 		else
 			self:EmitSound("weapon.BulletImpact")
 			self:EmitSound("SolidMetal.BulletImpact")
-			--weapon.BulletImpact
-			--SolidMetal.BulletImpact
-			--MetalGrate.BulletImpact
 		end
 
 		dmgInfo:SetDamage( math.min(dmgInfo:GetDamage(), 100) ) --Don't take more than 100 in a single go.
