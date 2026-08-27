@@ -1996,7 +1996,7 @@
 
 			draw.SimpleText("★ " .. language.GetPhrase("jcms.credits_github"), "jcms_medium", 24, 218, jcms.color_bright, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 			local contributors = {
-				"Traeesen", "Redox", "thecraftianman", "rtkz_wasa19741"
+				"Traeesen", "Redox", "thecraftianman", "rtkz_wasa19741", "the16mapper"
 			}
 
 			draw.SimpleText(table.concat(contributors, ", "), "jcms_small_bolder", 28, 248, jcms.color_pulsing)
