@@ -110,6 +110,17 @@ include "_main/server/sv_rangecap.lua"
 	end
 -- // }}}
 
+jcms.inSpecialMap = false
+if file.Exists("gamemodes/mapsweepers/gamemode/specialmaps/" .. game.GetMap(), "GAME") then
+	jcms.inSpecialMap = game.GetMap()
+	print("Found special map: '" .. jcms.inSpecialMap .. "'")
+
+	local path = "specialmaps/" .. jcms.inSpecialMap
+	include(path .. "/init.lua")
+	AddCSLuaFile(path .. "/cl_init.lua")
+end
+
+
 AddCSLuaFile "shared.lua"
 AddCSLuaFile "_main/sh_controls.lua"
 AddCSLuaFile "_main/sh_net.lua"

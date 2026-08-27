@@ -69,6 +69,16 @@ include "_main/client/cl_bulletshields.lua"
 	end
 -- // }}}
 
+jcms.inSpecialMap = false
+if file.Exists("gamemodes/mapsweepers/gamemode/specialmaps/" .. game.GetMap(), "GAME") then
+	jcms.inSpecialMap = game.GetMap()
+	print("Found special map: '" .. jcms.inSpecialMap .. "'")
+
+	local path = "specialmaps/" .. jcms.inSpecialMap
+	include(path .. "/cl_init.lua")
+end
+
+
 --Optimisation. Getting locPly from a lua table is cheaper than the function.
 jcms.locPly = jcms.locPly or NULL
 hook.Add("InitPostEntity", "jcms_cacheValues", function()

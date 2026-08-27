@@ -27,22 +27,6 @@ jcms.vectorUp = Vector(0, 0, 1)
 jcms.vectorOne = Vector(1, 1, 1)
 jcms.vectorInvalid = Vector(math.huge, math.huge, math.huge)
 
-jcms.inSpecialMap = false
-if file.Exists("gamemodes/mapsweepers/gamemode/specialmaps/" .. game.GetMap(), "GAME") then
-	jcms.inSpecialMap = game.GetMap()
-	print("Found special map: '" .. jcms.inSpecialMap .. "'")
-
-	local path = "specialmaps/" .. jcms.inSpecialMap
-	if SERVER then
-		include(path .. "/init.lua")
-		AddCSLuaFile(path .. "/cl_init.lua")
-	end
-	
-	if CLIENT then
-		include(path .. "/cl_init.lua")
-	end
-end
-
 local pmt = FindMetaTable("Player")
 local emt = FindMetaTable("Entity")
 local nmt = FindMetaTable("NPC")
