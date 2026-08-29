@@ -1263,7 +1263,7 @@ local nmt = FindMetaTable("NPC")
 			local lastpos = from
 
 			for i=1, 48 do
-				local trace = util.TraceLine { start = lastpos + jcms.vectorUp, endpos = lastpos + up, mask = MASK_SOLID_BRUSHONLY }
+				local trace = util.TraceLine { start = lastpos + jcms.vectorUp, endpos = lastpos + up, mask = MASK_SOLID_BRUSHONLY, filter = {"func_breakable", "func_physbox"} }
 
 				if trace.HitSky then
 					return trace.HitPos, i == 1
