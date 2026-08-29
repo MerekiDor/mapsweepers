@@ -36,6 +36,11 @@ jcms.zombieSpewer_FogDistValues = {
 	[3] = 1000
 }
 
+ENT.BodyTarget = nil
+function ENT:jcms_BodyTarget(origin, noisy)
+	return self:WorldSpaceCenter()
+end
+
 if SERVER then
 	function ENT:Initialize()
 		self:SetModel("models/props_wasteland/antlionhill.mdl")
