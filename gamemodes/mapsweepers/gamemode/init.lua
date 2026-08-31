@@ -111,6 +111,26 @@ include "_main/server/sv_validmaps.lua"
 	end
 -- // }}}
 
+-- // Modding Includes {{{
+	do
+		local clientFiles, _ = file.Find( "mapsweepers/gamemode/includes/client/*.lua", "LUA")
+		for i, v in ipairs(clientFiles) do 
+			AddCSLuaFile("includes/client/" .. v)
+		end
+
+		local serverFiles, _ = file.Find( "mapsweepers/gamemode/includes/server/*.lua", "LUA")
+		for i, v in ipairs(serverFiles) do 
+			include("includes/server/" .. v)
+		end
+
+		local sharedFiles, _ = file.Find( "mapsweepers/gamemode/includes/*.lua", "LUA")
+		for i, v in ipairs(sharedFiles) do
+			AddCSLuaFile("npcs/" .. v)
+			include("includes/" .. v)
+		end
+	end
+-- // }}}
+
 jcms.inSpecialMap = false
 if file.Exists("gamemodes/mapsweepers/gamemode/specialmaps/" .. game.GetMap(), "GAME") then
 	jcms.inSpecialMap = game.GetMap()

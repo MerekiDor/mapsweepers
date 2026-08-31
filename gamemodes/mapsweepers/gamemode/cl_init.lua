@@ -69,6 +69,20 @@ include "_main/client/cl_bulletshields.lua"
 	end
 -- // }}}
 
+-- // Modding Includes {{{
+	do
+		local clientFiles, _ = file.Find( "mapsweepers/gamemode/includes/client/*.lua", "LUA")
+		for i, v in ipairs(clientFiles) do 
+			include("includes/client/" .. v)
+		end
+
+		local sharedFiles, _ = file.Find( "mapsweepers/gamemode/includes/*.lua", "LUA")
+		for i, v in ipairs(sharedFiles) do
+			include("includes/" .. v)
+		end
+	end
+-- // }}}
+
 jcms.inSpecialMap = false
 if file.Exists("gamemodes/mapsweepers/gamemode/specialmaps/" .. game.GetMap(), "GAME") then
 	jcms.inSpecialMap = game.GetMap()
