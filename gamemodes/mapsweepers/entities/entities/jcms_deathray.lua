@@ -117,21 +117,23 @@ if SERVER then
 
 			local basedmg = selfTbl.DPS_DIRECT
 			for i, target in ipairs(targets) do
-				if jcms.team_GoodTarget(target) then
-					local targetclass = target:GetClass()
-					local threshold = jcms.deathray_npcMinDamageThresholds[ targetclass ] or 15
-					dmg:SetDamagePosition(target:WorldSpaceCenter())
+				if target:GetMaxHealth() <= 0 then continue end --Skip anything that can't take damage
+
+				local targetclass = target:GetClass()
+				local threshold = jcms.deathray_npcMinDamageThresholds[ targetclass ] or 15
+				dmg:SetDamagePosition(target:WorldSpaceCenter())
+				
+				if threshold > 1 then
+					local multiplier = jcms.deathray_dmgMultipliers[ targetclass ] or 1
+					target.jcms_beamSumDmg = (target.jcms_beamSumDmg or 0) + dmg:GetDamage()*multiplier
 					
-					if threshold > 1 then
-						local multiplier = jcms.deathray_dmgMultipliers[ targetclass ] or 1
-						target.jcms_beamSumDmg = (target.jcms_beamSumDmg or 0) + dmg:GetDamage()*multiplier
+					if target.jcms_beamSumDmg >= threshold then
+						target.jcms_beamSumDmg = target.jcms_beamSumDmg - threshold
+						dmg:SetDamage(threshold)
+						target:DispatchTraceAttack(dmg, tr)
+						dmg:SetDamage(basedmg)
 						
-						if target.jcms_beamSumDmg >= threshold then
-							target.jcms_beamSumDmg = target.jcms_beamSumDmg - threshold
-							dmg:SetDamage(threshold)
-							target:DispatchTraceAttack(dmg, tr)
-							dmg:SetDamage(basedmg)
-							
+						if jcms.team_GoodTarget(target) then
 							local ed = EffectData()
 							ed:SetMagnitude(1)
 							ed:SetOrigin(target:EyePos())
@@ -140,22 +142,22 @@ if SERVER then
 							ed:SetFlags(5)
 							ed:SetColor(colourInt)
 							util.Effect("jcms_blast", ed)
-							
+						
 							target:EmitSound("jcms_deathray_blast")
-
-							if selfTbl.IgniteOnHit then
-								target:Ignite(math.ceil(threshold/5))
-							end
 						end
 
-						if selfTbl.instantDamageImpulse and not selfTbl.hitTargets[target] then
-							dmg:SetDamage(basedmg)
-							selfTbl.hitTargets[target] = true
-							target:TakeDamageInfo(dmg)
+						if selfTbl.IgniteOnHit then
+							target:Ignite(math.ceil(threshold/5))
 						end
-					else
-						target:DispatchTraceAttack(dmg, tr)
 					end
+
+					if selfTbl.instantDamageImpulse and not selfTbl.hitTargets[target] then
+						dmg:SetDamage(basedmg)
+						selfTbl.hitTargets[target] = true
+						target:TakeDamageInfo(dmg)
+					end
+				else
+					target:DispatchTraceAttack(dmg, tr)
 				end
 			end
 		elseif beamTime >= lifeTime + prepTime then
