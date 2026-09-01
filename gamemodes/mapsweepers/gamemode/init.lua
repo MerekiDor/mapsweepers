@@ -550,13 +550,6 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		end
 	end)
 
-	hook.Add("PostEntityTakeDamage", "jcms_DamageTracker", function(ent, dmg, took)
-		if not took then return end
-		if not ent:IsPlayer() then
-			ent.jcms_lastDamaged = CurTime()
-		end
-	end)
-	
 	hook.Add("OnNPCKilled", "jcms_OnKill", function(npc, attacker, inflictor)
 		if npc.jcms_onKilled then 
 			npc:jcms_onKilled(attacker, inflictor)

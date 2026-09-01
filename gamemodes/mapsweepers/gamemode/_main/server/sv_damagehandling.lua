@@ -283,3 +283,11 @@ hook.Add("EntityFireBullets", "jcms_dmgOverride", function(ent, bulletData)
 
 	return true
 end)
+
+--Track last damage time (for npcs)
+hook.Add("PostEntityTakeDamage", "jcms_DamageTracker", function(ent, dmg, took)
+	if not took then return end
+	if not ent:IsPlayer() then
+		ent.jcms_lastDamaged = CurTime()
+	end
+end)
