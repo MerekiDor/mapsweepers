@@ -647,7 +647,7 @@
 		vtol = {
 			category = jcms.SPAWNCAT_MOBILITY,
 			cost = 1200,
-			cooldown = 300,
+			cooldown = 240,
 			slotPos = 2,
 			argparser = "vehicle",
 			
@@ -684,7 +684,7 @@
 		apc = {
 			category = jcms.SPAWNCAT_MOBILITY,
 			cost = 600,
-			cooldown = 600,
+			cooldown = 420,
 			slotPos = 3,
 			argparser = "vehicle",
 			
@@ -721,7 +721,7 @@
 		hovertank = {
 			category = jcms.SPAWNCAT_MOBILITY,
 			cost = 4000,
-			cooldown = 600,
+			cooldown = 420,
 			slotPos = 4,
 			argparser = "vehicle",
 			

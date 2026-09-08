@@ -362,6 +362,9 @@ jcms.npc_types.antlion_waster = {
 
 		npc.jcms_dmgMult = 2
 		jcms.npc_SetupAntlionBurrowCheck(npc)
+
+		npc.jcms_DontCollideWithNPCs = true
+		npc:SetCustomCollisionCheck(true)
 	end,
 	
 	takeDamage = function(npc, dmg)

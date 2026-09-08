@@ -1853,7 +1853,7 @@
 					jcms.announcer_SpeakChance(0.45, jcms.ANNOUNCER_SWARM)
 				end
 
-				local missionTimeThrottle = missionTime / 10
+				local missionTimeThrottle = (missionTime / 10)^1.5
 				if swarmCost > missionTimeThrottle then
 					-- local str = string.format("Throttling swarm cost from %.2f to %.2f", swarmCost, missionTimeThrottle)
 					-- jcms.printf(str)

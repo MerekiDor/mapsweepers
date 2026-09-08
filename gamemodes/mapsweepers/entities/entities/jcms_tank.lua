@@ -66,8 +66,8 @@ function ENT:Initialize()
 			self:PhysicsInit(SOLID_VPHYSICS)
 			self:SetTankIsTower(true)
 			
-			self:SetMaxHealth(700)
-			self:SetHealth(700)
+			self:SetMaxHealth(1000)
+			self:SetHealth(1000)
 			
 			self.soundTower = CreateSound(self, "vehicles/tank_turret_loop1.wav")
 			self.soundTower:Play()
@@ -90,8 +90,8 @@ function ENT:Initialize()
 
 			constraint.Keepupright( self, angle_zero, 0, 5 )
 			
-			self:SetMaxHealth(2000)
-			self:SetHealth(2000)
+			self:SetMaxHealth(2500)
+			self:SetHealth(2500)
 			
 			timer.Simple(0.1, function()
 				if not IsValid(self) then return end 
