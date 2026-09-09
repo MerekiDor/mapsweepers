@@ -575,8 +575,7 @@
 			table.insert(ply.jcms_playerRespawnVectors, vec)
 		end
 
-		function jcms.director_PvpDynamicRespawn(ply) --TODO: Prefer outside of radiation.
-			local plyPos = ply:WorldSpaceCenter()
+		function jcms.director_PvpDynamicRespawn(ply)
 			local plyTeam = ply:GetNWInt("jcms_pvpTeam", -1)
 
 			--Get enemy positions
@@ -587,22 +586,55 @@
 				end
 			end
 
+			local radSphereVecs = {}
+			for i, radSphere in ipairs(ents.FindByClass("jcms_radsphere")) do 
+				table.insert(radSphereVecs, radSphere:GetPos())
+			end
+
+			--Get areas visible to enemy turrets (This is going to be expensive ):)
+			local turretVisDict = {}
+			for i, turret in ipairs(ents.FindByClass("jcms_turret")) do 
+				if jcms.team_pvpSameTeam_optimised(plyTeam, turret:GetNWInt("jcms_pvpTeam", -1)) then continue end
+				
+				local turretPos = turret:GetPos()
+				local area = navmesh.GetNavArea( turretPos, turretPos.z + 64 )
+				if not area then continue end
+
+				--Add a visibility factor to every area, scaling to 0 past 5000u
+				local visibleAreas = area:GetVisibleAreas()
+				for i, visArea in ipairs(visibleAreas) do
+					local dist = turretPos:Distance(area:GetCenter())
+					local add = math.max(1 - dist/3000, 0)
+					turretVisDict[visArea] = (turretVisDict[visArea] or 0) + add
+				end
+			end
+
 			--Calculate weights
 			local areaWeights = {}
-
 			for i, area in ipairs(jcms.mapgen_MainZone()) do 
+				local areaCentre = area:GetCenter()
 				--Limit impact of differently sized areas, avoid very open / visible areas.
-				areaWeights[area] = math.sqrt(area:GetSizeX() * area:GetSizeY()) /math.sqrt(math.max(#area:GetVisibleAreas(), 1))
+				areaWeights[area] = math.sqrt(area:GetSizeX() * area:GetSizeY()) / math.sqrt(math.max(#area:GetVisibleAreas(), 1))
 
+				--Avoid enemies
 				local closest = math.huge
 				for i, vec in ipairs(enemyVecs) do
-					local dist = plyPos:Distance(vec)
+					local dist = areaCentre:Distance(vec)
 					closest = math.min(closest, dist)
 				end
-
-				if not(closest == math.huge) then --Avoid enemies.
+				if not(closest == math.huge) then
 					areaWeights[area] = areaWeights[area] * math.sqrt(closest)
 				end
+
+				--Reduced chance to spawn inside radiation
+				for i, vec in ipairs(radSphereVecs) do 
+					if areaCentre:DistToSqr(vec) < jcms.radSphereSize^2 then
+						areaWeights[area] = areaWeights[area] * 0.25
+					end
+				end
+
+				--Avoid areas visible to / close to turrets
+				areaWeights[area] = areaWeights[area] / (1 + (turretVisDict[area] or 0))	
 			end
 
 			--Pick final area / vec
