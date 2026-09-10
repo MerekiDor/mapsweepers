@@ -22,7 +22,7 @@ local class = {}
 jcms.class_Add("npc_rebelvanguard", class)
 
 class.faction = "rebel"
-class.mdl = "models/humans/group03/male_07.mdl"
+class.mdl = "models/barney.mdl"
 class.deathSound = "npc_citizen.die"
 class.footstepSfx = "NPC_Citizen.RunFootstep"
 
@@ -31,58 +31,56 @@ class.shield = 0
 class.shieldRegen = 0
 class.shieldDelay = 64
 
-class.damage = 0.2
-class.hurtMul = 1
-class.hurtReduce = 1
+class.damage = 0.4
+class.hurtMul = 0.2
+class.hurtReduce = 0
 class.speedMul = 0.75
 
 class.playerColorVector = Vector(0.6, 0, 1.0)
 
 function class.OnSpawn(ply)
-	local weapon = ply:Give("weapon_shotgun", false)
-	weapon:SetNWInt("jcms_npcspecial", 1) -- Smoke Grenades
+	local weapon = ply:Give("weapon_jcms_igl", false)
 	ply:GiveAmmo(9999, weapon:GetPrimaryAmmoType())
 	ply:Give("weapon_frag", false)
 	ply.jcms_bounty = 45
 	ply.jcms_EntityFireBullets = class.EntityFireBullets
+
+	if IsValid(ply.jcms_vanguardnpc_backpack) then
+		ply.jcms_vanguardnpc_backpack:Remove()
+	end
+
+	local backpack = ents.Create("jcms_vanguard_backpack")
+	ply.jcms_vanguardnpc_backpack = backpack
+
+	local attch = ply:GetAttachment(3)
+	backpack:SetPos(attch.Pos - attch.Ang:Forward() * 11 - attch.Ang:Up() * 20)
+	backpack:SetAngles(attch.Ang)
+	backpack:SetParent(ply, 3)
+	backpack:Spawn()
+	backpack.jcms_owner = ply
+	backpack.jcms_fireproof = true
+
+	backpack:SetPreventTransmit(ply, true)
 end
 
 if SERVER then
 
-	function class.EntityFireBullets(ent, bulletData)
-		bulletData.Callback = function(attacker, tr, dmgInfo)
-			local effectdata = EffectData()
-			local adjustedStartPos = ent:EyePos()
-			local eyeAngles = ent:EyeAngles()
-			adjustedStartPos:Add( eyeAngles:Right() * 4 )
-			effectdata:SetStart(adjustedStartPos)
-			effectdata:SetScale(math.random(6500, 9000))
-			effectdata:SetAngles(tr.Normal:Angle())
-			effectdata:SetOrigin(tr.HitPos)
-			effectdata:SetFlags(1)
-			effectdata:SetMaterialIndex(0)
-			util.Effect("jcms_laser", effectdata)
-
-			dmgInfo:SetDamageType( bit.bor(dmgInfo:GetDamageType(), DMG_BURN) )
-
-			if tr.HitWorld and tr.HitNormal:Dot(jcms.vectorUp) > 0 then
-				local fire = ents.Create("jcms_fire")
-				fire:SetPos(tr.HitPos)
-				fire:Spawn()
-				fire.jcms_owner = ent
-
-				fire:SetRadius(45)
-				fire:SetActivationTime(CurTime() + 3)
-				fire.dieTime = CurTime() + 10
-			elseif tr.Entity and not (tr.Entity:IsOnFire() or tr.Entity:IsPlayer() or jcms.team_SameTeam(tr.Entity, ent)) then 
-				tr.Entity:Ignite(1.5)
+	function class.TakeDamage(ply, dmg)
+		local backpack = ply.jcms_vanguardnpc_backpack
+		if IsValid(backpack) and not backpack.jcms_exploded then
+			if bit.band( dmg:GetDamageType(), bit.bor(DMG_BURN, DMG_SLOWBURN) ) > 0 then
+				dmg:ScaleDamage(0.01)
 			end
+		else
+			dmg:ScaleDamage(1.37) -- easier to kill with the backpack exploded
 		end
 	end
 
-	function class.TakeDamage(ply, dmg)
-		if bit.band( dmg:GetDamageType(), bit.bor(DMG_BURN, DMG_SLOWBURN) ) > 0 then
-			dmg:ScaleDamage(0.1)
+	function class.OnDeath(ply)
+		local backpack = ply.jcms_vanguardnpc_backpack
+		if IsValid(backpack) and not backpack.jcms_exploded then
+			backpack:FallOff()
+			backpack:SetPreventTransmit(ply, false)
 		end
 	end
 
@@ -132,11 +130,7 @@ if CLIENT then
 			end
 
 			if speed > 10 then
-				if not ply:IsWalking() then
-					return ply:Crouching() and 361 or 2060
-				else
-					return ply:Crouching() and 361 or 2058
-				end
+				return ply:Crouching() and 361 or 362
 			else
 				return ply:Crouching() and 298 or 287
 			end
@@ -158,33 +152,6 @@ if CLIENT then
 		jcms.colormod["$pp_colour_brightness"] = -0.02
 		
 		jcms.colormod[ "$pp_colour_colour" ] = 0.89
-	end
-	
-end
-
-if SERVER then
-
-	function class.Ability(ply)
-		local weapon = ply:GetActiveWeapon()
-
-		if weapon:GetNWInt("jcms_npcspecial", 0) > 0 then
-			local smoke = ents.Create("jcms_smokenade")
-			smoke:SetPos(ply:EyePos())
-			smoke:SetAngles(AngleRand())
-			smoke:SetOwner(ply)
-			smoke:Spawn()
-
-			local phys = smoke:GetPhysicsObject()
-			if IsValid(phys) then
-				phys:SetVelocity(ply:EyeAngles():Forward()*1000)
-				phys:SetAngleVelocity(VectorRand(-128, 128))
-			end
-
-			weapon:SetNWInt("jcms_npcspecial", weapon:GetNWInt("jcms_npcspecial", 0) - 1)
-			return true
-		else
-			return false
-		end
 	end
 	
 end

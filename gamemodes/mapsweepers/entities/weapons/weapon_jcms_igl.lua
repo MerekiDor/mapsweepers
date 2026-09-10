@@ -95,6 +95,8 @@ end
 
 		self:ShootEffects()
 
+		if CLIENT then return end
+
 		--Spawning
 		local startPos
 		if self.Owner:IsPlayer() then

@@ -54,9 +54,10 @@ if SERVER then
 			else
 				v = dmg:GetDamagePosition() - dmg:GetReportedPosition()
 			end
+			local force = math.Remap(v:Length(), 0, 128, 1000, 200)
 			v:Normalize()
 			v.z = v.z + 0.1
-			v:Mul( dmg:GetDamage() * 16 )
+			v:Mul( force )
 
 			ply:SetVelocity(v)
 			dmg:ScaleDamage(0.01)
