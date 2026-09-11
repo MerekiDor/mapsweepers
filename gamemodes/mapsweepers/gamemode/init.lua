@@ -1822,6 +1822,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 				if classdata.faction then
 					jcms.playerspawn_RespawnAs(ply, "npc", ply:GetPos(), classname)
 				else
+					ply:SetNWString("jcms_desiredclass", classname)
 					jcms.playerspawn_RespawnAs(ply, "sweeper", ply:GetPos(), true)
 				end
 			else
