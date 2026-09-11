@@ -54,16 +54,20 @@ if SERVER then
 			else
 				v = dmg:GetDamagePosition() - dmg:GetReportedPosition()
 			end
-			local force = math.Remap(v:Length(), 0, 128, 1000, 200)
-			v:Normalize()
-			v.z = v.z + 0.1
-			v:Mul( force )
+			local force = math.max(0, math.Remap(v:Length(), 0, 128, 1000, 200))
 
-			ply:SetVelocity(v)
-			dmg:ScaleDamage(0.01)
 			ply.jcms_odessaRocketJumped = 0 -- Time spent airborne
+			dmg:ScaleDamage(0.01)
+			
+			if force > 0 then
+				v:Normalize()
+				v.z = v.z + 0.1
+				v:Mul( force )
 
-			ply:EmitSound("weapons/iceaxe/iceaxe_swing1.wav")
+				ply:SetVelocity(v)
+
+				ply:EmitSound("weapons/iceaxe/iceaxe_swing1.wav")
+			end
 		end
 
 		if dmg:IsFallDamage() and ply.jcms_odessaRocketJumped then
