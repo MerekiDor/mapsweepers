@@ -265,7 +265,7 @@ if SERVER then
 		self:SetNWString("jcms_terminal_modeData", "2")
 		self:SetActive(false)
 
-		jcms.director_PvpObjectiveCompleted(self.jcms_activator, self:GetPos())
+		jcms.director_PvpObjectiveCompleted(self.jcms_activator, self:GetPos(), true)
 	end
 
 	function ENT:StartCountdown()

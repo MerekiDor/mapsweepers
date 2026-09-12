@@ -102,7 +102,7 @@ if SERVER then
 
 			if self:GetCharge() >= self:GetMaxCharge() and not self:GetIsComplete() then
 				self:ReleaseBoss()
-				jcms.director_PvpObjectiveCompleted(attacker, self:GetPos())
+				jcms.director_PvpObjectiveCompleted(attacker, self:GetPos(), true)
 			end
 		end
 	end

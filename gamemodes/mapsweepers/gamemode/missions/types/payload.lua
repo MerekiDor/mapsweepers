@@ -194,7 +194,7 @@ jcms.missions.payload = {
 				function term:jcms_terminal_Callback(cmd, data, ply)
 					if not ent:GetIsEnabled() then
 						
-						jcms.director_PvpObjectiveCompleted(ply, term:GetPos())
+						jcms.director_PvpObjectiveCompleted(ply, term:GetPos(), true)
 						ent:SetIsEnabled(true)
 						term:EmitSound("buttons/button17.wav")
 						return true, "c"

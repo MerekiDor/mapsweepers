@@ -61,7 +61,7 @@ if SERVER then
 				local newColorVector = Vector(1, 0.25, 0.25)
 
 				if IsValid(ent.jcms_hackedBy) then
-					jcms.director_PvpObjectiveCompleted(ent.jcms_hackedBy, ent:GetPos())
+					jcms.director_PvpObjectiveCompleted(ent.jcms_hackedBy, ent:GetPos(), true)
 
 					local pvpTeam = ent.jcms_hackedBy:GetNWInt("jcms_pvpTeam", -1)
 					if pvpTeam ~= -1 then
