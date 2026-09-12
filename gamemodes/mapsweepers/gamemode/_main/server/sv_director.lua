@@ -623,7 +623,7 @@
 					closest = math.min(closest, dist)
 				end
 				if not(closest == math.huge) then
-					areaWeights[area] = areaWeights[area] * math.sqrt(closest)
+					areaWeights[area] = areaWeights[area] * closest^2
 				end
 
 				--Reduced chance to spawn inside radiation
@@ -634,7 +634,7 @@
 				end
 
 				--Avoid areas visible to / close to turrets
-				areaWeights[area] = areaWeights[area] / (1 + (turretVisDict[area] or 0))	
+				areaWeights[area] = areaWeights[area] / (1 + (turretVisDict[area] or 0))^2	
 			end
 
 			--Pick final area / vec
