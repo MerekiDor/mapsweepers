@@ -75,7 +75,7 @@ function ENT:UpdateForFaction(faction)
 end
 
 if SERVER then
-	hook.Add("InitPostEntity", "jcms_LinkPortalsToDoors", function()
+	local function jcms_LinkPortalsToDoors()
 		local namedDoors = {}
 		for i, door in ipairs(ents.FindByClass("prop_door_rotating")) do 
 			if IsValid(door) then
@@ -101,7 +101,9 @@ if SERVER then
 				end
 			end
 		end
-	end)
+	end
+	hook.Add("InitPostEntity", "jcms_LinkPortalsToDoors_init", jcms_LinkPortalsToDoors)
+	hook.Add("PostCleanupMap", "jcms_LinkPortalsToDoors_cleanup", jcms_LinkPortalsToDoors)
 
 	function jcms.DestroyBuildingsHookFunction(ent, dmginfo)
 		local attacker = dmginfo:GetAttacker()
