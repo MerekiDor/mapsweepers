@@ -1,0 +1,10 @@
+"LightmappedGeneric"
+{
+    //"$basetexture" "Tools/toolsskybox2D"
+    "$additive" 1
+    "$surfaceprop" "glass"
+    "$detail" "tools/pixelgrid"
+    "$detailscale" 3
+    "$detailblendfactor" 4
+    "$detailblendmode" 1
+}
