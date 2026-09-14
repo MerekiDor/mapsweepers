@@ -114,7 +114,7 @@ if SERVER then
 		self:SetColor(color)
 		local vel = trace.HitPos - trace.StartPos
 		local dist = vel:Length()
-		vel:Mul(math.random(15, 200) / dist)
+		vel:Mul( (jcms.util_IsPVP() and math.random(200, 275) or math.random(15, 200)) / dist) --Faster in PVP
 		self:Spawn()
 		self:PhysWake()
 		self:GetPhysicsObject():SetAngleVelocity(Vector( (math.random()<0.5 and 1 or -1)*math.random(8, 19), 0, 0))
@@ -122,7 +122,16 @@ if SERVER then
 		self:GetPhysicsObject():SetVelocity(vel)
 
 		local allPlayers = RecipientFilter()
-		allPlayers:AddAllPlayers()
+		
+		if jcms.util_IsPVP() then
+			for i, otherPly in player.Iterator() do 
+				if jcms.team_pvpSameTeam(ply, otherPly) then
+					allPlayers:AddPlayer(otherPly)
+				end
+			end
+		else
+			allPlayers:AddAllPlayers()
+		end
 		
 		if self._rocketsnd then
 			self._rocketsnd:Stop()
@@ -308,9 +317,12 @@ if CLIENT then
 		local f = math.ease.OutCubic( math.Clamp(math.Remap(distToEyes, 5000, 300, 1, 0), 0, 1 ) )
 		
 		if f > 0 then
+			local selfTeam = self:GetNWInt("jcms_pvpTeam", -1)
+			local sameTeam = jcms.team_pvpSameTeam_optimised(selfTeam, jcms.locPly:GetNWInt("jcms_pvpTeam", -1))
+			
 			normal:Mul(Lerp(f, 0.0001, 0.0003))
 
-			if self:GetNWInt("jcms_pvpTeam", -1) == 2 then
+			if selfTeam == 2 then
 				col = Color(255, 195, 30)
 				colBrighter = Color(235, 255, 120)
 			else
@@ -318,7 +330,9 @@ if CLIENT then
 				colBrighter = Color(255, 130, 120)
 			end
 
-			local scale = 16 * f
+			
+
+			local scale = 16 * f * (sameTeam and 1 or 0.25)
 			render.SetMaterial(mat_beam)
 			render.StartBeam(2)
 				render.AddBeam(pos, math.Rand(3, 7)*scale, 0, colBrighter)
