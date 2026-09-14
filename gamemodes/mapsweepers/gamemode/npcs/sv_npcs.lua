@@ -22,11 +22,6 @@
 jcms.npc_types = jcms.npc_types or {}
 jcms.npc_commanders = {}
 
-jcms.NPC_DANGER_FODDER = 1
-jcms.NPC_DANGER_STRONG = 2
-jcms.NPC_DANGER_BOSS = 3
-jcms.NPC_DANGER_RAREBOSS = 4
-
 jcms.npc_idleSchedules = {
 	[SCHED_IDLE_STAND] = true,
 	[SCHED_ALERT_STAND] = true

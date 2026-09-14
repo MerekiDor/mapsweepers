@@ -93,6 +93,11 @@ local nmt = FindMetaTable("NPC")
 	jcms.NOTIFY_BUILT = 6
 	jcms.NOTIFY_ORDERED = 7
 
+	jcms.NPC_DANGER_FODDER = 1
+	jcms.NPC_DANGER_STRONG = 2
+	jcms.NPC_DANGER_BOSS = 3
+	jcms.NPC_DANGER_RAREBOSS = 4
+
 -- }}}
 
 -- // ConVars {{{
