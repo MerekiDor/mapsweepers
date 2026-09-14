@@ -125,7 +125,7 @@ include "_main/server/sv_validmaps.lua"
 
 		local sharedFiles, _ = file.Find( "mapsweepers/gamemode/includes/*.lua", "LUA")
 		for i, v in ipairs(sharedFiles) do
-			AddCSLuaFile("npcs/" .. v)
+			AddCSLuaFile("includes/" .. v)
 			include("includes/" .. v)
 		end
 	end
