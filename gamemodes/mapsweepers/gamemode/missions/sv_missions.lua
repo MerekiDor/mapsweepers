@@ -117,11 +117,14 @@
 			end
 
 			game.CleanUpMap()
+
 			jcms.RecolorAllDollies()
 			jcms.ReplaceAllCrates()
-			jcms.DisableThumpers()
-			jcms.SetDoorReturns()
-			jcms.ForceOpenFuncDoors()
+			if not jcms.inSpecialMap then
+				jcms.DisableThumpers()
+				jcms.SetDoorReturns()
+				jcms.ForceOpenFuncDoors()
+			end
 			if jcms.cvar_performanceMode:GetBool() then 
 				jcms.ClearTinyProps()
 				jcms.ClearWindows()
