@@ -50,6 +50,7 @@ Features List
 - **Playing as NPCs after you die or evacuate**  [🛈](## "This feature optionally allows you to respawn as an NPC to harass survivors if you're bored, making this gamemode technically PvP.")
 - **Codex** and **Bestiary** with lore about the world
 - 🇷🇺 **Russian localization / Перевод на русский язык**
+- 🇫🇷 **French localization / Traduction en français**
 
 
 Contributing
@@ -59,7 +60,7 @@ You may contribute to our repository by creating a **Pull Request** with code, o
 Boring stuff
 ===========
 
-Reuploading & Hosting / Владельцам серверов и о перезаливах
+Reuploading & Hosting / Владельцам серверов и о перезаливах / À l'attention des propriétaires de serveurs
 ---
 ### 🇬🇧 English
 The source code of this repository is licensed under *GNU GPL v3*. More info in the "Legal" section.
@@ -71,6 +72,16 @@ Here's the summary if you plan on modifying the addon or creating your own versi
 - You **can** monetize the addon or your server, don't worry. Just remember to credit us.
 - Assets of the addon (textures, mission control voice lines and 3d models) can be used only in the context of Map Sweepers, you can not use them in other media.
 
+### 🇫🇷 Français
+Le code source de ce dépôt est sous licence *GNU GPL v3*. Plus d'informations sont disponibles dans la section « Legal ».
+Voici un résumé si vous prévoyez de modifier l'addon ou de créer votre propre version :
+- **Conservez toutes les mentions de droit d'auteur** (copyright) en haut de chaque fichier *.lua* qui nous créditent. Vous ne pouvez pas les modifier. Vous pouvez toutefois ajouter vos propres mentions de droit d'auteur *à côté* de celles-ci.
+- Votre version (fork/branche) de Map Sweepers **doit être open-source** et accessible à vos joueurs si vous créez une version destinée à un usage public.
+- Vous pouvez déplacer les liens vers nos réseaux sociaux ou de support ailleurs dans l'addon si vous souhaitez insérer vos propres liens, mais **nous devons rester crédités dans le jeu**.
+- **N'effacez pas les mentions/crédits d'Octantis Addons** (MerekiDor & JonahSoldier), mais n'hésitez pas à ajouter votre nom si vous avez modifié l'addon.
+- Vous **pouvez** monétiser l'addon ou votre serveur, ne vous inquiétez pas. N'oubliez simplement pas de nous créditer.
+- Les ressources de l'addon (textures, doublages du mission control et modèles 3D) ne peuvent être utilisées que dans le contexte de Map Sweepers ; vous ne pouvez pas les utiliser dans d'autres médias.
+
 ### 🇷🇺 Русский
 Исходный код данного аддона обладает лицензией *GNU GPL v3*. Больше информации на эту тему в секции "Лицензия".
 Вот самое важное для тех, кто хочет изменять аддон или использовать его на серверах:
@@ -81,7 +92,7 @@ Here's the summary if you plan on modifying the addon or creating your own versi
 - Вам **разрешается** монетизировать аддон на своём сервере, то есть добавлять туда донаты и прочие штуки, не волнуйтесь.
 - Ассеты аддона (текстуры, 3д модели и голосовые дорожки) являются собственностью MerekiDor, на них **не распространяется** лицензия о свободном использовании. Вам разрешено их использовать в контексте Map Sweepers, но ни в коем случае не в каких-то своих целях, типа сторонних игр.
 
-Legal / Лицензия
+Legal / Лицензия / Mentions Légales
 --- 
 ### 🇬🇧 English
 - This addon's **source code** is licensed under GNU GPL v3.
@@ -98,6 +109,21 @@ Legal / Лицензия
 	- The following link: https://fonts.google.com/specimen/IBM+Plex+Sans/license
 	- The following link: https://openfontlicense.org/open-font-license-official-text/
 
+### 🇫🇷 Français
+- Le **code source** de cet addon est sous licence GNU GPL v3.
+    - Le texte complet de la licence se trouve dans le fichier `LICENSE`.
+    - Le fichier `gamemodes/mapsweepers/gamemode/sh_bspreader.lua` est **EXEMPTÉ** de ceci. Il s'agit d'un module tiers appelé 'BspReader' par *JonahSoldier*, sous des conditions de licence différentes. Il est utilisé avec la permission de *JonahSoldier* et **ne fait pas** partie du code source de *Map Sweepers*.
+- Les **Assets** (textures, modèles 3D et fichiers audio) présents dans la version originale (non modifiée) de l'addon, listés ci-dessous, sont soumis au droit d'auteur de MerekiDor. Tous les droits sur lesdits assets sont réservés par MerekiDor (contact : merekidorian@gmail.com).
+    - Les textures du dossier `materials/jcms` et tous ses sous-dossiers ;
+    - Les textures du dossier `materials/models` dont le nom commence par `jcorp_` ou `rgg_`, à l'exception des fichiers `rgg_male` et `rgg_female` ;
+    - Les textures du dossier `materials/models/zombiespawner` ;
+    - Tous les modèles 3D du dossier `models/jcms` ;
+    - Tous les fichiers audio (voix) du dossier `sound/vo/jcms`.
+- **La police** utilisée dans l'addon est *IBM Plex Sans* et est sous licence *SIL Open Font License Version 1.1* par *IBM Corp.*. Octantis Addons ne revendique aucun droit d'auteur sur cette police. Le texte intégral de ladite licence peut être consulté via les liens suivants :
+    - Le fichier `LICENSE_FONT` ;
+    - Le lien suivant : https://fonts.google.com/specimen/IBM+Plex+Sans/license
+    - Le lien suivant : https://openfontlicense.org/open-font-license-official-text/
+
 ### 🇷🇺 Русский
 - **Исходный код** аддона лицензирован под GNU GPL v3.
 	- Полный текст лицензии может быть найден в файле `LICENSE`.
@@ -112,3 +138,4 @@ Legal / Лицензия
 	- Файл `LICENSE_FONT`
 	- Интернет-ресурс https://fonts.google.com/specimen/IBM+Plex+Sans/license
 	- Интернет-ресурс https://openfontlicense.org/open-font-license-official-text/
+
