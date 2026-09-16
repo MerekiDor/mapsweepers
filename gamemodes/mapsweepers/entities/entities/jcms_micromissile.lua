@@ -201,7 +201,7 @@ if SERVER then
 
 		if IsValid(self.Target) and (data.HitEntity == self.Target or data.HitEntity:GetClass() == "phys_bone_follower" and data.HitEntity:GetOwner() == self.Target) then
 			self:Detonate(self.Target)
-		elseif not(self.AntiAir and CurTime() - self.creationTime < 30) then --antiair missiles only detonate on other objects after 30s of life.
+		elseif not(self.AntiAir and IsValid(self.Target) and CurTime() - self.creationTime < 30) then --antiair missiles only detonate on other objects after 30s of life.
 			self:Detonate()
 		end
 	end
