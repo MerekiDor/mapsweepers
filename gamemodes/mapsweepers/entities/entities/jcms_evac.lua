@@ -133,6 +133,8 @@ if SERVER then
 		return true
 	end
 	
+	local evacZoneMins = Vector(-96, -96, 0)
+	local evacZoneMaxs = Vector(96, 96, 64)
 	function ENT:Think()
 		local selfTbl = self:GetTable()
 		if jcms.director or selfTbl.forceCharging then
@@ -157,7 +159,11 @@ if SERVER then
 					self:SetAllSwpNear(true)
 				end
 
-				for _, ent in ipairs(ents.FindInSphere(self:GetPos(), 64)) do
+				local selfpos = self:GetPos()
+				local bMins, bMaxs = selfpos + evacZoneMins, selfpos + evacZoneMaxs
+				for _, ent in ipairs(ents.FindInBox(bMins, bMaxs)) do
+					if ent:GetPos():DistToSqr(selfpos) > 96^2 then continue end --Pseudo-Hemisphere (cut off at the top)
+
 					if jcms.team_GoodTarget(ent) or ent.jcms_canBeEvacuated then
 						if ent:IsPlayer() and jcms.team_JCorp_player(ent) and not IsValid(ent:GetNWEntity("jcms_vehicle", NULL)) then
 							self:BeamUp(ent)
