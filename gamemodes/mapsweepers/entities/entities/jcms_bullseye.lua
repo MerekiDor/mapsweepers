@@ -26,7 +26,7 @@ ENT.PrintName = "Bullseye"
 ENT.Author = "Octantis Addons"
 ENT.Category = "Map Sweepers"
 ENT.Spawnable = false
-ENT.RenderGroup = RENDERGROUP_OPAQUE
+ENT.RenderGroup = RENDERGROUP_OTHER
 
 jcms.team_jCorpClasses["jcms_bullseye"] = true
 
@@ -58,10 +58,6 @@ end
 if CLIENT then
 	function ENT:Think()
 		self:DestroyShadow()
-	end
-
-	function ENT:Draw()
-		
 	end
 end
 

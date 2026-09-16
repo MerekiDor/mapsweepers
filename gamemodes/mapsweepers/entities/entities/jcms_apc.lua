@@ -631,6 +631,7 @@ if SERVER then
 			self.driver = nil
 
 			for i, bullseye in ipairs(self.jcms_bullseyes) do 
+				if not IsValid(bullseye) then continue end
 				bullseye:AddFlags(FL_NOTARGET)
 			end
 		end
@@ -645,6 +646,7 @@ if SERVER then
 			ply:SetMoveType( MOVETYPE_NOCLIP )
 
 			for i, bullseye in ipairs(self.jcms_bullseyes) do 
+				if not IsValid(bullseye) then continue end
 				bullseye:RemoveFlags(FL_NOTARGET)
 			end
 		end
