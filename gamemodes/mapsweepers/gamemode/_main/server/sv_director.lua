@@ -1534,9 +1534,9 @@
 			
 			for i=#npcs, 1, -1 do
 				local npc = npcs[i]
-				if not (IsValid(npc) and npc:Health() > 0) then
+				if not (IsValid(npc) and npc:Health() > 0 and not IsValid(npc:GetParent())) then
 					table.remove(npcs, i)
-				elseif npc:GetPos().z < -32000 then --NOTE: Bandaid, remove invalids. Ideally we want to prevent this happening in the first place.
+				elseif npc:GetPos().z < -32768 then --NOTE: Bandaid, remove invalids. Ideally we want to prevent this happening in the first place.
 					npc:Remove()
 					table.remove(npcs, i)
 				else
