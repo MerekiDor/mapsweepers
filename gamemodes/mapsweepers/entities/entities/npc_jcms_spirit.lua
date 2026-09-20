@@ -221,36 +221,7 @@ if SERVER then
 	end
 
 	function ENT:Death(attacker, inflictor)
-		self:DeployNPCs()
-
-		-- // Shield nearby units, up to max 5 {{{
-			local valids = {}
-			for i, npc in ipairs( ents.FindInSphere(self:WorldSpaceCenter(), self.GiveShieldDistance) ) do
-				if IsValid(npc) and npc:Health() > 0 and jcms.team_SameTeam(self, npc) then
-					table.insert(valids, npc)
-				end
-			end
-
-			table.Shuffle(valids)
-			for i=1, math.min(#valids, 5) do
-				local npc = valids[i]
-
-				if npc:IsPlayer() then --NPC Players
-					npc:SetMaxArmor( npc:GetMaxArmor() + self.GiveShieldAmount )
-					npc:SetArmor( npc:GetMaxArmor() )
-				elseif not npc:GetClass() == "npc_jcms_spirit" then --Difficult/impossible to see shields on other spirits, so I'd rather just not. --TODO: use the no-sweepershields var instead
-					jcms.npc_SetupSweeperShields(npc, npc:GetNWInt("jcms_sweeperShield_max", 0) + self.GiveShieldAmount, self.GiveShieldRegen, self.GiveShieldRegenDelay, jcms.factions_GetColorInteger("zombie"))
-					npc:SetPlaybackRate(2)
-				end
-
-				--FX
-				local ed = EffectData()
-				ed:SetFlags(2)
-				ed:SetEntity(npc)
-				ed:SetOrigin(self:WorldSpaceCenter())
-				util.Effect("jcms_chargebeam", ed)
-			end
-		-- // }}}
+		self:DeployNPCs(nil, 50)
 
 		self:SetSolid(SOLID_NONE)
 		self:SetMoveType(MOVETYPE_FLY)
@@ -347,7 +318,7 @@ if SERVER then
 		self:AddGestureSequence(17)
 	end
 
-	function ENT:DeployNPCs(pos) --Reversed deploy - try to spawn close to enemy first
+	function ENT:DeployNPCs(pos, hurtAmount) --Reversed deploy - try to spawn close to enemy first
 		-- // NPCs to deploy {{{
 			local toDeploy = {}
 			for i, ent in ipairs( self:GetChildren() ) do
@@ -394,6 +365,10 @@ if SERVER then
 			ent:SetParent()
 			ent:SetPos(v + upVec)
 			ent:SetNoDraw(false)
+
+			if type(hurtAmount) == "number" and hurtAmount > 0 then
+				ent:SetHealth(math.max(1, ent:Health() - hurtAmount))
+			end
 
 			--Target the enemy we were deployed towards
 			if IsValid(foe) then
