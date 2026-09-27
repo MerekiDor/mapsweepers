@@ -696,7 +696,9 @@ jcms.missions.datadownload = {
 			cost = 1,
 			cooldown = 90,
 			slotPos = 1,
-			argparser = "respawn_beacon", 
+			argparser = "respawn_beacon",
+			
+			missionSpecific = true,
 
 			func = function(ply, pos, angle)
 				local beacon = ents.Create("jcms_recallbeacon")
