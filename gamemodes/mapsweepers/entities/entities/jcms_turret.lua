@@ -525,7 +525,7 @@ if SERVER then
 			local hackedByRebels = selfTbl:GetHackedByRebels()
 			local mul = (hackedByRebels and (0.5 * jcms.npc_GetScaledDamage())) or 1
 			local dmg = data.damage * mul
-			if hackedByRebels then --bolters can get pretty extreme
+			if hackedByRebels or tr.Entity:IsPlayer() then --bolters can get pretty extreme
 				dmg = math.min(50, dmg)
 			end
 

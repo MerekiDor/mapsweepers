@@ -48,6 +48,12 @@ hook.Add("EntityTakeDamage", "jcms_Adjustments", function(ent, dmg) --TODO: This
 		return true
 	end
 
+	--Invuln in the droppod
+	if isPlayer and IsValid(ent:GetVehicle()) and ent:GetVehicle() == "prop_vehicle_prisoner_pod" then
+		dmg:ScaleDamage(0)
+		return true
+	end
+
 	--Weapon inflictor hack-fix
 	if (inflictor == attacker) and attacker:IsPlayer() and bit.band(dmgType, bit.bor(DMG_BUCKSHOT, DMG_BULLET)) > 0 then
 		-- This is really shitty, but neither M9K nor ArcCW properly set up their inflictors, which is why this is necessary.
