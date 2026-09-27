@@ -414,19 +414,25 @@
 			maxDist = maxDist*maxDist
 			
 			for i, area in ipairs(zoneAreas) do
-				if IsValid(area) and not (area:IsUnderwater() or area:IsDamaging()) then
-					local bad = false
+				if jcms.mapgen_ValidArea(area) then
+					local tooClose = false
+					local inRange = false
 					for j, origin in ipairs(origins) do
 						local d1, d2, d3, d4, d5 = area:GetCorner(0):DistToSqr(origin), area:GetCorner(1):DistToSqr(origin), area:GetCorner(2):DistToSqr(origin), area:GetCorner(3):DistToSqr(origin), area:GetCenter():DistToSqr(origin)
 						
-						local distClosest, distFarthest = math.min(d1, d2, d3, d4, d5), math.max(d1, d2, d3, d4, d5)
-						if (distClosest < minDist) or (not (distClosest <= maxDist and distFarthest >= minDist)) then
-							bad = true
+						local distClosest = math.min(d1, d2, d3, d4, d5)
+						if (distClosest < minDist) then
+							tooClose = true
 							break
+						end
+
+						local distFarthest = math.max(d1, d2, d3, d4, d5)
+						if distClosest < maxDist and distFarthest < maxDist then
+							inRange = true
 						end
 					end
 					
-					if not bad then
+					if (not tooClose) and inRange then
 						table.insert(areas, area)
 					end
 				end
