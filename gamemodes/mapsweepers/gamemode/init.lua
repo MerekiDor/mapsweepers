@@ -1761,26 +1761,28 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 			jcms.mission_Clear()
 		else								--Enable Debug mode
 			jcms.director.debug = true
-			for i, npc in ipairs(jcms.director.npcs) do
-				if IsValid(npc) then
-					npc:Remove()
-				end
-			end
-
+			ply:SetHealth(9999999)
+			
 			--Kick us out of the droppod
 			for i, ply in player.Iterator() do 
 				ply:ExitVehicle()
 			end
-			
-			jcms.director.swarmNext = math.huge
-			table.Empty(jcms.director.encounters)
-			
-			for i, ent in ipairs( ents.FindByClass("jcms_npcportal") ) do
-				ent:Remove()
+
+			if tostring(args[1]) ~= "1" then --1 To keep director active
+				for i, npc in ipairs(jcms.director.npcs) do
+					if IsValid(npc) then
+						npc:Remove()
+					end
+				end
+				jcms.director.swarmNext = math.huge
+				table.Empty(jcms.director.encounters)
+				
+				for i, ent in ipairs( ents.FindByClass("jcms_npcportal") ) do
+					ent:Remove()
+				end
+				
+				jcms.printf("Debug mode ON. To revert it, use 'jcms_debug_enable 0'. All NPCs, encounters and NPC portals have been despawned, and swarms will no longer spawn.")
 			end
-			
-			ply:SetHealth(9999999)
-			jcms.printf("Debug mode ON. To revert it, use 'jcms_debug_enable 0'. All NPCs, encounters and NPC portals have been despawned, and swarms will no longer spawn.")
 		end
 	end, nil, "Remove all NPC portals, delay all swarms and so on.", FCVAR_CHEAT)
 	
