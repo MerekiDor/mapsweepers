@@ -1079,7 +1079,7 @@ local nmt = FindMetaTable("NPC")
 	function jcms.PVPGetTeamPlayers( pvpTeam )
 		local plys = {}
 		for i, ply in player.Iterator() do
-			if jcms.team_pvpSameTeam_optimised(pvpTeam, ply:GetNWInt("jcms_pvpTeam", -1)) then
+			if (ply:GetObserverMode() ~= OBS_MODE_FIXED) and jcms.team_pvpSameTeam_optimised(pvpTeam, ply:GetNWInt("jcms_pvpTeam", -1)) then
 				table.insert(plys, ply) 
 			end
 		end

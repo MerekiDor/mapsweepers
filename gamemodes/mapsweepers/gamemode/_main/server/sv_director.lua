@@ -504,9 +504,8 @@
 				teamCountsNoPersonal[i] = teamCounts[i]
 			end
 
-
 			for i, ply in player.Iterator() do 
-				if ply.jcms_playerRespawnVectors then
+				if ply.jcms_playerRespawnVectors and (ply:GetObserverMode() ~= OBS_MODE_FIXED) then
 					local plyTeam = ply:GetNWInt("jcms_pvpTeam", -1)
 					if plyTeam == -1 then plyTeam = 1 end
 
