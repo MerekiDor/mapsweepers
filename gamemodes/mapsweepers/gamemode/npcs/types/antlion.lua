@@ -964,7 +964,6 @@ jcms.npc_types.antlion_ultracyberguard = {
 				timer.Simple(0.9, function()
 					if not IsValid(npc) or not IsValid(enemy) then
 						if IsValid(npc) then
-							npc:RemoveLayer( gestureLayer )
 							npc.jcms_uCyberguard_beaming = false
 						end
 						return 
