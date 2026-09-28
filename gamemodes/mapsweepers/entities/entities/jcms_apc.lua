@@ -64,6 +64,8 @@ function ENT:Initialize()
 		self.soundTurbo:Play()
 		self.soundTurbo:ChangePitch(12)
 		self.soundWater = CreateSound(self, "vehicles/airboat/pontoon_fast_water_loop1.wav")
+		self.soundHorn = CreateSound(self, "ambient/alarms/klaxon1.wav")
+		self.soundHorn:SetSoundLevel( 100 )
 		
 		self:SetMaxHealth(1250)
 		self:SetHealth(1250)
@@ -239,6 +241,12 @@ if SERVER then
 				local range = 230 + math.min(500, speed/3)
 				if speed > 230 then
 					sound.EmitHint(SOUND_DANGER, self:GetPos(), range, 0.1, self)
+				end
+				
+				if selfTbl.soundHorn and selfTbl.soundHorn2 then 
+					if driver:KeyDown(IN_RELOAD) then
+						selfTbl.soundHorn:PlayEx(1, 130 + math.Rand(-5, 5))
+					end
 				end
 			end
 
