@@ -782,6 +782,10 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 
 		hook.Run("jcms_PlayerFootsteps", ply, pos, foot, sound, volume, rf ) --return true blocks other calls of this hook so I need this to be able to do other stuff - J
 
+		if not data.footstepSfx then
+			return false 
+		end
+
 		if data then
 			local wl = ply:WaterLevel()
 			local postfix = data.footstepSfxNoPostfix and "" or (foot == 0 and "Left" or "Right")
