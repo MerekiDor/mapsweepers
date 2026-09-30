@@ -135,6 +135,8 @@ if SERVER then
 				self:SetExplodeTime(CurTime() + (self.wasObliterated and 0.09 or (self.wasPrimed and 1 or 0.25)))
 			end
 		end
+		
+		return math.max(dmg:GetDamage(), 0)
 	end
 
 	function ENT:HandleAnimEvent(event, eventTime, cycle, type, options)

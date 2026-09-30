@@ -114,7 +114,7 @@ if SERVER then
 
 	function ENT:OnTakeDamage(dmgInfo)
 		if self.dying then
-			return
+			return 0
 		end
 
 		if bit.band( dmgInfo:GetDamageType(), bit.bor(DMG_BLAST,DMG_BLAST_SURFACE) ) > 0 then
@@ -142,6 +142,8 @@ if SERVER then
 				self:SetNWFloat("HealthFraction", self:Health() / self:GetMaxHealth())
 			end
 		end)
+
+		return math.max(dmgInfo:GetDamage(), 0)
 	end
 
 	function ENT:OnRemove()

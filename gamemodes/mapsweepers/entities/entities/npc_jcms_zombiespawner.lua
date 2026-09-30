@@ -78,7 +78,7 @@ if SERVER then
 		local dmg = dmgInfo:GetDamage()
 
 		if self.dying then
-			return
+			return 0
 		end
 
 		if dmg > 0 then
@@ -122,6 +122,8 @@ if SERVER then
 				self:SetNWFloat("HealthFraction", self:Health() / self:GetMaxHealth())
 			end
 		end)
+
+		return math.max(dmgInfo:GetDamage(), 0)
 	end
 
 	function ENT:Think()

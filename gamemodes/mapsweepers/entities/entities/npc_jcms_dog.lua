@@ -67,7 +67,7 @@ if SERVER then
 	end
 
 	function ENT:OnTakeDamage(dmg)
-		if self.jcms_dogDead then return end 
+		if self.jcms_dogDead then return 0 end 
 
 		if bit.band( dmg:GetDamageType(), bit.bor(DMG_BULLET, DMG_BUCKSHOT) ) > 0 then
 			self:EmitSound("Computer.BulletImpact", 100, 100, 1)
@@ -107,7 +107,7 @@ if SERVER then
 			end
 		end
 		
-		return 0
+		return math.max(dmg:GetDamage(), 0)
 	end
 
 	-- pose params:

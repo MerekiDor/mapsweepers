@@ -66,10 +66,9 @@ if SERVER then
 	end
 
 	function ENT:OnTakeDamage(dmg)
-		local armorMul = math.random() < 0.8 and math.Rand(0.2, 0.4) or math.Rand(0.8, 1.0)
 		self:SetHealth(self:Health() - dmg:GetDamage())
 
-		if armorMul < 0.5 then
+		if math.random() < 0.5 then
 			local ed = EffectData()
 			ed:SetOrigin(dmg:GetDamagePosition())
 			ed:SetNormal( (dmg:GetDamagePosition() - self:WorldSpaceCenter()):GetNormalized() )
@@ -121,7 +120,7 @@ if SERVER then
 			self:UpdateEnemyMemory(dmg:GetAttacker(), dmg:GetReportedPosition())
 		end
 
-		return 0
+		return math.max(dmg:GetDamage(), 0)
 	end
 
 	function ENT:Think()

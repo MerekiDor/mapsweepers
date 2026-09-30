@@ -141,7 +141,7 @@ if SERVER then
 			self:SetVelocity(v)
 		end
 
-		return 0
+		return math.max(dmg:GetDamage(), 0)
 	end
 
 	function ENT:SelectSchedule()
