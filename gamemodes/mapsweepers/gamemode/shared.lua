@@ -1522,7 +1522,7 @@ local nmt = FindMetaTable("NPC")
 	end
 
 	function jcms.util_IsStunstick(ent)
-		return not not (IsValid(ent) and ent:IsWeapon() and ent:GetClass():lower():find("stun_?stick"))
+		return not not (IsValid(ent) and ent:IsWeapon() and (ent.jcms_isStunstick or ent:GetClass():lower():find("stun_?stick")))
 	end
 
 	function jcms.util_GetThresholdTimer() -- How many players need to be ready to start mission countdown

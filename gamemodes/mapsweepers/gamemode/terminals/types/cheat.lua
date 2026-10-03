@@ -32,7 +32,9 @@ if SERVER then
 			local currentClass = ply:GetNWString("jcms_class", "infantry")
 
 			if desiredClass ~= currentClass then
+				ply.jcms_canGetWeapons = true
 				jcms.class_Apply(ply, desiredClass)
+				ply.jcms_canGetWeapons = false
 				ply:EmitSound("items/ammopickup.wav")
 				return true
 			else

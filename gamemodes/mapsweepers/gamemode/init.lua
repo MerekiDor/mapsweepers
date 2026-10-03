@@ -323,9 +323,8 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 					local loadout = {}
 					
 					for i, wep in ipairs(ply:GetWeapons()) do
-						local class = wep:GetClass()
-						if class ~= "weapon_stunstick" and class ~= "weapon_physcannon" then
-							loadout[ class ] = 1
+						if IsValid(wep) and (not wep.jcms_isDefaultWeapon) then
+							loadout[ wep:GetClass() ] = 1
 						end
 					end
 
@@ -388,7 +387,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		if IsValid(owner) and IsValid(wep) and owner:IsPlayer() then
 			timer.Simple(0, function()
 				if IsValid(owner) and IsValid(wep) then
-					if jcms.util_IsStunstick(wep) then
+					if wep.jcms_isDefaultWeapon then
 						owner:PickupWeapon(wep)
 					else
 						wep.jcms_canPickup = true -- So that we can pick it back up.
@@ -1221,9 +1220,8 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 				
 				ply.jcms_lastLoadout = {}
 				for i, wep in ipairs(ply:GetWeapons()) do
-					local class = wep:GetClass()
-					if class ~= "weapon_stunstick" and class ~= "weapon_physcannon" then
-						ply.jcms_lastLoadout[ class ] = 1
+					if IsValid(wep) and (not wep.jcms_isDefaultWeapon) then
+						ply.jcms_lastLoadout[ wep:GetClass() ] = 1
 					end
 				end
 

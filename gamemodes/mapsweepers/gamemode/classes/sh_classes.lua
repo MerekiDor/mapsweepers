@@ -75,10 +75,64 @@ table.Empty(jcms.classesOrderIndices)
 		ply:SetHealth( ply:GetMaxHealth() )
 		ply:SetMaxArmor( data.shield )
 		ply:SetArmor( ply:GetMaxArmor() )
-
+		
 		-- Giving weapons
 		if data.jcorp then
-			ply:Give("weapon_stunstick")
+			local protectedWeapons = {} -- So that we don't remove weapons we've just given
+
+			local function plyWeaponGetOrGive(class)
+				-- GMod can't remove and give a weapon of the same class in the same tick, we gotta reuse
+				local existing = ply:GetWeapon(class)
+				if IsValid(existing) then
+					return existing
+				else
+					return ply:Give(class)
+				end
+			end
+
+			-- Giving default weapons {{{
+				if type(data.defaultWeapons) == "table" then
+					for i, name in ipairs(data.defaultWeapons) do
+						local weaponEnt = plyWeaponGetOrGive(name)
+						if IsValid(weaponEnt) then
+							protectedWeapons[ weaponEnt ] = true
+							weaponEnt.jcms_isDefaultWeapon = true
+						end
+					end
+				end
+			-- }}}
+
+			-- Giving stunstick {{{
+				local stunstickEnt
+				if data.stunstickOverride then
+					stunstickEnt = plyWeaponGetOrGive(data.stunstickOverride)
+				elseif data.stunstickOverride ~= "" then
+					stunstickEnt = plyWeaponGetOrGive("weapon_stunstick")
+				end
+
+				if IsValid(stunstickEnt) then
+					protectedWeapons[ stunstickEnt ] = true
+					stunstickEnt.jcms_isDefaultWeapon = true
+					stunstickEnt.jcms_isStunstick = true
+				end
+			-- }}}
+
+			-- Getting rid of other weapons {{{
+				for i, wep in ipairs( ply:GetWeapons() ) do
+					if protectedWeapons[ wep ] then continue end -- Don't remove what we've just given
+					if IsValid(wep) and wep.jcms_isDefaultWeapon then
+						wep:Remove()
+					end
+				end
+			-- }}}
+
+			if #ply:GetWeapons() >= 1 then
+				local switchTo = stunstickEnt or ply:GetWeapons()[1]
+				if IsValid(switchTo) then
+					local class = switchTo:GetClass()
+					ply:SelectWeapon(class)
+				end
+			end
 
 			if ply.jcms_pendingLoadout then
 				-- TODO jcms.spawnmenu_GetValidatedLoadout(ply, loadout, gunPriceMul, ammoPriceMul)
@@ -86,35 +140,45 @@ table.Empty(jcms.classesOrderIndices)
 				ply.jcms_pendingLoadout = nil
 				ply:SetNWInt("jcms_pendingLoadoutCost", 0)
 			end
+		else
+			-- Stripping away other classes' default weapons
+			for i, wep in ipairs( ply:GetWeapons() ) do
+				if IsValid(wep) and wep.jcms_isDefaultWeapon then
+					wep:Remove()
+				end
+			end
 		end
 
 		-- Shield
 		local timerIdentifier = "jcms_ShieldRegen" .. ply:EntIndex()
+		if data.shieldRegen > 0 then
+			timer.Create(timerIdentifier, 1 / data.shieldRegen, 0, function()
+				if IsValid(ply) and ply:Alive() and ply:GetObserverMode() == OBS_MODE_NONE then
 
-		timer.Create(timerIdentifier, 1 / data.shieldRegen, 0, function()
-			if IsValid(ply) and ply:Alive() and ply:GetObserverMode() == OBS_MODE_NONE then
+					if (ply:Armor() < ply:GetMaxArmor()) and (not ply.jcms_lastDamaged or CurTime()-ply.jcms_lastDamaged > data.shieldDelay) then
+						local newValue = ply:Armor() + 1
+						ply:SetArmor(newValue)
 
-				if (ply:Armor() < ply:GetMaxArmor()) and (not ply.jcms_lastDamaged or CurTime()-ply.jcms_lastDamaged > data.shieldDelay) then
-					local newValue = ply:Armor() + 1
-					ply:SetArmor(newValue)
+						if newValue == ply:GetMaxArmor() then
+							if not ply:GetNoDraw() then
+								local ed = EffectData()
+								ed:SetEntity(ply)
+								ed:SetFlags(2)
+								ed:SetColor(jcms.util_colorIntegerSweeperShield)
+								util.Effect("jcms_shieldeffect", ed)
+							end
 
-					if newValue == ply:GetMaxArmor() then
-						if not ply:GetNoDraw() then
-							local ed = EffectData()
-							ed:SetEntity(ply)
-							ed:SetFlags(2)
-							ed:SetColor(jcms.util_colorIntegerSweeperShield)
-							util.Effect("jcms_shieldeffect", ed)
+							ply:EmitSound("items/suitchargeok1.wav", 50, 130, 0.5)
 						end
-
-						ply:EmitSound("items/suitchargeok1.wav", 50, 130, 0.5)
 					end
-				end
 
-			else
-				timer.Remove(timerIdentifier)
-			end
-		end)
+				else
+					timer.Remove(timerIdentifier)
+				end
+			end)
+		else
+			timer.Remove(timerIdentifier)
+		end
 
 		-- Post
 		if data.OnSpawn then

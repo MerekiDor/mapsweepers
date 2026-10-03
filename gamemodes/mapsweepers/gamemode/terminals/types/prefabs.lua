@@ -347,7 +347,7 @@ if SERVER then
 					local gunPriceMul = ent:GetGunPriceMul()
 					local weaponPrice = jcms.weapon_prices[ weapon:GetClass() ]
 					
-					if not weaponPrice then
+					if not weaponPrice or weapon.jcms_isDefaultWeapon then
 						return false
 					else
 						jcms.giveCash(ply, math.max(1, math.floor(weaponPrice*gunPriceMul*0.25)))

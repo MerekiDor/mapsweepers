@@ -41,9 +41,15 @@ class.hurtMul = 1
 class.hurtReduce = 1
 class.speedMul = 1
 
-function class.OnSpawn(ply)
-	ply:Give( "weapon_physcannon", false )
-end
+-- If you're making a custom class, you can change stunstickOverride to any other weapon you want instead
+-- This even supports hitscan weapons. E.g. "weapon_pistol" will give you a HL2 pistol that hacks terminals, heals buildings/vehicles on shot and so on
+-- Change to "" to NOT give anything instead
+class.stunstickOverride = "weapon_stunstick"
+
+-- Gives these weapons on spawn. They can't be sold and are stripped from the player on class change.
+class.defaultWeapons = {
+	"weapon_physcannon"
+}
 
 --Engineer's cost offset behaviours.
 class.engineer_discounts = {
