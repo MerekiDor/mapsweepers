@@ -1048,8 +1048,11 @@ local nmt = FindMetaTable("NPC")
 
 -- Other {{{
 
-	function jcms.isPlayerEngineer(ply)
-		return IsValid(ply) and (ply:GetNWString("jcms_class") == "engineer")
+	function jcms.isPlayerEngineer(ply) -- for boosting Engineer's call-ins
+		if jcms.team_JCorp_player(ply) then
+			local classData = jcms.class_GetData(ply)
+			return classData and classData.boostedOrders
+		end
 	end
 
 	function jcms.GetAliveSweepers()

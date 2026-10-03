@@ -186,7 +186,7 @@ table.Empty(jcms.classesOrderIndices)
 		end
 	end
 
-	function jcms.class_Get(ply) --This isn't used anywhere.
+	function jcms.class_Get(ply) --This isn't used anywhere (although, ideally, it really should be).
 		if IsValid(ply) then
 			return ply:GetNWString("jcms_class", "infantry")
 		end
@@ -194,6 +194,11 @@ table.Empty(jcms.classesOrderIndices)
 
 	function jcms.class_GetData(ply)
 		return jcms.classes[ ply:GetNWString("jcms_class", "infantry") ]
+	end
+
+	function jcms.class_GetRepairMultiplier(ply)
+		local classData = jcms.class_GetData(ply)
+		return classData and tonumber(classData.repairMul) or 1
 	end
 
 	if CLIENT then --Optimisation, the GetNW calls can get expensive here so we cache it.

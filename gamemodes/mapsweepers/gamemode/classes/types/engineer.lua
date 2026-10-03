@@ -51,6 +51,9 @@ class.defaultWeapons = {
 	"weapon_physcannon"
 }
 
+class.boostedOrders = true -- Gives call-ins various bonuses
+class.repairMul = 2.5
+
 --Engineer's cost offset behaviours.
 class.engineer_discounts = {
 	[jcms.SPAWNCAT_ORBITALS] = 0.5,

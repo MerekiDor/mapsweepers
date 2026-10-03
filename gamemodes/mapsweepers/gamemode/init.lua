@@ -2703,8 +2703,10 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		end
 		
 		repairValue = tonumber(repairValue) or 7
-		if jcms.isPlayerEngineer(ply) then
-			repairValue = repairValue * 2.5
+		
+		local repairMul = jcms.class_GetRepairMultiplier(ply)
+		if type(repairMul) == "number" then
+			repairValue = repairValue * repairMul
 		end
 		
 		local oldValue = ent:Health()
