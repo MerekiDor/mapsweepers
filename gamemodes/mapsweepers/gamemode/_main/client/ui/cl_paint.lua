@@ -1653,6 +1653,20 @@
 			local myclass = LocalPlayer():GetNWString("jcms_desiredclass", "infantry")
 			local classData = jcms.classes[ myclass ]
 
+			local shieldRegenPhrase = ""
+			local renderShieldBar = classData.shield > 0
+			if classData.shieldText then
+				shieldRegenPhrase = language.GetPhrase(classData.shieldText)
+			elseif classData.shield <= 0 then
+				shieldRegenPhrase = language.GetPhrase("jcms.shieldregen_noshield")
+			elseif classData.shieldRegen <= 0 then
+				shieldRegenPhrase = language.GetPhrase("jcms.shieldregen_noregen")
+			elseif classData.shieldDelay <= 0 then
+				shieldRegenPhrase = language.GetPhrase("jcms.shieldregen_nodelay"):format(classData.shieldRegen)
+			else
+				shieldRegenPhrase = language.GetPhrase("jcms.shieldregen"):format(classData.shieldRegen, classData.shieldDelay)
+			end
+
 			if p.lowres then
 				local tw1 = draw.SimpleText("#jcms.class_" .. myclass, "jcms_medium", h + 8, 12, jcms.color_bright)
 				local tw2 = draw.SimpleText("#jcms.class_" .. myclass .. "_special", "jcms_small", w - 32, 16, jcms.color_bright, TEXT_ALIGN_RIGHT)
@@ -1663,12 +1677,15 @@
 
 				surface.SetDrawColor(jcms.color_bright)
 				drawFilledPolyButton(h + 8, 36, healthWidth, 8, 4)
-				surface.SetDrawColor(jcms.color_bright_alt)
-				drawFilledPolyButton(h + 8, 36 + 10, armorWidth, 8, 4)
 				draw.SimpleText(classData.health, "DefaultVerySmall", h + 4, 36 + 4, jcms.color_bright, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
-				draw.SimpleText(classData.shield, "DefaultVerySmall", h + 4, 36 + 14, jcms.color_bright_alt, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+				
+				surface.SetDrawColor(jcms.color_bright_alt)
+				if renderShieldBar then
+					drawFilledPolyButton(h + 8, 36 + 10, armorWidth, 8, 4)
+					draw.SimpleText(classData.shield, "DefaultVerySmall", h + 4, 36 + 14, jcms.color_bright_alt, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+				end
 				surface.SetAlphaMultiplier(0.5)
-				draw.SimpleText(language.GetPhrase("jcms.shieldregen"):format(classData.shieldRegen, classData.shieldDelay), "DefaultVerySmall", h, 36+20, jcms.color_bright_alt)
+				draw.SimpleText(shieldRegenPhrase, "DefaultVerySmall", h, 36 + (renderShieldBar and 20 or 10), jcms.color_bright_alt)
 				surface.SetAlphaMultiplier(1)
 
 				local xpos = h + 8 + tw1 + 8
@@ -1686,12 +1703,15 @@
 
 				surface.SetDrawColor(jcms.color_bright)
 				drawFilledPolyButton(h + 8, 58, healthWidth, 18)
-				surface.SetDrawColor(jcms.color_bright_alt)
-				drawFilledPolyButton(h + 8, 58 + 20, armorWidth, 18)
 				draw.SimpleText(classData.health, "jcms_medium", h + 16, 58 + 9, jcms.color_dark, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-				draw.SimpleText(classData.shield, "jcms_medium", h + 16, 58 + 20 + 9, jcms.color_dark_alt, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				
+				surface.SetDrawColor(jcms.color_bright_alt)
+				if renderShieldBar then
+					drawFilledPolyButton(h + 8, 58 + 20, armorWidth, 18)
+					draw.SimpleText(classData.shield, "jcms_medium", h + 16, 58 + 20 + 9, jcms.color_dark_alt, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				end
 				surface.SetAlphaMultiplier(0.5)
-				draw.SimpleText(language.GetPhrase("jcms.shieldregen"):format(classData.shieldRegen, classData.shieldDelay), "jcms_small", h + 16, 58 + 42, jcms.color_bright_alt)
+				draw.SimpleText(shieldRegenPhrase, "jcms_small", h + 16, 58 + (renderShieldBar and 42 or 24), jcms.color_bright_alt)
 				surface.SetAlphaMultiplier(1)
 
 				local xpos = h + 8 + tw1 + 8
