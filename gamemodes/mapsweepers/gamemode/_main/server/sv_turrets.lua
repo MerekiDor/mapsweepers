@@ -277,12 +277,19 @@ jcms.turret_targetingModes = {
 	weakest = function(self, targets, origin, radius)
 		local best, npcPos
 		local minhealth
+		local mindist2
 
 		for i, target in ipairs(targets) do
-			if not IsValid(target) then continue end				local health = target:Health()
+			if not IsValid(target) then continue end
+			local health = target:Health()
+			local targetPos = jcms.turret_GetTargetPos(self, target, origin)
 			if not minhealth or health < minhealth then
-				local targetPos = jcms.turret_GetTargetPos(self, target, origin)
 				minhealth, best, npcPos = health, target, targetPos
+			elseif health == minhealth then -- secondary sorting by distance
+				local dist2 = targetPos:DistToSqr(origin)
+				if not mindist2 or dist2 < mindist2 then
+					mindist2, minhealth, best, npcPos = dist2, health, target, targetPos
+				end
 			end
 		end
 
