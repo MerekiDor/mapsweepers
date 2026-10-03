@@ -1,0 +1,7 @@
+"vertexlitgeneric"
+{
+	"$baseTexture" 	"jcms/bglow"
+	"$selfillum" 1
+	"$selfillummask" "jcms/jglow_illum"
+	"$nofog" 1
+}
