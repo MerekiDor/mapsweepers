@@ -243,7 +243,7 @@ if SERVER then
 					sound.EmitHint(SOUND_DANGER, self:GetPos(), range, 0.1, self)
 				end
 				
-				if selfTbl.soundHorn and selfTbl.soundHorn2 then 
+				if selfTbl.soundHorn then 
 					if driver:KeyDown(IN_RELOAD) then
 						selfTbl.soundHorn:PlayEx(1, 130 + math.Rand(-5, 5))
 					end
