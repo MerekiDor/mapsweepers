@@ -51,7 +51,12 @@
 	
 	jcms.missions = {}
 	function jcms.mission_IsBossMission(winstreak)
-		return (jcms.runprogress.winstreak > 0 and jcms.runprogress.winstreak % 5 == 0) and not jcms.util_IsPVP()
+		local frequency = jcms.cvar_bossmission_frequency:GetInt()
+		if frequency == 0 then
+			return false
+		else
+			return (jcms.runprogress.winstreak > 0 and jcms.runprogress.winstreak % frequency == 0) and not jcms.util_IsPVP()
+		end
 	end
 
 	function jcms.mission_GetWeightedTypes(pvpOnly, isBoss) --Gets weights for all missions based on previous missions/factions

@@ -106,6 +106,7 @@ local nmt = FindMetaTable("NPC")
 	local FCVAR_JCMS_SHARED_SAVED = bit.bor(FCVAR_REPLICATED, FCVAR_JCMS_NOTIFY_AND_SAVE) --TODO: More of these should probably be replicated, I've just done the obvious ones currently.
 	jcms.cvar_ffmul = CreateConVar("jcms_friendlyfire_multiplier", "1", FCVAR_JCMS_SHARED_SAVED, "Friendly fire damage is multiplied by this number. 0 disables friendly fire. This applies to turrets and orbitals!", 0, 100)
 	jcms.cvar_softcap = CreateConVar("jcms_npc_softcap", "50", FCVAR_JCMS_SHARED_SAVED, "The game will stop sending new swarms if there's more than X NPCs on the map. The actual sizes of the swarms stay the same, so there may be more NPCs than this number. It only prevents more NPCs from spawning through swarms, which is often good enough.", 1, 250)
+	jcms.cvar_bossmission_frequency = CreateConVar("jcms_bossmission_frequency", "5", FCVAR_JCMS_SHARED_SAVED, "Every X missions there will be a boss mission (such as Eschaton). 5 by default. Set to 0 to turn off.", 0, 100)
 
 	jcms.cvar_map_excludecurrent = CreateConVar("jcms_map_excludecurrent", "0", FCVAR_JCMS_SHARED_SAVED, "Excludes the current server map from the post-mission vote, ensuring that every mission is on a new map. Unless there's no other valid map.")
 	jcms.cvar_map_iswhitelist = CreateConVar("jcms_map_iswhitelist", "0", FCVAR_JCMS_SHARED_SAVED, "Alters the behaviour of jcms_map_list. If this is 1, the list of maps will be a 'whitelist' (ONLY those maps will be picked). If this is 0, the list of maps will be a 'blacklist' (those maps will be EXCLUDED)")
