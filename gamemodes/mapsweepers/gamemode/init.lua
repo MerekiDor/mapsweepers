@@ -965,7 +965,7 @@ AddCSLuaFile "_main/sh_deprecatedcode.lua"
 	end)
 	
 	function GM:PlayerCanPickupItem(ply, item)
-		return jcms.team_JCorp_player(ply) and (item:IsPlayerHolding() or item.jcms_autoPickup)
+		return jcms.team_JCorp_player(ply) and (not item.jcms_manualPickup or item:IsPlayerHolding())
 	end
 
 	function GM:PlayerCanPickupWeapon(ply, wep)

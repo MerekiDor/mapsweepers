@@ -128,7 +128,6 @@ if SERVER then
 				
 				item:SetAngles( AngleRand() )
 				item:Spawn()
-				item.jcms_autoPickup = true
 
 				local phys = item:GetPhysicsObject()
 				if IsValid(phys) then
