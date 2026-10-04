@@ -74,7 +74,8 @@ if SERVER then
 				-- Remove Weapon
 				local weapon = ply:GetActiveWeapon()
 
-				if IsValid(weapon) and not jcms.util_IsStunstick(weapon) then
+				if IsValid(weapon) and not weapon.jcms_isDefaultWeapon then
+					jcms.SetWeaponRemembered(ply, weapon, false)
 					ply:StripWeapon( weapon:GetClass() )
 					return true
 				else

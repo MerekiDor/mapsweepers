@@ -1400,6 +1400,7 @@
 		ply.jcms_canGetWeapons = true
 		for class, count in pairs(loadout) do
 			local weapon = ply:Give(class, true)
+			jcms.SetWeaponRemembered(ply, weapon, true)
 			
 			if not IsValid(weapon) then
 				weapon = ents.Create(class)
@@ -1472,12 +1473,14 @@
 						local givenAmmoCount = jcms.gunstats_CountGivenAmmoFromLoadoutCount(stats, extraClipCount)
 						local oldAmmoCount = ply:GetAmmoCount(stats.ammotype)
 
-						ply:Give(class, false)
+						local wep = ply:Give(class, false)
 						ply:SetAmmo(oldAmmoCount + givenAmmoCount, stats.ammotype)
 						ply:SetNWInt("jcms_cash", plyCash - cost - extraClipCost)
+						jcms.SetWeaponRemembered(ply, wep, true)
 					else
-						ply:Give(class, true)
+						local wep = ply:Give(class, true)
 						ply:SetNWInt("jcms_cash", plyCash - cost)
+						jcms.SetWeaponRemembered(ply, wep, true)
 					end
 					ply.jcms_canGetWeapons = false
 

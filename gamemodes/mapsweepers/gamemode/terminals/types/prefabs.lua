@@ -272,7 +272,8 @@ if SERVER then
 			if cmd == 1 and not locked and data ~= "" then
 				local oldValue = ply.jcms_canGetWeapons
 				ply.jcms_canGetWeapons = true
-				ply:Give(ent.jcms_weaponclass)
+				local wep = ply:Give(ent.jcms_weaponclass)
+				jcms.SetWeaponRemembered(ply, wep, true)
 				ply.jcms_canGetWeapons = oldValue
 
 				ent:ResetSequence("idle_open")
@@ -283,6 +284,8 @@ if SERVER then
 				if gunstats then
 					jcms.net_NotifyGeneric(ply, jcms.NOTIFY_OBTAINED, gunstats.name or "#"..ent.jcms_weaponclass)
 				end
+
+				ent.jcms_weaponTaken = true
 				return true, ""
 			elseif cmd == 2 and locked then
 				jcms.terminal_ToUnlock(ent)
@@ -291,6 +294,8 @@ if SERVER then
 		end,
 		
 		generate = function(ent)
+			if ent.jcms_weaponTaken then return "" end
+
 			if not ent.jcms_weaponclass then
 				local starterCash = jcms.util_IsPVP() and jcms.cvar_cash_start_pvp:GetInt() or jcms.cvar_cash_start:GetInt()
 				local evacCash = jcms.cvar_cash_evac:GetInt()
@@ -351,6 +356,7 @@ if SERVER then
 						return false
 					else
 						jcms.giveCash(ply, math.max(1, math.floor(weaponPrice*gunPriceMul*0.25)))
+						jcms.SetWeaponRemembered(ply, weapon, false)
 						ply:StripWeapon(weapon:GetClass())
 
 						-- If the ammo type of the weapon is useless, we sell it.

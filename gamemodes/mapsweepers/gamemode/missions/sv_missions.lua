@@ -179,6 +179,11 @@
 				end
 				
 				jcms.orders_ClearAllCooldowns()
+
+				for i, ply in ipairs( player.GetHumans() ) do
+					jcms.ClearRememberedWeapons(ply)
+				end
+
 				jcms.net_SendMissionBeginning()
 				
 				if not jcms.validMapOptions then
@@ -441,6 +446,7 @@
 				ply:SetNWInt("jcms_desiredteam", 0)
 				ply:SetNWBool("jcms_ready", false)
 				ply:SetNWInt("jcms_pvpTeam", -1)
+				jcms.ClearRememberedWeapons(ply)
 
 				if victory then
 					jcms.statistics_AddMissionStatus(ply, jcms.director.missionType, jcms.director.faction, true)

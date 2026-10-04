@@ -269,6 +269,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		local sid64 = ply:SteamID64()
 		if jcms.director and jcms.director.persisting_loadout then
 			ply.jcms_lastLoadout = jcms.director.persisting_loadout[ sid64 ]
+			ply.jcms_rememberedWeapons = jcms.director.persisting_rememberedWeapons[ sid64 ]
 			ply:SetNWString("jcms_desiredclass", jcms.director.persisting_class[ sid64 ] or "infantry")
 			ply:SetNWInt("jcms_cash", jcms.director.persisting_cash[ sid64 ] or jcms.runprogress_GetStartingCash(ply))
 			jcms.printf("Restoring loadout, class and cash for player " .. tostring(ply))
@@ -312,6 +313,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		
 		if jcms.director then
 			jcms.director.persisting_loadout = jcms.director.persisting_loadout or {}
+			jcms.director.persisting_rememberedWeapons = jcms.director.persisting_rememberedWeapons or {}
 			jcms.director.persisting_class = jcms.director.persisting_class or {}
 			jcms.director.persisting_cash = jcms.director.persisting_cash or {}
 			
@@ -331,6 +333,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 					jcms.director.persisting_loadout[ sid64 ] = loadout
 				end
 
+				jcms.director.persisting_rememberedWeapons[ sid64 ] = ply.jcms_rememberedWeapons
 				jcms.director.persisting_class[ sid64 ] = ply:GetNWString("jcms_desiredclass", "infantry")
 				jcms.director.persisting_cash[ sid64 ] = ply:GetNWInt("jcms_cash", 0)
 			end
@@ -1663,6 +1666,64 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 
 -- // }}}
 
+-- // Remembered weapons for restoring single-use grenades and such {{{
+
+	function jcms.SetWeaponRemembered(ply, wep, state) -- When you wanna check for validity/if it exists
+		if not IsValid(wep) then return end
+		jcms.SetWeaponRememberedByClass(ply, wep:GetClass(), state)
+	end
+
+	function jcms.SetWeaponRememberedByClass(ply, class, state)
+		if not ply.jcms_rememberedWeapons then
+			ply.jcms_rememberedWeapons = {}
+		end
+
+		if state then
+			ply.jcms_rememberedWeapons[ class ] = true
+		else
+			ply.jcms_rememberedWeapons[ class ] = nil
+		end
+	end
+
+	function jcms.ClearRememberedWeapons(ply)
+		ply.jcms_rememberedWeapons = nil
+	end
+
+	function jcms.GetMissingRememberedWeapons(ply)
+		local remembered = {}
+
+		if type(ply.jcms_rememberedWeapons) == "table" then
+			table.Merge(remembered, ply.jcms_rememberedWeapons)
+
+			for i, wep in ipairs( ply:GetWeapons() ) do
+				remembered[ wep:GetClass() ] = nil
+			end
+
+			local i = 0
+			PrintTable(remembered)
+			for class in pairs(remembered) do
+				i = i + 1
+				remembered[class] = nil
+				remembered[i] = class
+			end
+		end
+		
+		return remembered
+	end
+
+	function jcms.RestoreRememberedWeapons(ply)
+		local classes = jcms.GetMissingRememberedWeapons(ply)
+
+		local oldValue = ply.jcms_canGetWeapons
+		ply.jcms_canGetWeapons = true
+		for i, class in ipairs(classes) do
+			ply:Give(class)
+		end
+		ply.jcms_canGetWeapons = oldValue
+	end
+
+-- // }}}
+
 -- // Console Commands {{{
 
 	concommand.Add("jcms_givecash", function(ply, cmd, args)
@@ -2113,6 +2174,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 						ply.jcms_canGetWeapons = true
 						jcms.net_SendWeaponInLoadout(args[1], ply.jcms_pendingLoadout[ args[1] ], ply)
 						ply:Give(args[1], true)
+						jcms.SetWeaponRememberedByClass(ply, args[1], true)
 						ply.jcms_canGetWeapons = false
 					end
 				elseif count < 0 then
@@ -2121,6 +2183,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 					if worked then
 						if exhausted then
 							ply:StripWeapon(args[1])
+							jcms.SetWeaponRememberedByClass(ply, args[1], false)
 							jcms.net_SendWeaponInLoadout(args[1], 0, ply)
 						else
 							jcms.net_SendWeaponInLoadout(args[1], ply.jcms_pendingLoadout[ args[1] ], ply)
@@ -2244,7 +2307,8 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 
 		if allowed then
 			ply.jcms_canGetWeapons = true
-			ply:Give(args[1])
+			local wep = ply:Give(args[1])
+			jcms.SetWeaponRemembered(ply, wep, true)
 			ply.jcms_canGetWeapons = false
 		end
 	end)
@@ -2261,6 +2325,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 
 		if allowed then
 			ply:StripWeapon(args[1])
+			jcms.SetWeaponRememberedByClass(ply, args[1], false)
 		end
 	end)
 

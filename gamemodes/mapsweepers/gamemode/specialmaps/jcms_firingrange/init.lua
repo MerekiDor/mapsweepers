@@ -106,7 +106,8 @@ end
 function jcms.specialmap_RestoreLoadout(ply, loadout)
     if type(loadout) == "table" then
         for class in pairs(loadout) do
-            ply:Give(class)
+            local wep = ply:Give(class)
+            jcms.SetWeaponRemembered(ply, wep, true)
         end
     end
 end

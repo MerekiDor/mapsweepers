@@ -77,6 +77,9 @@ if SERVER then
 		local typeCounts = {} --How much we already have
 		local typeDemands = {} --How much the weapon ""wants"" for its mag
 
+		-- Restore missing weapons
+		jcms.RestoreRememberedWeapons(ply)
+
 		--Get counts and types
 		for i, wep in ipairs(ply:GetWeapons()) do
 			--Primary then secondary
