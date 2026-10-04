@@ -75,10 +75,10 @@ hook.Add("Think", "jcms_TutorialThink", function()
 	end
 	
 	if jcms.tutorialPhase == 1 then
-		local cash = ply:GetNWInt("jcms_cash")
+		local cash = jcms.cash_Get(ply)
 		
 		if cash >= 100 or jcms.tutorialHadEnoughCash then
-			ply:SetNWInt("jcms_cash", math.max(100, cash))
+			jcms.cash_EnsureMinimum(ply, 100)
 			jcms.tutorialHadEnoughCash = true
 			jcms.tutorialPos = Vector("3073.396729 -1118.742798 -320.100616")
 		end
@@ -99,7 +99,7 @@ hook.Add("Think", "jcms_TutorialThink", function()
 			jcms.net_ShareMissionData(objectives)
 		end
 		
-		ply:SetNWInt("jcms_cash", math.max(150, ply:GetNWInt("jcms_cash")))
+		jcms.cash_EnsureMinimum(ply, 150)
 	end
 	
 	if jcms.tutorialPhase == 2 and ply:GetPos():WithinAABox(Vector("2973.141113 -946.744263 6.538483"), Vector("3272.571289 -696.505676 -267.185547")) then
@@ -171,7 +171,7 @@ hook.Add("Think", "jcms_TutorialThink", function()
 			end
 		end
 		
-		ply:SetNWInt("jcms_cash", math.max(350, ply:GetNWInt("jcms_cash")))
+		jcms.cash_EnsureMinimum(ply, 350)
 	end
 	
 	if jcms.tutorialPhase == 4 then
@@ -204,7 +204,7 @@ hook.Add("Think", "jcms_TutorialThink", function()
 			}
 			jcms.net_ShareMissionData(objectives)
 		else
-			ply:SetNWInt("jcms_cash", math.max(500, ply:GetNWInt("jcms_cash")))
+			jcms.cash_EnsureMinimum(ply, 500)
 		end
 	end
 	
@@ -256,7 +256,7 @@ hook.Add("Think", "jcms_TutorialThink", function()
 	end
 	
 	if jcms.tutorialPhase == 6 then
-		ply:SetNWInt("jcms_cash", math.max(1000, ply:GetNWInt("jcms_cash")))
+		jcms.cash_EnsureMinimum(ply, 1000)
 		local v = Vector("58.321732 287.461945 204.396271")
 
 		if not IsValid(jcms.tutorialRangeGunship) then
@@ -303,7 +303,7 @@ hook.Add("Think", "jcms_TutorialThink", function()
 	
 	if jcms.tutorialPhase == 7 then
 		jcms.tutorialEnts.door6:Fire("Open")
-		ply:SetNWInt("jcms_cash", math.max(500, ply:GetNWInt("jcms_cash")))
+		jcms.cash_EnsureMinimum(ply, 500)
 	end
 	
 	if jcms.tutorialPhase == 8 then
@@ -323,7 +323,7 @@ hook.Add("Think", "jcms_TutorialThink", function()
 			end
 		end
 		
-		ply:SetNWInt("jcms_cash", math.max(2000, ply:GetNWInt("jcms_cash")))
+		jcms.cash_EnsureMinimum(ply, 2000)
 		
 		if ply:GetPos():WithinAABox(Vector("1343.458374 -1728.119751 0.365191"), Vector("1598.161743 -1417.928101 205.418396")) then
 			jcms.tutorialPhase = 9
@@ -437,7 +437,7 @@ function jcms.specialmap_CustomSpawnFunction(ply, transition)
 	ply.jcms_justSpawned = true
 	ply:SetNWString("class", "infantry")
 	jcms.playerspawn_Sweeper(ply, ply:GetPos(), true)
-	ply:SetNWInt("jcms_cash", 0)
+	jcms.cash_Set(ply, 0)
 	ply:SetTeam(1)
 	ply.jcms_justSpawned = false
 	jcms.net_SendRespawnEffect(ply)
@@ -452,6 +452,6 @@ function jcms.specialmap_CustomRespawnFunc(ply)
 	ply.jcms_justSpawned = false
 	
 	if jcms.tutorialPhase == 5 then
-		ply:SetNWInt("jcms_cash", 500)
+		jcms.cash_Set(ply, 500)
 	end
 end

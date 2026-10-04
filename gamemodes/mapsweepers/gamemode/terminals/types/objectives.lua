@@ -141,9 +141,9 @@ if SERVER then
 	terms.datadownloadcomputer = {
 		command = function(ent, cmd, data, ply)
 			if cmd == 0 then
-				local cash = ply:GetNWInt("jcms_cash")
+				local cash = jcms.cash_Get(ply)
 				if cash >= ent.jcms_datadownload_cost then
-					ply:SetNWInt("jcms_cash", cash - ent.jcms_datadownload_cost)
+					jcms.cash_Add(ply, -ent.jcms_datadownload_cost)
 					local worked, newdata = ent.jcms_terminal_Callback(ent, cmd, data, ply)
 					return worked, newdata
 				end
@@ -484,7 +484,7 @@ if CLIENT then
 		
 		if tonumber(modedata) then
 			local initCost = math.ceil(tonumber(modedata))
-			local canAfford = jcms.locPly:GetNWInt("jcms_cash", 0) >= initCost
+			local canAfford = jcms.cash_Get(jcms.locPly) >= initCost
 
 			local bId
 

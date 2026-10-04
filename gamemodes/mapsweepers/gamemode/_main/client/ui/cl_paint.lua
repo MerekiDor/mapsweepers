@@ -1742,7 +1742,7 @@
 			local loadoutCost = LocalPlayer():GetNWInt("jcms_pendingLoadoutCost", 0)
 
 			local font = "jcms_title"
-			local cashString = jcms.util_CashFormat(LocalPlayer():GetNWInt("jcms_cash", 0) - loadoutCost) .. " J"
+			local cashString = jcms.util_CashFormat(jcms.cash_Get(LocalPlayer()) - loadoutCost) .. " J"
 			surface.SetFont(font)
 			local tw = surface.GetTextSize(cashString) + 24
 			drawFilledPolyButton(w-tw-4, 4, tw, 24, 8)

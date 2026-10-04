@@ -1772,7 +1772,7 @@
 				cashColor, cashColorDark = jcms.color_bright_alt, jcms.color_dark_alt
 			end
 
-			local cash = jcms.util_CashFormat( jcms.locPly:GetNWInt("jcms_cash", 0) )
+			local cash = jcms.util_CashFormat( jcms.cash_Get(jcms.locPly) )
 			local tw = draw.SimpleText(cash, "jcms_hud_medium", 0, 0, cashColorDark)
 			surface.SetDrawColor(cashColorDark)
 

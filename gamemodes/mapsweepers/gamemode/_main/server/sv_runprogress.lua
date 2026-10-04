@@ -126,7 +126,7 @@ end
 
 function jcms.runprogress_UpdateAllPlayers() -- set everyone's current cash to starting cash
 	for i, ply in player.Iterator() do 
-		ply:SetNWInt("jcms_cash", jcms.runprogress_GetStartingCash(ply))
+		jcms.cash_Set(ply, jcms.runprogress_GetStartingCash(ply))
 	end
 end
 

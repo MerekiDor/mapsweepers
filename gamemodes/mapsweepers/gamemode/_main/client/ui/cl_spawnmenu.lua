@@ -44,7 +44,7 @@ end
 
 		local costMult, coolDownMult = jcms.class_GetCostMultipliers(jcms.class_GetLocPlyData(), orderData)
 		local timeUntilUse = (orderData.nextUse or 0) - CurTime()
-		local affordable = math.ceil(orderData.cost*costMult) <= jcms.locPly:GetNWInt("jcms_cash", 0)
+		local affordable = math.ceil(orderData.cost*costMult) <= jcms.cash_Get(jcms.locPly)
 
 		return (affordable and timeUntilUse <= 0)
 	end
@@ -291,8 +291,7 @@ end
 			local ca = -span/2*blend
 			local dist = 150
 			
-			local myCash = LocalPlayer():GetNWInt("jcms_cash", 0)
-			
+			local myCash = jcms.cash_Get( LocalPlayer() )
 			local classData = jcms.class_GetLocPlyData()
 			
 			for i=1, 8 do
@@ -654,7 +653,7 @@ end
 		draw.SimpleText(pingString, "jcms_small", w - 4 + ox, h/2-1 + oy, jcms.color_pulsing, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 		
 		if isSweeper and canShowInfo then
-			local cashString = jcms.util_CashFormat(ply:GetNWInt("jcms_cash", 0)) .. "J"
+			local cashString = jcms.util_CashFormat( jcms.cash_Get(ply) ) .. "J"
 			draw.SimpleText(cashString, "jcms_small", w - 4 - 58 + ox, h/2-1 + oy, jcms.color_bright, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 		elseif isNPC then
 			draw.SimpleText("NPC", "jcms_small", w - 4 - 58 + ox, h/2-1 + oy, jcms.color_bright, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)

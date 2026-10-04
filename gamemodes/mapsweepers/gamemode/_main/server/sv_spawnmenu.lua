@@ -1208,8 +1208,8 @@
 
 			local cooldown = orderData.cooldown_override or orderData.cooldown
 
-			if ply:GetNWInt("jcms_cash") < math.ceil(cost*costMult) then 
-				return false, 1, ("%d / %d"):format(ply:GetNWInt("jcms_cash", 0), math.ceil(cost*costMult))
+			if jcms.cash_Get(ply) < math.ceil(cost*costMult) then 
+				return false, 1, ("%d / %d"):format(jcms.cash_Get(ply), math.ceil(cost*costMult))
 			end
 			
 			if not jcms.orders_lastused[orderId] then return true end
@@ -1230,7 +1230,7 @@
 		local cost = orderData.cost_override or orderData.cost
 		local cooldown = orderData.cooldown_override or orderData.cooldown
 
-		ply:SetNWInt("jcms_cash", ply:GetNWInt("jcms_cash") - math.ceil(cost*costMult))
+		jcms.cash_Add(ply, -math.ceil(cost*costMult))
 		jcms.orders_SetCooldown(ply, orderId, math.ceil(cooldown*coolDownMult))
 		orderData.func(ply, ...)
 
@@ -1355,7 +1355,7 @@
 			table.insert(classes, class)
 		end
 		
-		local plyCash = ply:GetNWInt("jcms_cash", 0)
+		local plyCash = jcms.cash_Get(ply)
 		while true do
 			table.Shuffle(classes)
 			local boughtOne = false
@@ -1432,14 +1432,14 @@
 		end
 		ply.jcms_canGetWeapons = false
 
-		ply:SetNWInt("jcms_cash", ply:GetNWInt("jcms_cash") - consumedCash)
+		jcms.cash_Add(ply, -consumedCash)
 	end
 
 	function jcms.spawnmenu_PurchaseAndGiveGun(ply, class, count, clipCostMul)
 		local cost = jcms.weapon_prices[ class ]
 		clipCostMul = tonumber(clipCostMul) or 1
 		local count = math.max( math.floor(count or 1), 1 )
-		local plyCash = ply:GetNWInt("jcms_cash", 0)
+		local plyCash = jcms.cash_Get(ply)
 		
 		if type(cost) == "number" and cost > 0 then
 			local stats = jcms.gunstats_Get(class)
@@ -1457,7 +1457,7 @@
 						local oldAmmoCount = ply:GetAmmoCount(stats.ammotype)
 						ply:SetAmmo(oldAmmoCount + extraClipCount * stats.clipsize, stats.ammotype)
 					end
-					ply:SetNWInt("jcms_cash", plyCash - extraClipCost)
+					jcms.cash_Add(ply, -extraClipCost)
 					return extraClipCount > 0
 				end
 
@@ -1475,11 +1475,11 @@
 
 						local wep = ply:Give(class, false)
 						ply:SetAmmo(oldAmmoCount + givenAmmoCount, stats.ammotype)
-						ply:SetNWInt("jcms_cash", plyCash - cost - extraClipCost)
+						jcms.cash_Add(ply, -cost-extraClipCost)
 						jcms.SetWeaponRemembered(ply, wep, true)
 					else
 						local wep = ply:Give(class, true)
-						ply:SetNWInt("jcms_cash", plyCash - cost)
+						jcms.cash_Add(ply, -cost)
 						jcms.SetWeaponRemembered(ply, wep, true)
 					end
 					ply.jcms_canGetWeapons = false
@@ -1501,7 +1501,7 @@
 
 		local cost = jcms.weapon_prices[ class ]
 		local count = math.max( math.floor(count or 1), 1 )
-		local plyCash = ply:GetNWInt("jcms_cash", 0) - ply:GetNWInt("jcms_pendingLoadoutCost", 0)
+		local plyCash = jcms.cash_Get(ply) - ply:GetNWInt("jcms_pendingLoadoutCost", 0)
 
 		if cost and cost > 0 then
 			cost = math.ceil(cost * jcms.util_GetLobbyWeaponCostMultiplier())

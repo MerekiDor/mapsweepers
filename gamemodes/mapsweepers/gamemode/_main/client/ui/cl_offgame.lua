@@ -1149,7 +1149,7 @@ jcms.offgame = jcms.offgame or NULL
 				function tab.loadoutPnl.randomLoadout:DoClick()
 					local weaponPool = {}
 					
-					local myCash = LocalPlayer():GetNWInt("jcms_cash", 0) - LocalPlayer():GetNWInt("jcms_pendingLoadoutCost", 0)
+					local myCash = jcms.cash_Get( LocalPlayer() ) - LocalPlayer():GetNWInt("jcms_pendingLoadoutCost", 0)
 					for weapon, cost in pairs(jcms.weapon_prices) do
 						if cost > 0 and math.ceil(cost * jcms.util_GetLobbyWeaponCostMultiplier()) <= myCash and not LocalPlayer():HasWeapon(weapon) then
 							weaponPool[ weapon ] = 5 + cost ^ 0.8
@@ -1260,7 +1260,7 @@ jcms.offgame = jcms.offgame or NULL
 
 					local ply = LocalPlayer()
 					for i, wbtn in ipairs(self.weaponButtons) do
-						local mycash = ply:GetNWInt("jcms_cash", 0) - ply:GetNWInt("jcms_pendingLoadoutCost", 0)
+						local mycash = jcms.cash_Get(ply) - ply:GetNWInt("jcms_pendingLoadoutCost", 0)
 						local count = jcms.weapon_loadout[wbtn.gunClass] or 0
 
 						if count > 0 then

@@ -73,7 +73,7 @@ function jcms.specialmap_CustomSpawnFunction(ply, transition)
             pos = Vector(512 + math.random(-1, 1)*32, 2508 + math.random(-1,1)*32, 64)
             ang = Angle(0, 90, 0)
             ply.jcms_inArena = nil
-            ply:SetNWInt("jcms_cash", 0)
+            jcms.cash_Set(ply, 0)
         end
     else
         pos = Vector(480 + math.random(-2, 2)*32, 1536 + math.random(-2, 2)*32, 0)
@@ -86,7 +86,7 @@ function jcms.specialmap_CustomSpawnFunction(ply, transition)
         -- spawning for the first time
         jcms.printf("Spawning %s for the first time", ply:Nick())
         ply:SetNWString("jcms_class", "infantry")
-        ply:SetNWInt("jcms_cash", 0)
+        jcms.cash_Set(ply, 0)
         pos = ply:GetPos()
         ang = ply:EyeAngles()
     else
@@ -491,9 +491,7 @@ end
             end
 
             for i, ply in ipairs(arena_data.players) do
-                if ply:GetNWInt("jcms_cash", 0) < 5 then
-                    ply:SetNWInt("jcms_cash", 5)
-                end
+                jcms.cash_EnsureMinimum(ply, 5)
             end
         end
     end
@@ -627,7 +625,7 @@ end
                     ply:SetPos(pos + Vector(off_x, off_y, 0))
                     ply:ScreenFade(SCREENFADE.IN, color_white, 0.75, 0.15)
 
-                    ply:SetNWInt("jcms_cash", 0)
+                    jcms.cash_Set(ply, 0)
                     ply:SetHealth( ply:GetMaxHealth() )
                     ply:SetArmor( ply:GetMaxArmor() )
                     ply:RemoveAllAmmo()
@@ -662,7 +660,7 @@ end
 
         if arena_settings.wavebonus and arena_settings.wavebonus > 0 then
             for i, ply in ipairs(arena_data.players) do
-                jcms.giveCash(ply, arena_settings.wavebonus)
+                jcms.cash_Add(ply, arena_settings.wavebonus)
             end
         end
 

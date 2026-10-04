@@ -62,10 +62,10 @@ jcms.missions.miningoperations = {
 				if not jcms.director_IsSuddenDeath() then
 					if miner ~= bringer then
 						local half = math.ceil(obtain/2)
-						jcms.giveCash(miner, half)
-						jcms.giveCash(bringer, half)
+						jcms.cash_Add(miner, half)
+						jcms.cash_Add(bringer, half)
 					else
-						jcms.giveCash(miner, obtain)
+						jcms.cash_Add(miner, obtain)
 					end
 				end
 			end

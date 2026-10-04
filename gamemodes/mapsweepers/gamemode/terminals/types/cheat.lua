@@ -49,11 +49,11 @@ if SERVER then
 		end,
 
 		command = function(ent, cmd, data, ply)
-			local plyCash = ply:GetNWInt("jcms_cash", 0)
+			local plyCash = jcms.cash_Get(ply)
 			
 			local options = { 100, 1000, 10000, -plyCash }
 			if options[ cmd ] then
-				jcms.giveCash(ply, options[ cmd ])
+				jcms.cash_Add(ply, options[ cmd ])
 				return true
 			else
 				return false

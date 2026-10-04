@@ -419,10 +419,8 @@ jcms.missions.datadownload = {
 		md.timeEstimate = 0
 
 		--Make sure people always have at least 1J so they can order a recall beacon (hacky way to get around 0-value call-ins being impossible).
-		for i, ply in ipairs(team.GetPlayers(1)) do 
-			if ply:GetNWInt("jcms_cash", -1) < 1 then
-				jcms.giveCash(ply, 1)
-			end
+		for i, ply in ipairs(team.GetPlayers(1)) do
+			jcms.cash_EnsureMinimum(ply, 1)
 		end
 
 		--No waves until we start the defense
@@ -506,7 +504,7 @@ jcms.missions.datadownload = {
 				--Give cash for each active pillar
 				local totalIncome = activePillars * 15
 				for i, ply in ipairs(team.GetPlayers(1)) do 
-					jcms.giveCash(ply, totalIncome)
+					jcms.cash_Add(ply, totalIncome)
 				end
 
 				md.totalIncome = totalIncome

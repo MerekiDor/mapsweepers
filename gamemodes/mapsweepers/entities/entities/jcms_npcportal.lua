@@ -173,7 +173,7 @@ if SERVER then
 			self:EmitSound("npc/stalker/go_alert2.wav", 100, 80, 1)
 			util.ScreenShake(self:GetPos(), 599, 30, 2.5, 512, true)
 
-			jcms.giveCash(dmg:GetAttacker(), 250)
+			jcms.cash_Add(dmg:GetAttacker(), 250)
 			
 			self:SetDestructionTime( CurTime() + 1.5 )
 		end

@@ -76,7 +76,7 @@ if SERVER then
 					end
 				end)
 
-				jcms.giveCash(activator, 50)
+				jcms.cash_Add(activator, 50)
 			end
 
 			local sid64 = activator:SteamID64()

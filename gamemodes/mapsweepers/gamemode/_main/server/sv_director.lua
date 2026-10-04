@@ -1157,7 +1157,7 @@
 			[ jcms.HINT_RESPAWN ] = function(d, ply)
 				if jcms.orders.respawnbeacon then
 					if game.SinglePlayer() then
-						return (ply:Health() <= ply:GetMaxHealth()*0.2) and (ply:GetNWInt("jcms_cash") >= jcms.orders.respawnbeacon.cost*0.95)
+						return (ply:Health() <= ply:GetMaxHealth()*0.2) and (jcms.cash_Get(ply) >= jcms.orders.respawnbeacon.cost*0.95)
 					else
 						return d.deadPlayers > 0 and not jcms.util_IsPVP()
 					end
@@ -1165,7 +1165,7 @@
 			end,
 
 			[ jcms.HINT_ANTIAIR ] = function(d, ply)
-				if jcms.orders.antiairmissile and ply:GetNWInt("jcms_cash") >= jcms.orders.antiairmissile.cost*0.9 then
+				if jcms.orders.antiairmissile and jcms.cash_Get(ply) >= jcms.orders.antiairmissile.cost*0.9 then
 					for i, npc in ipairs(d.npcs) do
 						if IsValid(npc) and jcms.team_flyingEntityClasses[npc] then
 							return true

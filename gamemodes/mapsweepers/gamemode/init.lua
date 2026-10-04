@@ -40,6 +40,7 @@ include "shared.lua"
 include "_main/sh_net.lua"
 include "_main/sh_hints.lua"
 include "_main/server/sv_director.lua"
+include "_main/sh_cash.lua"
 include "_main/sh_controls.lua"
 include "terminals/sv_terminals.lua"
 include "_main/server/sv_spawnmenu.lua"
@@ -54,6 +55,7 @@ include "_main/server/sv_turrets.lua"
 include "_main/server/sv_damagehandling.lua"
 include "_main/server/sv_rangecap.lua"
 include "_main/server/sv_validmaps.lua"
+include "_main/sh_deprecatedcode.lua"
 
 -- // Mission Includes {{{
 	do 
@@ -143,6 +145,7 @@ end
 
 
 AddCSLuaFile "shared.lua"
+AddCSLuaFile "_main/sh_cash.lua"
 AddCSLuaFile "_main/sh_controls.lua"
 AddCSLuaFile "_main/sh_net.lua"
 AddCSLuaFile "_main/sh_hints.lua"
@@ -162,6 +165,7 @@ AddCSLuaFile "_main/client/cl_codex.lua"
 AddCSLuaFile "npcs/cl_bestiary.lua"
 AddCSLuaFile "_main/client/cl_addoncompatibility.lua"
 AddCSLuaFile "_main/client/cl_bulletshields.lua"
+AddCSLuaFile "_main/sh_deprecatedcode.lua"
 
 -- // Sounds {{{
 
@@ -271,7 +275,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 			ply.jcms_lastLoadout = jcms.director.persisting_loadout[ sid64 ]
 			ply.jcms_rememberedWeapons = jcms.director.persisting_rememberedWeapons[ sid64 ]
 			ply:SetNWString("jcms_desiredclass", jcms.director.persisting_class[ sid64 ] or "infantry")
-			ply:SetNWInt("jcms_cash", jcms.director.persisting_cash[ sid64 ] or jcms.runprogress_GetStartingCash(ply))
+			jcms.cash_Set(ply, jcms.director.persisting_cash[ sid64 ] or jcms.runprogress_GetStartingCash(ply))
 			jcms.printf("Restoring loadout, class and cash for player " .. tostring(ply))
 		end
 
@@ -335,7 +339,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 
 				jcms.director.persisting_rememberedWeapons[ sid64 ] = ply.jcms_rememberedWeapons
 				jcms.director.persisting_class[ sid64 ] = ply:GetNWString("jcms_desiredclass", "infantry")
-				jcms.director.persisting_cash[ sid64 ] = ply:GetNWInt("jcms_cash", 0)
+				jcms.director.persisting_cash[ sid64 ] = jcms.cash_Get(ply)
 			end
 		end
 
@@ -979,7 +983,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 						if hasAmmoType then
 							ply:GiveAmmo(wep:Clip1(), ammoType)
 						else
-							jcms.giveCashForUselessAmmo(ply, ammoType, wep:Clip1())
+							jcms.cash_GiveForAmmo(ply, ammoType, wep:Clip1())
 						end
 					end
 					
@@ -999,7 +1003,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 			if useless then
 				local count = ply:GetAmmoCount(ammoType)
 				ply:SetAmmo(0, ammoType)
-				jcms.giveCashForUselessAmmo(ply, ammoType, count)
+				jcms.cash_GiveForAmmo(ply, ammoType, count)
 			end
 		end
 	end
@@ -1360,7 +1364,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		ply:Give("weapon_stunstick")
 		ply.jcms_canGetWeapons = false
 		
-		ply:SetNWInt("jcms_cash", jcms.runprogress_GetStartingCash(ply))
+		jcms.cash_Set(ply, jcms.runprogress_GetStartingCash(ply))
 	end
 	
 	function jcms.playerspawn_Spectator(ply)
@@ -1380,7 +1384,7 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		ply:GodDisable()
 		if jcms.util_IsPVP() then		
 			ply.jcms_isNPC = true
-			jcms.giveCash(ply, 250)
+			jcms.cash_Add(ply, 250)
 		end
 
 		ply:SetNWBool("jcms_ready", false)
@@ -1488,16 +1492,6 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 -- // }}}
 	
 -- // Misc {{{
-	function jcms.giveCash(ply, amount)
-		if IsValid(ply) and ply:IsPlayer() then
-			local added = math.ceil( tonumber(amount) or 0 )
-			ply:SetNWInt("jcms_cash", ply:GetNWInt("jcms_cash") + added)
-			
-			if added > 0 then
-				jcms.net_SendCashEarn(ply, added)
-			end
-		end
-	end
 
 	function jcms.processBounty(npc, attacker, inflictor)
 		if jcms.director then
@@ -1579,16 +1573,16 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 				if totalDamage > 0 then
 					for ply, shareOfDamage in pairs(damageShare) do
 						local bounty = math.ceil(totalBounty * shareOfDamage / totalDamage)
-						jcms.giveCash(ply, bounty)
+						jcms.cash_Add(ply, bounty)
 						jcms.statistics_AddEXP(ply, math.ceil(bounty*0.9 + 10))
 					end
 				end
 			elseif plyCount == 1 then
 				local ply = next(damageShare)
-				jcms.giveCash(ply, totalBounty)
+				jcms.cash_Add(ply, totalBounty)
 				jcms.statistics_AddEXP(ply, totalBounty + 20)
 			elseif plyCount == 0 and IsValid(lastAttacker) and lastAttacker:IsPlayer() and jcms.team_JCorp_player(lastAttacker) then
-				jcms.giveCash(lastAttacker, totalBounty)
+				jcms.cash_Add(lastAttacker, totalBounty)
 				jcms.statistics_AddEXP(lastAttacker, totalBounty)
 			end
 		end
@@ -1614,20 +1608,6 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		end
 		
 		return true
-	end
-	
-	function jcms.giveCashForUselessAmmo(ply, ammoType, count)
-		if tonumber(ammoType) then
-			ammoType = game.GetAmmoName(tonumber(ammoType))
-		end
-		
-		if type(ammoType) == "string" then
-			local cost = jcms.weapon_ammoCosts[ string.lower(ammoType) ]
-			cost = cost or jcms.weapon_ammoCosts._DEFAULT
-			
-			jcms.giveCash(ply, math.floor(count * cost * 0.25))
-			-- todo Play sound
-		end
 	end
 
 	function jcms.GetSweepersInRange(point, dist)
@@ -1731,9 +1711,9 @@ AddCSLuaFile "_main/client/cl_bulletshields.lua"
 		local target = Entity(tgIndex)
 
 		if IsValid(target) and target:IsPlayer() and (target == ply or (not ply:IsPlayer() or ply:IsAdmin())) then
-			local oldCash = target:GetNWInt("jcms_cash")
+			local oldCash = jcms.cash_Get(target)
 			local giving = math.floor(tonumber(args[1]) or 0)
-			target:SetNWInt("jcms_cash", oldCash + giving)
+			jcms.cash_Add(target, giving)
 			print( ("Giving %d cash to %s (%d -> %d)"):format(giving, target:Nick(), oldCash, oldCash+giving) )
 		end
 	end, nil, "Give yourself J Corp Cash.", FCVAR_CHEAT)

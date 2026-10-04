@@ -27,6 +27,7 @@ include "shared.lua"
 include "_main/sh_net.lua"
 include "_main/client/ui/cl_hud.lua"
 include "_main/client/ui/cl_hud_npc.lua"
+include "_main/sh_cash.lua"
 include "_main/sh_controls.lua"
 include "_main/client/cl_flashlights.lua"
 include "terminals/cl_terminals.lua"
@@ -43,6 +44,7 @@ include "_main/client/cl_codex.lua"
 include "npcs/cl_bestiary.lua"
 include "_main/client/cl_addoncompatibility.lua"
 include "_main/client/cl_bulletshields.lua"
+include "_main/sh_deprecatedcode.lua"
 
 -- // Class Includes {{{
 	do

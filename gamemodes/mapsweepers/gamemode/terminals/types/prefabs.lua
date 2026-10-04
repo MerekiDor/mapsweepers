@@ -62,14 +62,14 @@ if SERVER then
 				local depositing = cmd > 4
 
 				if depositing then
-					local plyCash = ply:GetNWInt("jcms_cash")
+					local plyCash = jcms.cash_Get(ply)
 					count = math.min(count, plyCash)
-					ply:SetNWInt("jcms_cash", plyCash - count)
+					jcms.cash_Add(ply, -count)
 					return count > 0, (tonumber(data) or 0) + count
 				else
 					local terminalCash = tonumber(data) or 0
 					count = math.min(count, terminalCash)
-					ply:SetNWInt("jcms_cash", ply:GetNWInt("jcms_cash") + count)
+					jcms.cash_Add(ply, count)
 					ent:SetNWInt("cash", terminalCash - count)
 					return count > 0, terminalCash - count
 				end
@@ -84,11 +84,16 @@ if SERVER then
 
 	terms.gambling = {
 		command = function(ent, cmd, data, ply)
-			local cash = ply:GetNWInt("jcms_cash", 0)
+			local cash = jcms.cash_Get(ply)
 
 			if cash > 0 then
 				local won = math.random() < 0.5
-				ply:SetNWInt("jcms_cash", won and cash*2 or 0)
+
+				if won then
+					jcms.cash_Set(ply, cash*2)
+				else
+					jcms.cash_Set(ply, 0)
+				end
 
 				ent:EmitSound(won and "garrysmod/content_downloaded.wav" or "buttons/button8.wav")
 
@@ -155,7 +160,7 @@ if SERVER then
 				end
 			end
 
-			if ply:GetNWInt("jcms_cash") < cost then
+			if jcms.cash_Get(ply) < cost then
 				return false
 			end
 
@@ -210,7 +215,7 @@ if SERVER then
 
 				upgradeValues[cmd] = "x"
 				ent:EmitSound("items/medshot4.wav", 100, 80, 1)
-				ply:SetNWInt("jcms_cash", ply:GetNWInt("jcms_cash") - cost)
+				jcms.cash_Add(ply, -cost)
 				return true, table.concat(upgradeValues, " ")
 			else
 				return false
@@ -338,7 +343,7 @@ if SERVER then
 	terms.shop = {
 		command = function(ent, cmd, data, ply)
 			local weapon = ply:GetActiveWeapon()
-			local balance = ply:GetNWInt("jcms_cash")
+			local balance = jcms.cash_Get(ply)
 			
 			if IsValid(weapon) then
 				local dist2 = ply:EyePos():DistToSqr(ent:WorldSpaceCenter())
@@ -355,7 +360,7 @@ if SERVER then
 					if not weaponPrice or weapon.jcms_isDefaultWeapon then
 						return false
 					else
-						jcms.giveCash(ply, math.max(1, math.floor(weaponPrice*gunPriceMul*0.25)))
+						jcms.cash_Add(ply, math.max(1, math.floor(weaponPrice*gunPriceMul*0.25)))
 						jcms.SetWeaponRemembered(ply, weapon, false)
 						ply:StripWeapon(weapon:GetClass())
 
@@ -368,7 +373,7 @@ if SERVER then
 								if useless then
 									local count = ply:GetAmmoCount(ammoType)
 									ply:SetAmmo(0, ammoType)
-									jcms.giveCashForUselessAmmo(ply, ammoType, count)
+									jcms.cash_GiveForAmmo(ply, ammoType, count)
 								end
 							end
 						end
@@ -398,7 +403,7 @@ if SERVER then
 						local totalPrice = math.ceil(math.ceil(ammoPrice * clipSize)*ammoPriceMul)
 						if balance >= totalPrice then
 							ply:GiveAmmo(clipSize, ammoType)
-							ply:SetNWInt("jcms_cash", balance - totalPrice)
+							jcms.cash_Add(ply, -totalPrice)
 							return true
 						else
 							return false
@@ -427,7 +432,7 @@ if SERVER then
 						local totalPrice = math.floor( math.max(1, ammoPrice*clipSize*0.5*ammoPriceMul) )
 						if plyAmmo >= clipSize then
 							ply:SetAmmo(plyAmmo-clipSize, ammoType)
-							jcms.giveCash(ply, totalPrice)
+							jcms.cash_Add(ply, totalPrice)
 							return true
 						else
 							return false
@@ -579,7 +584,7 @@ if CLIENT then
 		draw.SimpleText(str1, "jcms_hud_big", w/2+swayX, swayY, color_bg, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 		draw.SimpleText(str2, "jcms_hud_medium", w/2+swayX, 96+swayY, color_bg, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 
-		local mycash = jcms.util_CashFormat( jcms.locPly:GetNWInt("jcms_cash", 0) ) .. " J"
+		local mycash = jcms.util_CashFormat( jcms.cash_Get(jcms.locPly) ) .. " J"
 		local cashFont = "jcms_hud_medium"
 		if #mycash <= 3 then
 			cashFont = "jcms_hud_superhuge"
@@ -973,7 +978,7 @@ if CLIENT then
 							continue
 						end
 
-						local canAfford = me:GetNWInt("jcms_cash", 0) >= price
+						local canAfford = jcms.cash_Get(me) >= price
 
 						if not ent.gunStatsCache[ wepclass ] then
 							ent.gunStatsCache[ wepclass ] = jcms.gunstats_Get(wepclass)
@@ -1190,7 +1195,7 @@ if CLIENT then
 		if buttonId == 0 and hoveredWeaponClass then
 			cam.PushModelMatrix(jcms.terminal_getGlitchMatrix(), true)
 				local price = jcms.weapon_prices[hoveredWeaponClass]
-				local canAfford = me:GetNWInt("jcms_cash", 0) >= price
+				local canAfford = jcms.cash_Get(me) >= price
 				
 				local col = canAfford and color_accent or color_bg
 				local col_dark = canAfford and color_accent_dark or color_dark
