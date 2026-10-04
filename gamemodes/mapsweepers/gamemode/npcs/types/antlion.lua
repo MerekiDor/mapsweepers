@@ -888,6 +888,11 @@ jcms.npc_types.antlion_ultracyberguard = {
 	end,
 
 	think = function(npc, state)
+		local enemy = npc:GetEnemy()
+		if IsValid(enemy) and not npc:Visible(enemy) and not (npc:GetCurrentSchedule() == SCHED_ESTABLISH_LINE_OF_FIRE) then 
+			npc:SetSchedule(SCHED_ESTABLISH_LINE_OF_FIRE)
+		end
+
 		jcms.npc_CyberGuard_Think(npc) --Base think for cyberguard behaviours
 
 		-- // Buffing bosses {{{
@@ -907,7 +912,6 @@ jcms.npc_types.antlion_ultracyberguard = {
 		-- // }}}
 
 		-- // Laser Beams {{{
-			local enemy = npc:GetEnemy()
 			if IsValid(enemy) and npc.jcms_uCyberguard_nextBeam < CurTime() and enemy:WorldSpaceCenter():DistToSqr(npc:GetPos()) > 150 then 
 				npc.jcms_uCyberguard_beaming = true
 
