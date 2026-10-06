@@ -346,6 +346,9 @@
 				return wep:GetSpread() * 5000
 			elseif wep.GetBaseSpread and wep.SpreadRatio then
 				return wep.SpreadRatio * math.deg( wep:GetBaseSpread() ) * 42
+			elseif wep.SimpleWeapon  then
+				local range, accuracy = wep:GetRange()
+				return (accuracy*133) / (range*0.05)
 			elseif wep.Primary and wep.Primary.RPM and (wep.Primary.Spread or wep.Primary.SpreadHip) then
 				local spread = math.deg(wep.Primary.Spread or wep.Primary.SpreadHip) * 48
 				return math.max(8,spread)
@@ -397,7 +400,7 @@
 				mtd.delta:SetUnpacked(dx, dy, dz)
 			end
 
-			local W = 75
+			local W = (id == "ccenter") and 2 or 75
 			local npos = eyePos + mtd.delta
 			local ndelta = pos - eyePos
 			local deltaDiff = (ndelta:Distance(mtd.delta)*1.2)^2 + 35
