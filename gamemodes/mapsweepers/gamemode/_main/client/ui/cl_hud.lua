@@ -857,62 +857,83 @@
 		if IsValid(wep) then
 			local ammo1 = wep:Clip1()
 			local ammoMax1 = wep:GetMaxClip1()
-			local frac1 = ammo1 and ammo1/ammoMax1 or 0
-			local type1 = wep:GetPrimaryAmmoType()
-			local ammoOff1 = me:GetAmmoCount( type1 )
-
 			local ammo2 = wep:Clip2()
 			local ammoMax2 = wep:GetMaxClip1()
-			local frac2 = ammo2 and ammo2/ammoMax2 or 0
+			local type1 = wep:GetPrimaryAmmoType()
+			local ammoOff1 = me:GetAmmoCount( type1 )
 			local type2 = wep:GetSecondaryAmmoType()
 			local ammoOff2 = me:GetAmmoCount( type2 )
+
+			if wep.CustomAmmoDisplay then
+				local customAmmoData = wep:CustomAmmoDisplay()
+				if type(customAmmoData) == "table" then
+					if not customAmmoData.Draw then
+						return
+					else
+						ammo1 = customAmmoData.PrimaryClip
+						ammo2 = customAmmoData.SecondaryClip
+						ammoOff1 = customAmmoData.PrimaryAmmo
+						ammoOff2 = customAmmoData.SecondaryAmmo
+						if type(ammoOff1) == "number" and ammoOff1 < 0 then ammoOff1 = nil end
+						if type(ammoOff2) == "number" and ammoOff2 < 0 then ammoOff2 = nil end
+					end
+				end
+			end
+
+			local frac1 = ammo1 and ammo1/ammoMax1 or 0
+			local frac2 = ammo2 and ammo2/ammoMax2 or 0
 
 			local offset1 = 4
 			local offset2 = 3
 
 			local tw1 = 0
 			local primaryColor = ammoOff1 == 0 and jcms.color_alert or jcms.color_bright
-
-			if type1 ~= -1 or type2 ~= -1 then
-				render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
-					surface.SetDrawColor(ammoOff1 == 0 and jcms.color_alert or jcms.color_pulsing)
-					jcms.draw_HUDAmmo_Decor() --todo: We lose the alpha with this optimisation
-				render.OverrideBlend( false )
-			end
+			local doRenderDecor = false
 			
-			if type1 ~= -1 then
+			if type1 ~= -1 and ammo1 and ammoMax1 then
 				if ammo1 > -1 and ammoMax1 > -1 then
 					tw1 = draw.SimpleText(ammo1, "jcms_hud_huge", -32, -8, jcms.color_dark, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM) + 16
-					draw.SimpleText(ammoOff1, "jcms_hud_medium", -32-tw1, -16, jcms.color_dark, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
+					if ammoOff1 then draw.SimpleText(ammoOff1, "jcms_hud_medium", -32-tw1, -16, jcms.color_dark, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM) end
 
 					render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
 						draw.SimpleText(ammo1, "jcms_hud_huge", -32 - offset1, -8 - offset1, primaryColor, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
-						draw.SimpleText(ammoOff1, "jcms_hud_medium", -32-tw1 - offset1, -16 - offset1, primaryColor, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
+						if ammoOff1 then draw.SimpleText(ammoOff1, "jcms_hud_medium", -32-tw1 - offset1, -16 - offset1, primaryColor, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM) end
 					render.OverrideBlend( false )
-				else
+					doRenderDecor = true
+				elseif ammoOff1 then
 					tw1 = draw.SimpleText(ammoOff1, "jcms_hud_huge", -32, -8, jcms.color_dark, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM) + 16
 
 					render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
 						draw.SimpleText(ammoOff1, "jcms_hud_huge", -32 - offset1, -8 - offset1, primaryColor, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
 					render.OverrideBlend( false )
+					doRenderDecor = true
 				end
 			end
 
-			if type2 ~= -1 then
+			if type2 ~= -1 and ammo2 and ammoMax2 then
 				local tw2 = 0
 				if ammo2 > -1 and ammoMax2 > -1 then
 					tw2 = draw.SimpleText(ammo2, "jcms_hud_big", -32-tw1, -96, jcms.color_dark, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM) + 16
-					draw.SimpleText(ammoOff2, "jcms_hud_small", -32-tw1-tw2, -88, jcms.color_dark, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
+					if ammoOff2 then draw.SimpleText(ammoOff2, "jcms_hud_small", -32-tw1-tw2, -88, jcms.color_dark, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM) end
 					render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
 						draw.SimpleText(ammo2, "jcms_hud_big", -32-tw1 - offset2, -96, jcms.color_bright_alt, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
-						draw.SimpleText(ammoOff2, "jcms_hud_small", -32-tw1-tw2 - offset2, -88, jcms.color_bright_alt, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
+						if ammoOff2 then draw.SimpleText(ammoOff2, "jcms_hud_small", -32-tw1-tw2 - offset2, -88, jcms.color_bright_alt, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM) end
 					render.OverrideBlend( false )
-				else
+					doRenderDecor = true
+				elseif ammoOff2 then 
 					tw2 = draw.SimpleText(ammoOff2, "jcms_hud_big", -32-tw1, -96, jcms.color_dark, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM) + 16
 					render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
 						draw.SimpleText(ammoOff2, "jcms_hud_big", -32-tw1 - offset2, -96, jcms.color_bright_alt, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
 					render.OverrideBlend( false )
+					doRenderDecor = true
 				end
+			end
+
+			if doRenderDecor then
+				render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
+					surface.SetDrawColor(ammoOff1 == 0 and jcms.color_alert or jcms.color_pulsing)
+					jcms.draw_HUDAmmo_Decor() --todo: We lose the alpha with this optimisation
+				render.OverrideBlend( false )
 			end
 
 			if jcms.hud_recycleAnim > 0 then
