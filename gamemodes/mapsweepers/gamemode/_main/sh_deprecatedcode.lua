@@ -56,6 +56,8 @@
 if SERVER then
 	jcms.deprecated_Define("jcms.giveCash", "jcms.cash_Add")
 	jcms.deprecated_Define("jcms.giveCashForUselessAmmo", "jcms.cash_GiveForAmmo")
+
+	jcms.deprecated_Define("jcms.npc_AddBulletShield", "jcms.AddBubbleMantle")
 end
 -- // }}}
 

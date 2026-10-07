@@ -193,6 +193,12 @@
 			name = "#jcms.codexlogs_norelease_name",
 			text = "#jcms.codexlogs_norelease"
 		},
+
+		{
+			unlock_id = "gasstation",
+			name = "#jcms.codexlogs_gasstation_name",
+			text = "#jcms.codexlogs_gasstation"
+		}
 	}
 
 	-- outdated (pre-v1.2) entries

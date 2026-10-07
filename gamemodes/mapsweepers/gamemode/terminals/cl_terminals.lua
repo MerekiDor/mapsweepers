@@ -55,9 +55,10 @@ jcms.terminal_themes = {
 	jcorp = { Color(64, 0, 0, 200), Color(230, 0, 0), Color(31, 114, 147) },
 	mafia = { Color(200, 136, 17, 55), Color(255, 255, 0), Color(255, 124, 36) },
 
+	antlion = { Color(200, 23, 17, 55), Color(255, 255, 0), Color(255, 124, 36) },
 	combine = { Color(0, 242, 255, 55), Color(0, 168, 229, 210), Color(215, 38, 42) },
 	rebel = { Color(32, 20, 255, 54), Color(143, 67, 229), Color(21, 224, 21) },
-	antlion = { Color(200, 23, 17, 55), Color(255, 255, 0), Color(255, 124, 36) }
+	zombie = { Color(58, 12, 0, 200), Color(204, 50, 50), Color(65, 207, 65) }
 }
 
 jcms.terminal_modeTypes = {}

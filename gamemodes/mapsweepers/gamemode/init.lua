@@ -269,6 +269,16 @@ AddCSLuaFile "_main/sh_deprecatedcode.lua"
 		end
 	end)
 
+	hook.Add("OnPlayerPhysicsPickup", "jcms_OnPickup", function( ply, ent )
+		local f = ent:GetTable().jcms_OnPickup
+		if f then f(ent, ply) end
+	end)
+
+	hook.Add("OnPlayerPhysicsDrop", "jcms_OnDrop", function( ply, ent, thrown )
+		local f = ent:GetTable().jcms_OnDrop
+		if f then f(ent, ply, thrown) end
+	end)
+
 	hook.Add("jcms_PlayerNetReady", "jcms_OnActivate", function(ply)
 		local sid64 = ply:SteamID64()
 		if jcms.director and jcms.director.persisting_loadout then
@@ -1644,6 +1654,11 @@ AddCSLuaFile "_main/sh_deprecatedcode.lua"
 		return sweeper, closestDist
 	end
 
+	function jcms.AddBubbleMantle(target, count, cap)
+		target:SetNWInt("jcms_shield", math.Clamp(target:GetNWInt("jcms_shield", 0) + (tonumber(count) or 1), 0, tonumber(cap) or 5))
+		jcms.net_SendBubbleShieldMark(target)
+	end
+
 -- // }}}
 
 -- // Remembered weapons for restoring single-use grenades and such {{{
@@ -2742,26 +2757,31 @@ AddCSLuaFile "_main/sh_deprecatedcode.lua"
 		EmitSound("jcms_jetby", v, 0, CHAN_AUTO, 1, 100, 0, 100, 22, allPlayers)
 	end
 
-	function jcms.util_PerformRepairs(ent, ply, repairValue)
-		if jcms.director_IsSuddenDeath() then
+	function jcms.util_PerformRepairs(ent, source, repairValue)
+		local isSourcePlayer = IsValid(source) and source:IsPlayer()
+		if isSourcePlayer and jcms.director_IsSuddenDeath() then
 			return
 		end
 		
 		repairValue = tonumber(repairValue) or 7
 		
-		local repairMul = jcms.class_GetRepairMultiplier(ply)
-		if type(repairMul) == "number" then
-			repairValue = repairValue * repairMul
+		if isSourcePlayer then
+			local repairMul = jcms.class_GetRepairMultiplier(source)
+			if type(repairMul) == "number" then
+				repairValue = repairValue * repairMul
+			end
 		end
 		
 		local oldValue = ent:Health()
 		local newValue = math.min(ent:Health() + repairValue, ent:GetMaxHealth())
 		
 		if oldValue < newValue then
-			if newValue == ent:GetMaxHealth() then
-				ply:EmitSound("buttons/button9.wav", 100)
-			else
-				ply:EmitSound("buttons/lever7.wav", 100)
+			if isSourcePlayer then
+				if newValue == ent:GetMaxHealth() then
+					source:EmitSound("buttons/button9.wav", 100)
+				else
+					source:EmitSound("buttons/lever7.wav", 100)
+				end
 			end
 			ent:SetHealth(newValue)
 		end

@@ -506,4 +506,75 @@ local prefabs = jcms.prefabs
 			return ent
 		end
 	}
+
+	-- models/props_wasteland/gaspump001a.mdl
+	prefabs.nerve_gas_station = {
+		natural = true,
+		weight = 0.06,
+
+		check = function(area)
+			if not jcms.mapgen_ValidArea(area) then return false end
+
+			local wallspots, normals = jcms.prefab_GetWallSpotsFromArea(area, 48, 128)
+			
+			if #wallspots > 0 then
+				local rng = math.random(#wallspots)
+				return true, { pos = wallspots[rng], normal = normals[rng] }
+			else
+				return false
+			end
+		end,
+
+		stamp = function(area, data)
+			local ent = ents.Create("jcms_terminal")
+			if not IsValid(ent) then return end
+
+			data.pos = data.pos + data.normal * 24
+			data.pos = data.pos + Vector(0, 0, -48)
+			ent:SetPos(data.pos)
+			ent:SetAngles(data.normal:Angle())
+			ent:Spawn()
+			ent.jcms_gasCratePriceMul = 3
+			ent.jcms_gasPurchases = 0
+			ent.jcms_gasPurchasesMax = 32 -- explodes after this many
+			ent.jcms_gasTypes = {
+				[1] = {
+					price = 300,
+					color = Vector(0.95, 0.1, 0.1),
+					func = "damage",
+					radius = 300,
+					interval = 0.33,
+					duration = 20,
+					power = 12
+				},
+
+				[2] = {
+					price = 750,
+					color = Vector(0.35, 0.8, 0.12),
+					func = "heal",
+					radius = 300,
+					interval = 0.25,
+					duration = 16,
+					power = 4,
+					extra = "jcms/beam_heal.png"
+				},
+
+				[3] = {
+					price = 650,
+					color = Vector(1, 0.95, 0.22),
+					func = "bubblemantle",
+					radius = 275,
+					interval = 1,
+					duration = 6,
+					power = 1,
+					extra = "effects/select_ring"
+				}
+			}
+
+			ent:InitAsTerminal("models/props_wasteland/gaspump001a.mdl", "nerve_gas_station")
+			ent.jcms_hackType = nil -- wanted to make them give you a discount when hacked but maybe not
+
+			return ent
+		end
+	}
 -- // }}}

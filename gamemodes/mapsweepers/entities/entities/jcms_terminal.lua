@@ -158,6 +158,17 @@ jcms.terminal_modelInfos = {
 		fwd = 5,
 		rotateUp = 90,
 		rotateRight = -48
+	},
+
+	["models/props_wasteland/gaspump001a.mdl"] = {
+		theme = "zombie",
+		width = 830,
+		height = 520,
+		up = 55,
+		fwd = 11,
+		right = 13,
+		rotateUp = 90,
+		rotateRight = -90
 	}
 }
 

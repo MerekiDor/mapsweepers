@@ -339,6 +339,183 @@ if SERVER then
 			return ent.jcms_weaponclass
 		end
 	}
+
+	terms.nerve_gas_station = {
+		command = function(ent, cmd, data, ply)
+			if ent.jcms_gasPurchasesExploding then
+				return false
+			end
+
+			if cmd == 1 then
+				local priceData = ""
+				local newData = data:sub(1, 1) == "1" and "0" or "1"
+
+				for i, v in ipairs(ent.jcms_gasTypes) do
+					priceData = priceData .. "," .. ( v.price * (newData=="1" and ent.jcms_gasCratePriceMul or 1) )
+				end
+
+				return true, newData .. priceData
+			else
+				local dist = ply:EyePos():DistToSqr(ent:WorldSpaceCenter())
+				if dist >= 200^2 then return false end -- too far away
+				if IsValid(ply:GetEntityInUse()) then return false end
+
+				local gasId = cmd - 1
+				local gasData = ent.jcms_gasTypes[gasId]
+				if gasData then
+					local isCrate = data:sub(1, 1) == "1"
+					local priceMul = isCrate and ent.jcms_gasCratePriceMul or 1
+					local price = gasData.price * priceMul
+
+					if jcms.cash_Get(ply) >= price then
+						jcms.cash_Add(ply, -price)
+						ent:EmitSound("ambient/levels/labs/coinslot1.wav")
+
+						ent.jcms_gasPurchases = ent.jcms_gasPurchases + 1
+						if ent.jcms_gasPurchases > ent.jcms_gasPurchasesMax then
+							-- blow up
+							ent.jcms_gasPurchasesExploding = true
+							timer.Simple(0.5, function()
+								if not IsValid(ent) then return end
+								ent:EmitSound("ambient/fire/gascan_ignite1.wav", 100, 145)
+							end)
+							timer.Simple(1.5, function()
+								if not IsValid(ent) then return end
+								ent:EmitSound("npc/roller/mine/rmine_tossed1.wav", 100, 126)
+
+								ent.jcms_purposeType = nil
+								ent.jcms_hackType = nil
+								ent:SetNWString("jcms_terminal_modeType", "")
+							end)
+							timer.Simple(2.5, function()
+								if not IsValid(ent) then return end
+								util.BlastDamage(ent, ent, ent:WorldSpaceCenter(), 200, 10)
+								local ed = EffectData()
+								ed:SetMagnitude(1)
+								ed:SetOrigin(ent:WorldSpaceCenter())
+								ed:SetRadius(400)
+								ed:SetNormal(jcms.vectorUp)
+								ed:SetFlags(1)
+								util.Effect("Explosion", ed)
+
+								local gas = ents.Create("jcms_gas_cloud")
+								gas.GasFuncName = "damage"
+								gas.GasPower = 5
+								gas:SetGasRadius(400)
+								gas:SetGasColour(Vector(1, 0, 0))
+								gas:SetPos(ent:GetPos())
+								gas:Spawn()
+
+								ent:SetAngles( ent:GetAngles() + AngleRand(-5, 5) )
+								ent:SetPos( ent:GetPos() - ent:GetAngles():Up() )
+								ent:Ignite(10)
+							end)
+						else
+							local function createBottle(pos, giveToPlayer)
+								local bottle = ents.Create("prop_physics")
+								if IsValid(bottle) then
+									bottle:SetModel("models/props_junk/garbage_glassbottle001a.mdl")
+									bottle:SetPos(pos)
+									bottle:SetHealth(75)
+									bottle:SetMaxHealth(75)
+									bottle:Spawn()
+									bottle:SetMaterial("models/shiny")
+									bottle:SetColor(Color(gasData.color[1]*255, gasData.color[2]*255, gasData.color[3]*255))
+									bottle.jcms_gasData = gasData
+									bottle.jcms_damageImmunityEnd = CurTime() + 5
+
+									if giveToPlayer then
+										ply:PickupObject(bottle)
+									end
+
+									bottle.jcms_OnPickup = function(_bottle, _ply)
+										_bottle.jcms_damageImmunityEnd = CurTime() + 2
+									end
+
+									bottle.jcms_OnDrop = function(_bottle, _ply, thrown)
+										if thrown then
+											_bottle.jcms_damageImmunityEnd = 0
+											util.SpriteTrail(_bottle, 0, _bottle:GetColor(), true, 10, 0, 0.5, 0.1, "trails/laser")
+											_bottle:SetHealth(1)
+										else
+											_bottle.jcms_damageImmunityEnd = CurTime() + 1
+											_bottle:SetHealth( _bottle:GetMaxHealth() )
+										end
+									end
+
+									bottle:CallOnRemove("jcms_spawnGas", function(_bottle)
+										local _gasData = _bottle.jcms_gasData
+										if type(_gasData) == "table" then
+											local gas = ents.Create("jcms_gas_cloud")
+											gas.GasFuncName = _gasData.func
+											gas.GasPower = _gasData.power
+											gas.GasInterval = _gasData.interval
+											gas:SetGasRadius(_gasData.radius)
+											gas:SetGasColour(_gasData.color)
+											gas:SetPos(_bottle:GetPos())
+											gas:Spawn()
+											gas.DeathTime = CurTime() + _gasData.duration
+											gas.jcms_owner = _bottle:GetPhysicsAttacker(60)
+
+											if _gasData.extra then
+												gas:SetExtraParticles(_gasData.extra)
+											end
+										end
+									end)
+								end
+								return bottle
+							end
+
+							if isCrate then
+								local crate = ents.Create("prop_physics")
+								if IsValid(crate) then
+									crate:SetModel("models/props_junk/cardboard_box002b.mdl")
+									crate:SetPos(ply:EyePos())
+									crate:Spawn()
+									crate:SetColor(Color(gasData.color[1]*255, gasData.color[2]*255, gasData.color[3]*255))
+									ply:PickupObject(crate)
+
+									crate:CallOnRemove("jcms_spawnBottles", function(_crate)
+										local angle = _crate:GetAngles()
+										local right, fwd = angle:Right(), angle:Forward()
+										local pos = _crate:WorldSpaceCenter()
+										right:Mul(7)
+										fwd:Mul(7)
+
+										for i=1, 4 do
+											local pos_i = Vector(pos)
+											if i > 2 then pos_i:Sub(right) else pos_i:Add(right) end
+											if i%2==0 then pos_i:Sub(fwd) else pos_i:Add(fwd) end
+											pos_i.z = pos_i.z + 1
+											timer.Simple(0.05, function() createBottle( pos_i, false ) end)
+										end
+									end)
+								end
+							else
+								createBottle( ply:EyePos(), true )
+							end
+
+							return true, data
+						end
+					else
+						return false
+					end
+				else
+					return false
+				end
+			end
+
+			return true
+		end,
+		
+		generate = function(ent)
+			local data = "0"
+			for i, v in ipairs(ent.jcms_gasTypes) do
+				data = data .. "," .. v.price
+			end
+			return data
+		end
+	}
 	
 	terms.shop = {
 		command = function(ent, cmd, data, ply)
@@ -825,6 +1002,66 @@ if CLIENT then
 		cam.PopModelMatrix()
 
 		return btnId
+	end
+
+	terms.nerve_gas_station = function(ent, mx, my, w, h, modedata)
+		local color_bg, color_fg, color_accent = jcms.terminal_GetColors(ent)
+		draw.SimpleText("#jcms.terminal_gasstation", "jcms_hud_big", w/2, 0, color_bg, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+
+		local args = string.Split(modedata, ",")
+		args[1] = args[1] == "1" -- is crate mode on?
+		for i=2, #args do
+			args[i] = jcms.util_CashFormat(tonumber(args[i] or 0)) .. " J" -- prices of crates
+		end
+
+		local bw, bh = w-64, 72
+		local bx, by = w/2 - bw/2, 118
+		local buttonId
+
+		surface.SetDrawColor(color_bg)
+		for i=1, 4 do
+			local by_i = by + (bh+12)*(i-1)
+
+			if i == 1 then
+				surface.DrawRect(bx, by_i, bh, bh)
+				draw.SimpleText("#jcms.terminal_gasstation_buycrate", "jcms_hud_medium", bx + bh + 16, by_i + bh/2, color_bg, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			else
+				surface.DrawRect(bx, by_i, bw, bh)
+			end
+
+			if not buttonId and mx >= bx and my >= by_i and mx <= bx + bw and my <= by_i + bh then
+				buttonId = i
+			end
+		end
+
+		cam.PushModelMatrix(jcms.terminal_getGlitchMatrix(), true)
+		render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
+			draw.SimpleText("#jcms.terminal_gasstation", "jcms_hud_big", w/2, 0, color_fg, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+
+			for i=1, 4 do
+				local by_i = by + (bh+12)*(i-1)
+				local color_cur = buttonId == i and color_accent or color_fg
+				surface.SetDrawColor(color_cur)
+
+				if i == 1 then
+					surface.DrawOutlinedRect(bx, by_i, bh, bh, 2)
+					draw.SimpleText("#jcms.terminal_gasstation_buycrate", "jcms_hud_medium", bx + bh + 16, by_i + bh/2, color_cur, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+					if args[1] then
+						surface.DrawRect(bx + 8, by_i + 8, bh - 16, bh - 16)
+					end
+				else
+					local text = "#jcms.terminal_gasstation_gas" .. (i-1)
+					if args[1] then text = text .. "c" end
+
+					surface.DrawOutlinedRect(bx, by_i, bw, bh, 2)
+					draw.SimpleText(text, "jcms_hud_small", bx + bh/2, by_i + bh/2, color_cur, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+					draw.SimpleText(args[i], "jcms_hud_small", bx + bw - bh/2, by_i + bh/2, color_accent, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+				end
+			end
+		render.OverrideBlend( false )
+		cam.PopModelMatrix()
+
+		return buttonId
 	end
 	
 	terms.shop = function(ent, mx, my, w, h, modedata)

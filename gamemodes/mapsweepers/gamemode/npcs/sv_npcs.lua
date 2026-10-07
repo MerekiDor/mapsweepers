@@ -486,11 +486,6 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 
 -- // NPC Utility/Helper functions {{{
 
-	function jcms.npc_AddBulletShield(npc, count)
-		npc:SetNWInt("jcms_shield", math.min(npc:GetNWInt("jcms_shield", 0) + (tonumber(count) or 1), 5) ) -- capped at 5 because this can get ridiculously high.
-		jcms.net_SendBubbleShieldMark(npc)
-	end
-
 	function jcms.npc_GetRowdy(npc, memoryPos)
 		if not IsValid(npc) then return end 
 		

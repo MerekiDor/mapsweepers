@@ -101,7 +101,7 @@
 						
 						for i, ent in ipairs(ents.FindInSphere(npc:WorldSpaceCenter(), 800)) do
 							if jcms.team_GoodTarget(ent) and jcms.team_SameTeam(ent, npc) and npc ~= ent then
-								jcms.npc_AddBulletShield(ent, 4)
+								jcms.AddBubbleMantle(ent, 4, 5)
 							end
 						end
 					end

@@ -48,7 +48,18 @@ local nmt = FindMetaTable("NPC")
 		entTbl.jcms_shieldDamageAnim = 0
 		entTbl.jcms_shieldLastCount = emt.GetNWInt(ent, "jcms_shield", 0)
 		entTbl.jcms_shieldColor = Color(0, 0, 0, 0)
-		entTbl.jcms_shieldJCorp = ent:IsPlayer() and ent:Team() == 1 
+		
+		local colorInt = ent:GetNWInt("jcms_sweeperShield_colour", -1)
+		if colorInt == -1 then
+			if jcms.team_JCorp(ent) then
+				entTbl.jcms_shieldColorDesired = jcms.util_GetPVPColor(ent)
+			elseif ent.jcms_faction then
+				-- doesn't actually work because I forgot this data is not clientside
+				entTbl.jcms_shieldColorDesired = jcms.factions_GetColor(ent.jcms_faction)
+			end
+		else
+			entTbl.jcms_shieldColorDesired = jcms.util_ColorFromInteger(colorInt)
+		end
 	end
 
 	function jcms.bubbleShield_UnmarkShielded(ent)
@@ -132,10 +143,9 @@ local function drawBubbleShield(ent, i) --Renamed from bulletshield, as the old 
 	local entTbl = ent:GetTable()
 	local pos = ent:WorldSpaceCenter()
 	local rad = ent:BoundingRadius() --TODO: Maybe cache this
-	local jcorp = entTbl.jcms_shieldJCorp
 	local color = entTbl.jcms_shieldColor or Color(0,0,0)
 	
-	local time = jcorp and CurTime()*(shield+2) or CurTime()*8
+	local time = CurTime()*8
 	local imInside = ent == jcms.locPly and not ent:ShouldDrawLocalPlayer()
 
 
@@ -160,18 +170,19 @@ local function drawBubbleShield(ent, i) --Renamed from bulletshield, as the old 
 	end
 
 	-- // Drawing {{{
-		local osc = jcorp and (time+0.6)%2-1 or math.sin(time+i)
+		local osc = math.sin(time+i)
 		local size = rad*2.4*(1-osc^2) + damageAnim * 50
 		render.SetColorMaterial()
 
 		-- // Shield Bubble {{{
-			if jcorp then
-				local alpha = shield*16
-				color:SetUnpacked(24 + 100*damageAnim, shield*32 + 200*damageAnim, 230, alpha+150*damageAnim)
+			local alpha = shield * 8
+			if entTbl.jcms_shieldColorDesired then
+				local r, g, b = entTbl.jcms_shieldColorDesired:Unpack()
+				color:SetUnpacked(r, g, b, alpha+150*damageAnim)
 			else
-				local alpha = shield * 8
 				color:SetUnpacked(255, 200, 100*damageAnim, alpha+150*damageAnim)
 			end
+
 			if imInside then
 				color.a = color.a*damageAnim*0.2
 			end
@@ -181,11 +192,13 @@ local function drawBubbleShield(ent, i) --Renamed from bulletshield, as the old 
 		-- // Ring 1 {{{
 			local vUp = jcms.vectorUp
 			render.SetMaterial(jcms.render_matShieldRing)
-			if jcorp then
-				color:SetUnpacked(64+damageAnim*255, math.Remap(shield, 1, 3, 164, 0), 255, 255)
+			if entTbl.jcms_shieldColorDesired then
+				local r, g, b = entTbl.jcms_shieldColorDesired:Unpack()
+				color:SetUnpacked(r*1.2, g*1.2, b*1.2, alpha+150*damageAnim)
 			else
 				color:SetUnpacked(255, 255, damageAnim*255, 255)
 			end
+
 			if imInside then
 				color.a = color.a*damageAnim
 			end
@@ -193,15 +206,17 @@ local function drawBubbleShield(ent, i) --Renamed from bulletshield, as the old 
 		-- // }}}
 		
 		-- // Ring 2 {{{
-			if jcorp then
-				color:SetUnpacked(255, 0, shield*8+175*damageAnim, 150)
+			if entTbl.jcms_shieldColorDesired then
+				local r, g, b = entTbl.jcms_shieldColorDesired:Unpack()
+				color:SetUnpacked(r*1.3, g*1.3, b*1.3, 150)
 			else
 				color:SetUnpacked(255, 140+150*damageAnim, 175*damageAnim, 150)
 			end
+
 			if imInside then
 				color.a = color.a*damageAnim
 			end
-			osc = jcorp and time%2-1 or math.sin(time+i+0.6)
+			osc = math.sin(time+i+0.6)
 			size = rad*2.7*(1-osc^2)
 			render.DrawQuadEasy(pos + osc*rad*1.2*vUp, vUp, size, size, color, 0)
 		-- // }}}

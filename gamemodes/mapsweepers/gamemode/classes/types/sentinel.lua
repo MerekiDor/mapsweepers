@@ -357,7 +357,7 @@ if SERVER then
 			local shieldCount = ply:GetNWInt("jcms_shield", 0)
 			local shieldCountCap = 3
 			local final = shieldCount == shieldCountCap - 1
-			ply:SetNWInt("jcms_shield", math.min(shieldCount + 1, shieldCountCap))
+			jcms.AddBubbleMantle(ply, 1, shieldCountCap)
 
 			if shieldCount < shieldCountCap then
 				local sfx = final and ("ambient/energy/newspark0"..math.random(10, 11)..".wav") or ("ambient/energy/newspark0"..math.random(8, 9)..".wav")
