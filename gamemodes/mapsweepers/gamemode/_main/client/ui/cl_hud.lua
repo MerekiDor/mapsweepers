@@ -346,7 +346,7 @@
 				return wep:GetSpread() * 5000
 			elseif wep.GetBaseSpread and wep.SpreadRatio then
 				return wep.SpreadRatio * math.deg( wep:GetBaseSpread() ) * 42
-			elseif wep.SimpleWeapon  then
+			elseif wep.SimpleWeapon and wep.GetRange then
 				local range, accuracy = wep:GetRange()
 				return (accuracy*133) / (range*0.05)
 			elseif wep.Primary and wep.Primary.RPM and (wep.Primary.Spread or wep.Primary.SpreadHip) then
