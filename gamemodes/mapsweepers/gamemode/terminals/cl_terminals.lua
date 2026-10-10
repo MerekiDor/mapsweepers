@@ -21,11 +21,21 @@
 
 -- Local stuff {{{
 
-	function jcms.terminal_getGlitchMatrix(div, baseAddition)
-		baseAddition = baseAddition or 0
+	do
 		local matrix = Matrix()
-		matrix:Translate(Vector(0,0, baseAddition + (2 + (math.random() < 0.023 and math.random() or 0))/(div or 8)))
-		return matrix
+		function jcms.terminal_getGlitchMatrix(div, baseAddition)
+			baseAddition = baseAddition or 0
+			div = div or 8
+
+			matrix:SetUnpacked(
+				1, 0, 0, 0,
+				0, 1, 0, 0,
+				0, 0, 1, baseAddition + ( 2 + (math.random() < 0.023 and math.random() or 0) )/div,
+				0, 0, 0, 1
+			)
+
+			return matrix
+		end
 	end
 
 	jcms.terminal_random_data = { 

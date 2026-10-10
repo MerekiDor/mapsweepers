@@ -634,8 +634,7 @@ if CLIENT then
 			surface.DrawRect(vx, vy, vw, vh)
 			render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
 
-			local matrix = jcms.terminal_getGlitchMatrix(8)
-			cam.PushModelMatrix(matrix, true)
+			cam.PushModelMatrix(jcms.terminal_getGlitchMatrix(8), true)
 				surface.SetDrawColor(color_fg)
 				surface.DrawRect(vx, vy + vh, vw, 4)
 				draw.SimpleText("#jcms.terminal_unlocked", "jcms_hud_medium", vx + vw/2, vy + vh/2 - 4, CurTime() % 0.25 < 0.125 and color_accent or color_fg, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
@@ -670,8 +669,7 @@ if CLIENT then
 					local by = vy + 32 + entryHeight + buttonHeight*(y-1) + pad
 					local this = notbefore and (mx>=bx and my>=by and mx<=bx+buttonWidth and my<=by+buttonHeight)
 					if this then
-						local matrix = jcms.terminal_getGlitchMatrix(8)
-						cam.PushModelMatrix(matrix, true)
+						cam.PushModelMatrix(jcms.terminal_getGlitchMatrix(8), true)
 						surface.SetDrawColor(color_fg)
 						notbefore = false
 						btnId = i
@@ -722,9 +720,8 @@ if CLIENT then
 
 		render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
 		draw.SimpleText("#jcms.terminal_cashcache", "jcms_hud_small", w/2, -8, color_bg, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
-		local matrix = jcms.terminal_getGlitchMatrix(8)
 		local cash = tonumber(modedata) or 0
-		cam.PushModelMatrix(matrix, true)
+		cam.PushModelMatrix(jcms.terminal_getGlitchMatrix(8), true)
 			local tw = draw.SimpleText("#jcms.terminal_cashcache", "jcms_hud_small", w/2, -8, color_fg, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
 			local tw = draw.SimpleText(jcms.util_CashFormat(cash) .. " ", "jcms_hud_big", w/2 - 16, 48, color_fg, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 			surface.SetDrawColor(color_fg)
@@ -779,9 +776,8 @@ if CLIENT then
 		surface.SetDrawColor(color_bg)
 		jcms.draw_Circle(bsize+swayX, h-bsize-32+swayY, bsize, bsize, 24, 24)
 
-		local matrix = jcms.terminal_getGlitchMatrix(8)
 		local hovered = math.DistanceSqr(mx, my, bsize, h-bsize-32) <= (bsize - 8)^2 and EyePos():DistToSqr( ent:WorldSpaceCenter() ) <= 100^2
-		cam.PushModelMatrix(matrix, true)
+		cam.PushModelMatrix(jcms.terminal_getGlitchMatrix(8), true)
 			render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
 				draw.SimpleText(str1, "jcms_hud_big", w/2, 0, color_fg, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 				draw.SimpleText(str2, "jcms_hud_medium", w/2, 96, color_accent, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
