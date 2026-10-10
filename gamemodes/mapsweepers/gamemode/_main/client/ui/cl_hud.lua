@@ -416,7 +416,7 @@
 		swayVec:SetUnpacked(math.sin(time) * 0.1, math.cos(time) * 0.1, math.sin(time*2) * 0.04)
 	end
 
-	function jcms.setup3d2dDiagonal(top, left)
+	function jcms.setup3d2dDiagonal(top, left, scale)
 		local pos = EyePos()
 		local angles = EyeAngles()
 		local time = CurTime() * 0.56
@@ -435,11 +435,11 @@
 
 		local idx = "x" .. ( (top and 1 or 3) + (left and 0 or 1) )
 		motionTouchup(pos, angles, idx)
-		cam.Start3D2D(pos, angles, jcms.hud_Get3D2DScale())
+		cam.Start3D2D(pos, angles, jcms.hud_Get3D2DScale() * (scale or 1))
 		return pos, angles
 	end
 
-	function jcms.setup3d2dCentral(dir)
+	function jcms.setup3d2dCentral(dir, scale)
 		local pos = EyePos()
 		local angles = EyeAngles()
 		local time = CurTime() * 0.56 + 0.2
@@ -479,7 +479,7 @@
 
 		local idx = "c" .. dir
 		motionTouchup(pos, angles, idx)
-		cam.Start3D2D(pos, angles, jcms.hud_Get3D2DScale())
+		cam.Start3D2D(pos, angles, jcms.hud_Get3D2DScale() * (scale or 1))
 		return pos, angles
 	end
 
