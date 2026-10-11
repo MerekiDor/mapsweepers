@@ -864,7 +864,8 @@
 			local type2 = wep:GetSecondaryAmmoType()
 			local ammoOff2 = me:GetAmmoCount( type2 )
 
-			if wep.CustomAmmoDisplay then
+			if wep.CustomAmmoDisplay and not wep.ArcCW then 
+				-- ArcCW specifically defines a function that reports 0 ammo. I have no idea why, so I'm adding an exception.
 				local customAmmoData = wep:CustomAmmoDisplay()
 				if type(customAmmoData) == "table" then
 					if not customAmmoData.Draw then
