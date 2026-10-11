@@ -36,6 +36,7 @@ if SERVER then
 				jcms.class_Apply(ply, desiredClass)
 				ply.jcms_canGetWeapons = false
 				ply:EmitSound("items/ammopickup.wav")
+				ply:SetupHands()
 				return true
 			else
 				return false
