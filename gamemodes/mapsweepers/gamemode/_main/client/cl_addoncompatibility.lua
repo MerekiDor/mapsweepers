@@ -136,6 +136,11 @@ hook.Add("InitPostEntity", "jcms_addonCompatibility", function()
 						cam.End3D2D()
 					end
 				end)
+
+				local baseTbl = weapons.GetStored("arccw_base")
+				if type(baseTbl) == "table" and type(baseTbl.CustomAmmoDisplay) == "function" then
+					baseTbl.CustomAmmoDisplay = nil
+				end
 			end
 		end)
 	-- }}}
