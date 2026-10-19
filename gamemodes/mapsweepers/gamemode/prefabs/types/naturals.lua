@@ -276,7 +276,12 @@ local prefabs = jcms.prefabs
 			local ent = ents.Create("jcms_npcportal")
 			if not IsValid(ent) then return end
 
-			if not jcms.director or math.random() < 0.1 or jcms.director.faction == "everyone" then
+			local randomPortalChance = 0.1
+			if jcms.cvar_npcportal_random_chance then
+				randomPortalChance = math.Clamp( jcms.cvar_npcportal_random_chance:GetFloat(), 0, 1 )
+			end
+			
+			if not jcms.director or math.random() < randomPortalChance or jcms.director.faction == "everyone" then
 				local factionNames = jcms.factions_GetOrder()
 				if not jcms.cvar_customfactions_hell:GetBool() and (jcms.director.missionType == "hell" or jcms.director.missionType == "eschaton")  then -- restrict spawners to only vanilla factions on hell/eschaton if the cvar for that is on.
 					factionNames = table.GetKeys(jcms.vanillaFactions)
