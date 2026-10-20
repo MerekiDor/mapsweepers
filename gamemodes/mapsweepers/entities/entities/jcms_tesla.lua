@@ -94,35 +94,48 @@ if SERVER then
 		effectdata:SetEntity(target)
 		util.Effect("TeslaHitboxes", effectdata)
 	end
-	
-	function ENT:Think()
-		if self:Health() > 0 then
-			local selfTbl = self:GetTable()
-			local cTime = CurTime()
-			if selfTbl.nextAttack <= cTime and selfTbl.jcms_stunEnd < CurTime() then
-				local selfPos = self:GetPos()
 
-				local isHacked = selfTbl:GetHackedByRebels()
-				local selfPvpTeam = self:GetNWInt("jcms_pvpTeam", -1)
-				local targets = ents.FindInSphere(selfPos, selfTbl.Radius)
-				local finalTargets = {}
-				for i, ent in ipairs(targets) do 
-					if jcms.team_GoodTarget(ent) and jcms.turret_IsDifferentTeam_Optimised(isHacked, ent, selfPvpTeam) and self:TurretVisible(ent) then
-						table.insert(finalTargets, ent)
-					end
+	function ENT:TeslaThink(numOfTargets, fireRateMul)
+		local selfTbl = self:GetTable()
+		local cTime = CurTime()
+		if selfTbl.nextAttack <= cTime and selfTbl.jcms_stunEnd < CurTime() then
+			local selfPos = self:GetPos()
+
+			local isHacked = selfTbl:GetHackedByRebels()
+			local selfPvpTeam = self:GetNWInt("jcms_pvpTeam", -1)
+			local targets = ents.FindInSphere(selfPos, selfTbl.Radius)
+			local finalTargets = {}
+			for i, ent in ipairs(targets) do 
+				if jcms.team_GoodTarget(ent) and jcms.turret_IsDifferentTeam_Optimised(isHacked, ent, selfPvpTeam) and self:TurretVisible(ent) then
+					table.insert(finalTargets, ent)
 				end
+			end
 
+			local shouldUpdateHp = false
+			for i=1, numOfTargets or 1 do
+				if #finalTargets <= 0 then break end
+				if self:Health() <= 0 then break end
 				local best = jcms.turret_targetingModes.strongest(self, finalTargets, selfPos)
 
 				if IsValid(best) then
-					local hp = self:Health()
-					self:SetHealth(hp - 1)
-					self:SetHealthFraction(hp / self:GetMaxHealth())
+					self:SetHealth(self:Health() - 1)
 					self:Zap(best)
+					table.RemoveByValue(finalTargets, best)
+					shouldUpdateHp = true
 				end
-
-				selfTbl.nextAttack = cTime + selfTbl.FireRate
 			end
+
+			if shouldUpdateHp then
+				self:SetHealthFraction(self:Health() / self:GetMaxHealth())
+			end
+
+			selfTbl.nextAttack = cTime + selfTbl.FireRate * (fireRateMul or 1)
+		end
+	end
+	
+	function ENT:Think()
+		if self:Health() > 0 then
+			self:TeslaThink()
 		else
 			local pos = self:WorldSpaceCenter()
 			local ed = EffectData()
@@ -239,17 +252,21 @@ if SERVER then
 	end
 	
 	function ENT:OnTakeDamage(dmg)
-		if self:GetHackedByRebels() then
-			local inflictor, attacker = dmg:GetInflictor(), dmg:GetAttacker()
-			if IsValid(inflictor) and jcms.util_IsStunstick(inflictor) and jcms.team_JCorp(attacker) then --UnHack
+		local inflictor, attacker = dmg:GetInflictor(), dmg:GetAttacker()
+		local isHacked = self:GetHackedByRebels()
+		if IsValid(inflictor) and jcms.util_IsStunstick(inflictor) and jcms.team_JCorp(attacker) then
+			if isHacked then --UnHack
 				jcms.util_UnHack(self, attacker)
-				return 0
+			elseif jcms.team_SameTeam(self, attacker) then
+				-- Triple zap
+				self.nextAttack = CurTime()
+				self:TeslaThink(3, 4)
+				self:EmitSound("ambient/energy/newspark10.wav", 100, 99)
 			end
-
+		elseif isHacked then
+			-- hacked tesla takes damage
 			self:SetHealth(self:Health() - dmg:GetDamage())
 			self:SetHealthFraction(math.Clamp(self:Health() / self:GetMaxHealth(), 0, 1))
-
-			return 0
 		end
 	end
 
