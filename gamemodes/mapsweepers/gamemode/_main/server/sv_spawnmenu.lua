@@ -983,7 +983,14 @@
 			func = function(ply, pos, angle, attachEnt, traceResult)
 				local mine = ents.Create("jcms_landmine")
 				mine:SetPos(pos)
-				mine:SetAngles(angle)
+
+				if IsValid(attachEnt) and attachEnt:IsNPC() or attachEnt:IsPlayer() or attachEnt:IsNextBot() then
+					local lookAngle = traceResult.Normal:Angle()
+					lookAngle:RotateAroundAxis(lookAngle:Right(), 90)
+					mine:SetAngles(lookAngle)
+				else
+					mine:SetAngles(angle)
+				end
 				
 				mine.Radius = 10
 				mine.Damage = 75
