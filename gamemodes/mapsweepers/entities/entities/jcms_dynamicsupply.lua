@@ -29,47 +29,16 @@ ENT.Spawnable = false
 
 if SERVER then
 
-	ENT.EngineClasses = {
-		["item_ammo_ar2"] = true,
-		["item_ammo_ar2_altfire"] = true,
-		["item_ammo_pistol"] = true,
-		["item_ammo_smg1"] = true,
-		["item_ammo_357"] = true,
-		["item_ammo_crossbow"] = true,
-		["item_box_buckshot"] = true,
-		["item_rpg_round"] = true,
-		["item_ammo_smg1_grenade"] = true,
-		["item_healthkit"] = true,
-		["item_healthvial"] = true,
-	}
-
-	ENT.LootTable = {
-		["ammo_AR2"] = "item_ammo_ar2",
-		["ammo_AR2AltFire"] = "item_ammo_ar2_altfire",
-		["ammo_Pistol"] = "item_ammo_pistol",
-		["ammo_SMG1"] = "item_ammo_smg1",
-		["ammo_357"] = "item_ammo_357",
-		["ammo_XBowBolt"] = "item_ammo_crossbow",
-		["ammo_Buckshot"] = "item_box_buckshot",
-		["ammo_RPG_Round"] = "item_rpg_round",
-		["ammo_SMG1_Grenade"] = "item_ammo_smg1_grenade",
-		["health_low"] = "item_healthkit",
-		["health_high"] = "item_healthvial",
-
-		-- Ammo from other addons {{{
-			["ammo_SniperRound"] = "arccw_ammo_sniper",
-			["ammo_AirboatGun"] = "m9k_ammo_winchester",
-			["ammo_SniperPenetratedRound"] = "m9k_ammo_sniper_rounds",
-			["ammo_40mmGrenade"] = "m9k_ammo_40mm_single",
-			["ammo_Nuclear_Warhead"] = "m9k_ammo_nuke"
-			-- todo: add bullshit ammo types from CW2.0 and whatnot.
-		-- }}}
-	}
-
 	function ENT:GetLootClass(demand)
-		local className = self.LootTable[ demand ]
-		if className and ( self.EngineClasses[ className ] or type(scripted_ents.GetStored(className)) == "table" ) then
-			return className
+		local entClasses = jcms.dynamicsupply_lootTable[ demand ]
+		if not entClasses then return end
+
+		local shuffled = jcms.util_GetShuffledByWeight(entClasses)
+		for i, className in ipairs(shuffled) do
+			if jcms.dynamicsupply_existingClasses[ className ] or type( scripted_ents.GetStored(className) ) == "table" then
+				jcms.dynamicsupply_existingClasses[ className ] = true
+				return className
+			end
 		end
 	end
 

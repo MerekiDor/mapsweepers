@@ -2993,6 +2993,57 @@ AddCSLuaFile "_main/sh_deprecatedcode.lua"
 
 -- // }}}
 
+-- // jcms_dynamicsupply entities {{{
+
+	jcms.dynamicsupply_lootTable = {}
+	jcms.dynamicsupply_existingClasses = {}
+	
+	-- use this to add your own entities to jcms_dynamicsupply. I hope you're happy Sixteen, if that's even your real name.
+	function jcms.dynamicsupply_AddLoot(demandName, entClass, entWeight, isEngineEntClass)
+		entWeight = tonumber(entWeight) or 1
+		if entWeight <= 0 then return end
+
+		local entClasses = jcms.dynamicsupply_lootTable[ demandName ]
+		if not entClasses then
+			entClasses = {}
+			jcms.dynamicsupply_lootTable[ demandName ] = entClasses
+		end
+
+		entClasses[ entClass ] = entWeight
+
+		if isEngineEntClass then -- makes entity bypass existence check (since that only works correctly for SENTs)
+			jcms.dynamicsupply_existingClasses[ entClass ] = true
+		end
+	end
+
+	-- Ammo {{{
+		jcms.dynamicsupply_AddLoot("ammo_AR2", "item_ammo_ar2", 1, true)
+		jcms.dynamicsupply_AddLoot("ammo_AR2AltFire", "item_ammo_ar2_altfire", 1, true)
+		jcms.dynamicsupply_AddLoot("ammo_Pistol", "item_ammo_pistol", 1, true)
+		jcms.dynamicsupply_AddLoot("ammo_SMG1", "item_ammo_smg1", 1, true)
+		jcms.dynamicsupply_AddLoot("ammo_357", "item_ammo_357", 1, true)
+		jcms.dynamicsupply_AddLoot("ammo_XBowBolt", "item_ammo_crossbow", 1, true)
+		jcms.dynamicsupply_AddLoot("ammo_Buckshot", "item_box_buckshot", 1, true)
+		jcms.dynamicsupply_AddLoot("ammo_RPG_Round", "item_rpg_round", 1, true)
+		jcms.dynamicsupply_AddLoot("ammo_SMG1_Grenade", "item_ammo_smg1_grenade", 1, true)
+	-- }}}
+
+	-- Health {{{
+		jcms.dynamicsupply_AddLoot("health_low", "item_healthkit", 1, true)
+		jcms.dynamicsupply_AddLoot("health_high", "item_healthvial", 1, true)
+	-- }}}
+
+	-- Ammo (modded) {{{
+		jcms.dynamicsupply_AddLoot("ammo_SniperRound", "arccw_ammo_sniper")
+		jcms.dynamicsupply_AddLoot("ammo_AirboatGun", "m9k_ammo_winchester")
+		jcms.dynamicsupply_AddLoot("ammo_SniperPenetratedRound", "m9k_ammo_sniper_rounds")
+		jcms.dynamicsupply_AddLoot("ammo_40mmGrenade", "m9k_ammo_40mm_single")
+		jcms.dynamicsupply_AddLoot("ammo_Nuclear_Warhead", "m9k_ammo_nuke")
+		-- TODO: add bullshit ammo types from CW2.0 and whatnot.
+	-- }}}
+
+-- }}}
+
 -- // Post {{{
 
 	function jcms.RecolorAllDollies()
