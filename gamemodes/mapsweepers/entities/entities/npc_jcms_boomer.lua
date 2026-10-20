@@ -196,9 +196,8 @@ if SERVER then
 	function ENT:Burst()
 		local selfTbl = self:GetTable()
 
-		self:Remove()
-		hook.Call("OnNPCKilled", GAMEMODE, self, selfTbl.lastAttacker, selfTbl.lastInflictor)
 		local pos = self:WorldSpaceCenter()
+		hook.Call("OnNPCKilled", GAMEMODE, self, selfTbl.lastAttacker, selfTbl.lastInflictor)
 
 		local ed = EffectData()
 		ed:SetOrigin(pos)
@@ -220,6 +219,7 @@ if SERVER then
 		local enemyBurst = ( IsValid(selfTbl.lastAttacker) and self:Disposition(selfTbl.lastAttacker) == D_HT ) or ( self:Health() <= 0 )
 		local primedMul = (selfTbl.wasPrimed and 150 or 1)
 		for i, ent in ipairs(ents.FindInSphere(pos, selfTbl.BurstRadius)) do
+			if ent == self then continue end
 			local phys = ent:GetPhysicsObject()
 			if IsValid(phys) then
 				local entpos = ent:WorldSpaceCenter()
@@ -266,6 +266,8 @@ if SERVER then
 				crabNPC:SetVelocity(vel)
 			end
 		end
+
+		self:Remove()
 	end
 end
 
