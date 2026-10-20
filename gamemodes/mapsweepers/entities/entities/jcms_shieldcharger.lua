@@ -30,6 +30,8 @@ ENT.RenderGroup = RENDERGROUP_BOTH
 
 ENT.ChargePerSecond = 5
 ENT.ChargeInterval = 0.5
+ENT.ChargeHitMul = 12 -- Hitting the shield charger with a stunstick nets more shield but drains the charger faster
+ENT.ChargeHitExtraDrain = 5
 
 ENT.SentinelAnchor = true
 ENT.JCMS_Stunnable = true
@@ -112,11 +114,13 @@ if SERVER then
 		return true
 	end
 
-	function ENT:ChargeShield(ply)
+	function ENT:ChargeShield(ply, chargeMul, extraDrain)
 		local plyArmour = ply:Armor()
-		local chargeAmount = math.Clamp(ply:GetMaxArmor() - plyArmour, 0, self.ChargePerSecond*self.ChargeInterval)
+		local chargeAmount = math.Clamp(ply:GetMaxArmor() - plyArmour, 0, self.ChargePerSecond*self.ChargeInterval*(chargeMul or 1))
 
-		self:SetHealth(self:Health() - chargeAmount)
+		if chargeAmount <= 0 then return 0 end
+
+		self:SetHealth(self:Health() - chargeAmount - (extraDrain or 0))
 		self:SetHealthFraction(math.Clamp(self:Health() / self:GetMaxHealth(), 0, 1))
 
 		if self:GetHackedByRebels() then
@@ -124,18 +128,26 @@ if SERVER then
 		end
 		
 		ply:SetArmor(plyArmour + chargeAmount)
+		return chargeAmount
 	end
 	
 	function ENT:OnTakeDamage(dmg)
-		if self:GetHackedByRebels() then
-			local inflictor, attacker = dmg:GetInflictor(), dmg:GetAttacker()
-			if IsValid(inflictor) and jcms.util_IsStunstick(inflictor) and jcms.team_JCorp(attacker) then --UnHack
+		local inflictor, attacker = dmg:GetInflictor(), dmg:GetAttacker()
+		local isHacked = self:GetHackedByRebels()
+		if IsValid(inflictor) and jcms.util_IsStunstick(inflictor) and jcms.team_JCorp(attacker) then
+			if isHacked then --UnHack
 				jcms.util_UnHack(self, attacker)
-				return 0
+			elseif jcms.team_SameTeam(self, attacker) then
+				-- Supercharge
+				local charged = self:ChargeShield(attacker, self.ChargeHitMul, self.ChargeHitExtraDrain)
+				if charged > 0 then
+					self:EmitSound("items/suitchargeok1.wav", 100, 200)
+				end
 			end
+		elseif isHacked then
+			-- hacked shield charger takes damage
 			self:SetHealth(self:Health() - dmg:GetDamage())
 			self:SetHealthFraction(math.Clamp(self:Health() / self:GetMaxHealth(), 0, 1))
-			return 0
 		end
 	end
 
