@@ -2415,11 +2415,17 @@
 				jcms.hud_DrawStripedRect(x2 + healthWidth*healthFrac, -190, healthWidth*(1-healthFrac), 24-4)
 			render.OverrideBlend(false)
 
-			surface.SetAlphaMultiplier(1)
-
 			if ent:GetHackedByRebels() then 
 				hudUnshift()
+			else
+				local tip = language.GetPhrase("jcms.superchargetip_shieldcharger")
+				draw.DrawText(tip, "jcms_hud_small", x2 + healthWidth/2, -164, jcms.color_dark, TEXT_ALIGN_CENTER)
+				render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
+					draw.DrawText(tip, "jcms_hud_small", x2 + off + healthWidth/2, -164-off, jcms.color_bright_alt, TEXT_ALIGN_CENTER)
+				render.OverrideBlend(false)
 			end
+
+			surface.SetAlphaMultiplier(1)
 		end,
 
 		["jcms_tesla"] = function(ent, blend)
@@ -2451,11 +2457,17 @@
 				jcms.hud_DrawStripedRect(x2 + healthWidth*healthFrac, -190, healthWidth*(1-healthFrac), 24-4)
 			render.OverrideBlend(false)
 
-			surface.SetAlphaMultiplier(1)
-
 			if ent:GetHackedByRebels() then 
 				hudUnshift()
+			else
+				local tip = language.GetPhrase("jcms.superchargetip_tesla")
+				draw.DrawText(tip, "jcms_hud_small", x2 + healthWidth/2, -164, jcms.color_dark, TEXT_ALIGN_CENTER)
+				render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD)
+					draw.DrawText(tip, "jcms_hud_small", x2 + off + healthWidth/2, -164-off, jcms.color_bright_alt, TEXT_ALIGN_CENTER)
+				render.OverrideBlend(false)
 			end
+
+			surface.SetAlphaMultiplier(1)
 		end,
 		
 		["prop_thumper"] = function(ent, blend)
