@@ -216,7 +216,6 @@ if SERVER then
 		dmg:SetInflictor(self)
 		dmg:SetReportedPosition(pos)
 
-		local enemyBurst = ( IsValid(selfTbl.lastAttacker) and self:Disposition(selfTbl.lastAttacker) == D_HT ) or ( self:Health() <= 0 )
 		local primedMul = (selfTbl.wasPrimed and 150 or 1)
 		for i, ent in ipairs(ents.FindInSphere(pos, selfTbl.BurstRadius)) do
 			if ent == self then continue end
@@ -255,7 +254,14 @@ if SERVER then
 
 		if not selfTbl.wasObliterated then
 			local vel = Vector(0, 0, 0)
-			for i=1, enemyBurst and 3 or 7 do
+
+			local crabCount = 7
+			local health = self:Health()
+			if self:Health() <= 0 then
+				crabCount = 3 - math.floor( -health/50 )
+			end
+			
+			for i=1, crabCount do
 				local crabNPC = jcms.npc_Spawn("zombie_explodingcrab", pos + VectorRand(-25, 25))
 
 				local ang = math.random() * math.pi * 2
