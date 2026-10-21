@@ -89,7 +89,7 @@ local nmt = FindMetaTable("NPC")
 	jcms.NOTIFY_OBTAINED = 2
 	jcms.NOTIFY_LOCATED = 3
 	jcms.NOTIFY_LOST = 4
-	jcms.NOTIFY_MARKED = 5
+	jcms.NOTIFY_ACTIVATED = 5
 	jcms.NOTIFY_BUILT = 6
 	jcms.NOTIFY_ORDERED = 7
 

@@ -87,6 +87,7 @@ if SERVER then
 		if self:GetSwpNear() then 
 			self:StartCountdown()
 			self.jcms_activator = ply
+			jcms.net_NotifyGeneric(ply, jcms.NOTIFY_ACTIVATED, "#jcms.zombiebeacon")
 			return true, tostring( CurTime() + 60 )
 		else
 			return false

@@ -231,6 +231,8 @@ jcms.missions.datadownload = {
 								end
 							end
 
+							jcms.net_NotifyGeneric(ply, jcms.NOTIFY_ACTIVATED, "#jcms.obj_datadownloadcomputer")
+
 							if #sameTeam > 0 then
 								jcms.net_SendTip(sameTeam, true, "#jcms.datadownload_started", tonumber(missionData.defenseProgress) or 0)
 							end
