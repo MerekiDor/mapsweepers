@@ -632,12 +632,16 @@ jcms.npc_types.zombie_husk = {
 				end
 			end
 		end)
-		
 	end,
 
 	takeDamage = function(npc, dmg)
 		if bit.band(dmg:GetDamageType(), bit.bor(DMG_BLAST_SURFACE, DMG_BLAST)) > 0 then
 			dmg:ScaleDamage(0.5)
+
+			local dist = npc:GetPos():Distance(dmg:GetDamagePosition())
+			local distScale = math.min(125/dist, 1)^1.33
+
+			dmg:ScaleDamage(distScale)
 		end
 	end,
 
@@ -696,7 +700,16 @@ jcms.npc_types.zombie_fast = {
 		if npc.jcms_dropshipLeaped and (curSched == 181 or curSched == 183) then
 			npc:SetSchedule(SCHED_CHASE_ENEMY)
 		end
-	end
+	end,
+
+	takeDamage = function(npc, dmg)
+		if bit.band(dmg:GetDamageType(), bit.bor(DMG_BLAST_SURFACE, DMG_BLAST)) > 0 then
+			local dist = npc:GetPos():Distance(dmg:GetDamagePosition())
+			local distScale = math.min(125/dist, 1)^1.33
+
+			dmg:ScaleDamage(distScale)
+		end
+	end,
 }
 
 jcms.npc_types.zombie_crawler = {
@@ -718,7 +731,16 @@ jcms.npc_types.zombie_crawler = {
 
 		npc.jcms_DontCollideWithNPCs = true
 		npc:SetCustomCollisionCheck(true)
-	end
+	end,
+	
+	takeDamage = function(npc, dmg)
+		if bit.band(dmg:GetDamageType(), bit.bor(DMG_BLAST_SURFACE, DMG_BLAST)) > 0 then
+			local dist = npc:GetPos():Distance(dmg:GetDamagePosition())
+			local distScale = math.min(125/dist, 1)^1.33
+
+			dmg:ScaleDamage(distScale)
+		end
+	end,
 }
 
 jcms.npc_types.zombie_poison = {
@@ -746,6 +768,11 @@ jcms.npc_types.zombie_poison = {
 	takeDamage = function(npc, dmg)
 		if bit.band(dmg:GetDamageType(), bit.bor(DMG_BLAST_SURFACE, DMG_BLAST)) > 0 then
 			dmg:ScaleDamage(0.5)
+			
+			local dist = npc:GetPos():Distance(dmg:GetDamagePosition())
+			local distScale = math.min(125/dist, 1)^1.33
+
+			dmg:ScaleDamage(distScale)
 		end
 	end,
 
@@ -968,6 +995,13 @@ jcms.npc_types.zombie_combine = {
 				end
 			end
 		end)
+
+		if bit.band(dmg:GetDamageType(), bit.bor(DMG_BLAST_SURFACE, DMG_BLAST)) > 0 then
+			local dist = npc:GetPos():Distance(dmg:GetDamagePosition())
+			local distScale = math.min(125/dist, 1)^1.33
+
+			dmg:ScaleDamage(distScale)
+		end
 	end,
 
 	damageEffect = function(npc, target, dmgInfo)
@@ -1259,6 +1293,13 @@ jcms.npc_types.zombie_charple = {
 			local dmgSound = "npc/headcrab_poison/ph_wallpain" .. tostring(math.random(1,3)) .. ".wav"
 			npc:EmitSound(dmgSound, 75, 80)
 			npc.lastPhraseTime = CurTime()
+		end
+
+		if bit.band(dmg:GetDamageType(), bit.bor(DMG_BLAST_SURFACE, DMG_BLAST)) > 0 then			
+			local dist = npc:GetPos():Distance(dmg:GetDamagePosition())
+			local distScale = math.min(125/dist, 1)^1.33
+
+			dmg:ScaleDamage(distScale)
 		end
 
 		--Remove our headcrab after we die. (also stops our gurgle)

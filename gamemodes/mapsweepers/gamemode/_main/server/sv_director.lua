@@ -780,7 +780,7 @@
 				
 				local zoneAreasInRange = zonesInRangeBuffer[ zoneChosen ]
 				if not zoneAreasInRange then
-					zoneAreasInRange = jcms.director_GetAreasAwayFrom(zoneAreas, playerOrigins, 256, 3500)
+					zoneAreasInRange = jcms.director_GetAreasAwayFrom(zoneAreas, playerOrigins, 256, math.min(3500, jcms.rangeCap + 250))
 					zonesInRangeBuffer[ zoneChosen ] = zoneAreasInRange
 				end
 				local zonesTable = #zoneAreasInRange >= 1 and zoneAreasInRange or zoneAreas
