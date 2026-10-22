@@ -1256,6 +1256,22 @@ end)
 	jcms.weapon_loadout = jcms.weapon_loadout or {}
 	jcms.weapon_favourites = jcms.weapon_favourites or {}
 
+	concommand.Add("jcms_switchtostunstick", function(ply, cmd, args)
+		local stunstickClass = "weapon_stunstick"
+
+		local classData = jcms.class_GetData(ply)
+		if classData and type(classData.stunstickOverride) == "string" then
+			stunstickClass = classData.stunstickOverride
+		end
+
+		for i, wep in ipairs( ply:GetWeapons() ) do
+			if IsValid(wep) and (wep:GetClass() == stunstickClass) then
+				input.SelectWeapon(wep)
+				break
+			end
+		end
+	end)
+
 -- // }}}
 
 -- // Skybox {{{
