@@ -1685,26 +1685,18 @@ AddCSLuaFile "_main/sh_deprecatedcode.lua"
 	end
 
 	function jcms.GetMissingRememberedWeapons(ply)
-		local remembered = {}
-
 		if type(ply.jcms_rememberedWeapons) == "table" then
-			table.Merge(remembered, ply.jcms_rememberedWeapons)
+			local remembered = table.Copy(ply.jcms_rememberedWeapons)
 
 			for i, wep in ipairs( ply:GetWeapons() ) do
 				remembered[ wep:GetClass() ] = nil
 			end
 
-			local i = 0
-			PrintTable(remembered)
-			for class in pairs(remembered) do
-				i = i + 1
-				remembered[class] = nil
-				remembered[i] = class
-			end
+			return table.GetKeys(remembered)
+		else
+			return {}
 		end
-		
-		return remembered
-	end
+	end 
 
 	function jcms.RestoreRememberedWeapons(ply)
 		local classes = jcms.GetMissingRememberedWeapons(ply)
