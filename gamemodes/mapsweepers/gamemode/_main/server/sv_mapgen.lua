@@ -1324,10 +1324,15 @@ jcms.MAPGEN_CONSTRUCT_DIAMETER = math.sqrt(82411875)
 		return closest, closestDist
 	end
 
-	function jcms.mapgen_GetAreaEdgePos(navArea, edge)
+	function jcms.mapgen_GetAreaEdgePos(navArea, edge, edgeSlideFactor)
 		local c1 = navArea:GetCorner( edge ) 
 		local c2 = navArea:GetCorner( (edge + 1)%4 )
-		return (c1 + c2)/2 
+
+		if edgeSlideFactor then
+			return LerpVector(edgeSlideFactor, c1, c2)
+		else
+			return (c1 + c2)/2 
+		end
 	end
 
 	function jcms.mapgen_DropEntToNav(ent, pos, range) --More reliable :DropToFloor. Don't use on npcs/non-statics as they could fall through a displacement.

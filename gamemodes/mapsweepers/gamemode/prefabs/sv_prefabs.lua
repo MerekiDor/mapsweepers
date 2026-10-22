@@ -167,6 +167,7 @@
 		local areas = area:GetVisibleAreas()
 		for i, otherArea in ipairs(areas) do 
 			if otherArea == area then continue end
+			if not jcms.mapgen_ValidArea(otherArea) then continue end
 
 			--Get the side the area's on, using closest instead of centre because large areas might have heavily offset centres
 			local toTarget = area:ComputeDirection(otherArea:GetClosestPointOnArea(centre))

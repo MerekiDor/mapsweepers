@@ -231,16 +231,70 @@ local prefabs = jcms.prefabs
 
 		check = function(area)
 			if not jcms.mapgen_ValidArea(area) then return false end
+			if ( area:GetSizeX()*area:GetSizeY() ) <= 40000 then return false end
+			if not jcms.mapgen_AreaFlat(area) then return false end
 
-			if ( area:GetSizeX()*area:GetSizeY() ) <= 60000 then
-				return false
+			local function doCheck(pos, ang, dist, span)
+				local shootPos = ang:Up()
+				shootPos:Mul(50)
+				shootPos:Add(pos)
+
+				local traceRes = {}
+				local traceInfo = {
+					mins = Vector(-4, -4, -4),
+					maxs = Vector(4, 4, 4),
+					mask = MASK_SHOT_HULL,
+					output = traceRes,
+					start = shootPos
+				}
+
+				local rotateAng = Angle(ang)
+				local rotateSpan = span or 120
+				local rotateSteps = 5
+				rotateAng:RotateAroundAxis(jcms.vectorUp, -rotateSpan/2+rotateSpan/rotateSteps/2)
+
+				local checkLength = dist or 512
+				local checkPenaltySum = 0
+				local checkPenaltyLimit = 1
+				for i=1, rotateSteps do
+					traceInfo.endpos = traceInfo.start + rotateAng:Forward()*checkLength
+					util.TraceHull(traceInfo)
+
+					local bad = traceRes.StartSolid or (traceRes.Fraction < 1)
+					local checkPenalty = (bad and 1 or 0) * ( math.sin( math.Remap(i, 1, rotateSteps, 0, math.pi) )*0.8 + 0.2 )
+					checkPenaltySum = checkPenaltySum + checkPenalty
+
+					if checkPenaltySum >= checkPenaltyLimit then
+						return false
+					end
+
+					rotateAng:RotateAroundAxis(jcms.vectorUp, rotateSpan/rotateSteps)
+				end
+
+				return true
 			end
 
-			if not jcms.mapgen_AreaFlat(area) then 
-				return false 
+			local ang_overlook, pos_overlook = jcms.prefab_CalcOverlooking(area, false)			
+			if doCheck(pos_overlook, ang_overlook) then
+				return true, { pos = pos_overlook, ang = ang_overlook }
+			else
+				-- Try fallbacks because the overlooking edge is obstructed
+				local edgeOrder = { 0, 1, 2, 3 }
+				table.Shuffle(edgeOrder)
+
+				local center = area:GetCenter()
+				for _, edge in ipairs(edgeOrder) do
+					local edgePos = jcms.mapgen_GetAreaEdgePos(area, edge, math.Rand(0.25, 0.75))
+					local angle = (edgePos - center):Angle()
+					angle.y = math.Round(angle.y / 90) * 90
+
+					if doCheck(edgePos, angle) then
+						return true, { pos = edgePos, ang = angle }
+					end
+				end
 			end
 
-			return true
+			return false
 		end,
 		
 		areaWeight = function(area)
@@ -252,10 +306,8 @@ local prefabs = jcms.prefabs
 			local ent = ents.Create("jcms_emplacement")
 			if not IsValid(ent) then return end
 
-			local ang, pos = jcms.prefab_CalcOverlooking(area, false)
-
-			ent:SetAngles(ang)
-			ent:SetPos(pos)
+			ent:SetAngles(data.ang)
+			ent:SetPos(data.pos)
 			ent:Spawn()
 
 			return ent
