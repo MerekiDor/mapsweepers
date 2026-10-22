@@ -109,7 +109,7 @@ function class.Think(ply)
 					return 0
 				end
 			end
-		elseif wep.TakeAmmo then
+		elseif type(wep.TakeAmmo) == "function" then
 			-- Serious Sam 2 weapons workaround
 			local originalFunction = wep.TakeAmmo
 			wep.TakeAmmo = function(self, count, ...)
@@ -128,13 +128,32 @@ function class.Think(ply)
 					return 0
 				end
 			end
+		elseif type(wep.ConsumeAmmo) == "function" then
+			-- Simple Weapons Base
+			local originalFunction = wep.ConsumeAmmo
+			wep.ConsumeAmmo = function(self, count, ...)
+				local owner = self:GetOwner()
+				if owner == self.jcms_infantryOwner then
+					local consumed = 0
+					if util.SharedRandom("InfantryAmmoRestore", 0, 1, CurTime()) >= 0.5 then
+						consumed = originalFunction(self, count, ...)
+					else
+						effectsFunction(owner, self)
+					end
+					return consumed
+				else
+					originalFunction(self, count, ...)
+					wep.ConsumeAmmo = originalFunction
+					return 0
+				end
+			end
 		else
 			local originalFunction = wep.TakePrimaryAmmo or function() end --No idea how to reproduce, but TakePrimaryAmmo doesn't exist on client *sometimes*. Happened on CFC.
 			wep.TakePrimaryAmmo = function(self, count, ...)
 				local owner = self:GetOwner()
 				if owner == self.jcms_infantryOwner then
 					local consumed = 0
-					if util.SharedRandom("InfantryAmmoRestore", 0, 1, CurTime())  >= 0.5 then
+					if util.SharedRandom("InfantryAmmoRestore", 0, 1, CurTime()) >= 0.5 then
 						consumed = originalFunction(self, count, ...)
 					else
 						effectsFunction(owner, self)
