@@ -1446,8 +1446,13 @@ if CLIENT then
 				draw.SimpleTextOutlined(jcms.util_CashFormat(price) .. " J", "jcms_hud_medium", mx, my + 108, col, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 2, col_dark)
 			cam.PopModelMatrix()
 
-			if me:KeyPressed(IN_USE) then
-				RunConsoleCommand("jcms_buyweapon", hoveredWeaponClass)
+			if me:KeyDown(IN_USE) then
+				if not ent.jcms_useDown then
+					ent.jcms_useDown = true
+					RunConsoleCommand("jcms_buyweapon", hoveredWeaponClass)
+				end
+			else
+				ent.jcms_useDown = false
 			end
 		elseif buttonId > 0 then
 			return buttonId

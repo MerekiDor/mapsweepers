@@ -3114,7 +3114,7 @@
 				draw.SimpleText(binding, font, 0, -200-off, jcms.color_bright, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
 				draw.SimpleText(str, "jcms_hud_small", -24, -172-off, jcms.color_bright, TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
 				
-				if jcms.locPly:KeyPressed(IN_JUMP) or jcms.locPly:KeyDown(IN_JUMP) and not jcms.modal_classChange_open then
+				if jcms.locPly:KeyDown(IN_JUMP) and not jcms.modal_classChange_open then
 					jcms.offgame_ModalChangeClass()
 					jcms.modal_classChange_open = true
 				end
