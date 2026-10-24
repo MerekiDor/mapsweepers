@@ -825,7 +825,7 @@ jcms.npc_types.rebel_fighter = {
 		local attacker = dmgInfo:GetAttacker()
 
 		timer.Simple(0, function()
-			if not(IsValid(npc) and npc:Health() < 0 and not npc.jcms_died) then return end 
+			if not(IsValid(npc) and npc:Health() <= 0 and not npc.jcms_died) then return end 
 
 			if npc.jcms_rebel_carrierVariant then
 				local resup = ents.Create("jcms_dynamicsupply")
@@ -926,7 +926,7 @@ jcms.npc_types.rebel_breacher = {
 
 	takeDamage = function(npc, dmgInfo) --Clean up our mask on death
 		timer.Simple(0, function()
-			if IsValid(npc) and IsValid(npc.jcms_breacher_mask) and npc:Health() < 0 and not npc.jcms_died then 
+			if IsValid(npc) and IsValid(npc.jcms_breacher_mask) and npc:Health() <= 0 and not npc.jcms_died then 
 				local gib = ents.Create("gib") --auto cleanup
 				gib:SetModel("models/props_silo/welding_helmet.mdl")
 				gib:SetPos(npc.jcms_breacher_mask:GetPos())
@@ -1179,7 +1179,7 @@ jcms.npc_types.rebel_teleporter = {
 
 	takeDamage = function(npc, dmgInfo) --Clean up our mask on death
 		timer.Simple(0, function()
-			if IsValid(npc) and IsValid(npc.jcms_breacher_mask) and npc:Health() < 0 and not npc.jcms_died then 
+			if IsValid(npc) and IsValid(npc.jcms_breacher_mask) and npc:Health() <= 0 and not npc.jcms_died then 
 				local gib = ents.Create("gib") --auto cleanup
 				gib:SetModel("models/props_silo/welding_helmet.mdl")
 				gib:SetPos(npc.jcms_breacher_mask:GetPos())
@@ -1225,7 +1225,7 @@ jcms.npc_types.rebel_teleporter = {
 			util.Effect("impact", effectdata)
 
 			npc.jcms_breacher_maskHealth = npc.jcms_breacher_maskHealth - dmgInfo:GetDamage()
-			if npc.jcms_breacher_maskHealth < 0 then
+			if npc.jcms_breacher_maskHealth <= 0 then
 				if IsValid(npc.jcms_breacher_mask) then 
 					npc.jcms_breacher_mask:Remove()
 				end

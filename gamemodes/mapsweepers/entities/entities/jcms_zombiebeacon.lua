@@ -176,7 +176,7 @@ if SERVER then
 			util.Effect("BloodImpact", ed)
 		end
 
-		if self:Health() < 0 and not self.jcms_beaconDead then 
+		if self:Health() <= 0 and not self.jcms_beaconDead then 
 			self:Die()
 		end
 	end

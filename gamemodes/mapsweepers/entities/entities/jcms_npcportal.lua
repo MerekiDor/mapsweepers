@@ -150,7 +150,7 @@ if SERVER then
 		if jcms.team_NPC( dmg:GetAttacker() ) then return 0 end
 		if bit.band( dmg:GetDamageType(), bit.bor(DMG_BURN, DMG_SLOWBURN) ) > 0 then return 0 end
 
-		if self:Health() < 0 then
+		if self:Health() <= 0 then
 			timer.Simple(1.5, function()
 				if IsValid(self) then
 					self:Remove()
