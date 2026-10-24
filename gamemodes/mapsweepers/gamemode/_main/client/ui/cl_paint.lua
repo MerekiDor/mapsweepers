@@ -410,7 +410,7 @@
 		end
 
 		--if BRANCH == "x86-64" then
-		if jit.arch == "x86" then
+		if jit.arch == "x64" then
 			local col = jcms.color_pulsing
 			surface.SetDrawColor(col)
 			drawHollowPolyButton(24, 84-9+28, 18, 18, 4)

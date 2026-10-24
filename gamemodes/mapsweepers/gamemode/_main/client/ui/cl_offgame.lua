@@ -577,13 +577,14 @@ jcms.offgame = jcms.offgame or NULL
 
 			local hasNMNavAddon = false
 			for i, addon in ipairs( engine.GetAddons() ) do
-				if addon.wsid == "2905690962" and addon.mounted then 
+				if addon.wsid == "2905690962" and addon.mounted then
 					hasNMNavAddon = true
 					break
 				end
 			end
 
-			if (not jcms.seenLagPopup) and (BRANCH ~= "x86-64" or not GetConVar("gmod_mcore_test"):GetBool() or hasNMNavAddon) then
+			--if (not jcms.seenLagPopup) and (jit.arch ~= "x64" or not GetConVar("gmod_mcore_test"):GetBool() or hasNMNavAddon) then
+			if false then
 				jcms.seenLagPopup = true
 				local popup = vgui.Create("DFrame")
 				popup:SetBackgroundBlur(true)
@@ -604,7 +605,7 @@ jcms.offgame = jcms.offgame or NULL
 				function close:DoClick()
 					popup:Remove()
 				end
-				
+	
 				close:SetEnabled(true)
 				close.Paint = jcms.paint_ButtonFilled
 
