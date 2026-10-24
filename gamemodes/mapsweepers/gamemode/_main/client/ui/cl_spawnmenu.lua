@@ -145,6 +145,7 @@ end
 	jcms.spawnmenu_lastUseTime = 0
 	jcms.spawnmenu_tagKeyTranslation = { 7, 1, 3, 5, 8, 2, 4, 6 }
 	jcms.spawnmenu_tagKeyTranslationAlt = { 2, 6, 3, 7, 4, 8, 1, 5 }
+	jcms.spawnmenu_usedReloadScroll = false
 
 	function jcms.spawnmenu_Update()
 		if (not jcms.spawnmenu_isOpen) then 
@@ -188,9 +189,14 @@ end
 					elseif jcms.mousewheel < 0 then
 						jcms.spawnmenu_selectedOrders[sector] = math.max(jcms.spawnmenu_selectedOrders[sector] - 1, 1)
 						scrolled = true
-					elseif jcms.locPly:KeyPressed(IN_RELOAD) then
-						jcms.spawnmenu_selectedOrders[sector] = (jcms.spawnmenu_selectedOrders[sector] % (#jcms.orders_lists[sector]) ) + 1
-						scrolled = true
+					elseif jcms.locPly:KeyDown(IN_RELOAD) then
+						if not jcms.spawnmenu_usedReloadScroll then
+							jcms.spawnmenu_usedReloadScroll = true
+							jcms.spawnmenu_selectedOrders[sector] = (jcms.spawnmenu_selectedOrders[sector] % (#jcms.orders_lists[sector]) ) + 1
+							scrolled = true
+						end
+					else
+						jcms.spawnmenu_usedReloadScroll = false
 					end
 
 					if scrolled then
