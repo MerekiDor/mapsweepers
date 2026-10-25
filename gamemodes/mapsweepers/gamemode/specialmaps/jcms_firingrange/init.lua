@@ -952,7 +952,7 @@ end
         if not IsValid(ent) then return end
         local class = ent:GetClass()
 
-        if class == "jcms_turret" then
+        if class == "jcms_turret" or class == "jcms_turret_smrls" then
             timer.Simple(0, function()
                 if not IsValid(ent) then return end
                 local maxclip = ent:GetTurretMaxClip()
