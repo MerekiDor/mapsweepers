@@ -44,6 +44,14 @@ function ENT:SetupDataTables()
 			ent:EmitSound("outland_10.shieldwall_off")
 		end
 	end)
+
+	if CLIENT then
+		self:NetworkVarNotify("NextStateSwitch", function(ent, name, old, new)
+			if not old or old == new then return end
+
+			self.PreviousStateSwitch = old
+		end)
+	end
 end
 
 if SERVER then
@@ -98,7 +106,6 @@ if SERVER then
 end
 
 if CLIENT then
-	ENT.SwitchInterval = 120 --scripted_ents.GetMember("jcms_mainframe", "JammerSwitchInterval") --This causes load-order issues, hardcoded for now.
 	
 	ENT.chargebarRT = GetRenderTarget("jcms_jammerpillarchargebar_rt", 8, 200)
 	ENT.chargebarRTMat = CreateMaterial("jcms_jammerpillarchargebar", "VertexLitGeneric", {
@@ -109,15 +116,18 @@ if CLIENT then
 
 	function ENT:Initialize()
 		self:SetRenderBounds(jcms.vectorOrigin, jcms.vectorOrigin, Vector(self.JammingRadius, self.JammingRadius, self.JammingRadius) )
+		self.PreviousStateSwitch = CurTime()
 	end
 
 	function ENT:RenderScreen()
-		local timeFrac = (self:GetNextStateSwitch() - CurTime()) / self.SwitchInterval
+		local nextStateSwitch = self:GetNextStateSwitch()
+		local timeFrac = (nextStateSwitch - CurTime()) / (nextStateSwitch - self.PreviousStateSwitch)
 		local barHeight = math.Round(timeFrac*200)
 
 		render.PushRenderTarget(self.chargebarRT)
 		cam.Start2D()
 		
+			-- Blinking animation
 			if timeFrac < 0 and (CurTime()+0.03)%0.5<0.25 then 
 				surface.SetDrawColor(99, 53, 0)
 				surface.DrawRect(0, 0, 8, 200, 1)
@@ -127,6 +137,7 @@ if CLIENT then
 
 				surface.SetDrawColor(255, 211, 13)
 				surface.DrawOutlinedRect(0, 0, 8, 200, 1)	
+			-- Countdown animation
 			else
 				if self:GetIsActive() then
 					surface.SetDrawColor(81, 0, 99)

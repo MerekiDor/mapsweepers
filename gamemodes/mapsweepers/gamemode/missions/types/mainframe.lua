@@ -417,10 +417,12 @@ jcms.missions.mainframe = {
 			local jammers = {{}, {}, {}}
 			for i, area in ipairs(chosenAreas) do 
 				local jammer = ents.Create("jcms_jammerstatic")
+				local groupIndex = ((i -1) % #jammers) + 1
 				jammer:SetPos(area:GetCenter())
 				jammer:Spawn()
+				jammer:SetNextStateSwitch(CurTime() + groupIndex * missionData.mainframe.JammerSwitchInterval)
 
-				table.insert( jammers[((i -1) % #jammers) + 1], jammer) 
+				table.insert( jammers[groupIndex], jammer) 
 			end
 
 			missionData.mainframe.jammers = jammers

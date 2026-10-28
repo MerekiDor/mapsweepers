@@ -53,7 +53,7 @@ if SERVER then
 		self.bombardmentActive = false
 		self.nextBombardment = CurTime() + 50
 		self.nextSupplyDrop = CurTime() + 90
-		self.nextJammerSwitch = CurTime() + 120
+		self.nextJammerSwitch = CurTime() + self.JammerSwitchInterval
 	
 		self.jammers = {{}, {}} --Set by mainframe mission gen
 		self.jammerIndex = 1
@@ -72,16 +72,7 @@ if SERVER then
 			if self.nextJammerSwitch < CurTime() then 
 				self.nextJammerSwitch = CurTime() + self.JammerSwitchInterval
 
-				self.jammerIndex = (self.jammerIndex % #self.jammers) + 1
-
-				for i, subTbl in ipairs(self.jammers) do 
-					local relativeIndex = (i - self.jammerIndex + #self.jammers) % #self.jammers 
-					for _, jammer in ipairs(subTbl) do 
-						jammer:SetIsActive(false)
-						jammer:SetNextStateSwitch(CurTime() + (relativeIndex * self.JammerSwitchInterval))
-					end
-				end
-
+				-- Activate next group of jammers
 				for i, jammer in ipairs(self.jammers[self.jammerIndex]) do 
 					local timerName = "jcms_"..tostring(jammer).."beep"
 					local function ping()
@@ -95,12 +86,23 @@ if SERVER then
 	
 					timer.Create(timerName, 1, 3, ping) --3s
 
+					-- 4 second chargeup, then activate
 					timer.Simple(4, function()
 						if not IsValid(jammer) or self:GetShieldJCorp() then return end
 						jammer:SetIsActive(true)
 						jammer:SetNextStateSwitch(self.nextJammerSwitch)
 					end)
+
+					-- deactivates itself later
+					timer.Simple(4+self.JammerSwitchInterval, function()
+						if not IsValid(jammer) then return end
+						jammer:SetIsActive(false)
+						jammer:SetNextStateSwitch(CurTime() + ((#self.jammers-1) * self.JammerSwitchInterval))
+					end)
 				end
+
+				self.jammerIndex = (self.jammerIndex % #self.jammers) + 1
+
 			end
 		end
 
