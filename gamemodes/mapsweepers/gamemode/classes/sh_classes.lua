@@ -220,6 +220,15 @@ table.Empty(jcms.classesOrderIndices)
 		return costMult, coolDownMult
 	end
 
+	jcms.class_defaultOrderCategories = { "turrets", "utility", "mines", "mobility", "orbitals", "supplies", "mission", "defensive" }
+	function jcms.class_GetOrderCategories(data)
+		if type(data.orderCategories) == "table" then
+			return data.orderCategories
+		else
+			return jcms.class_defaultOrderCategories
+		end
+	end
+
 	function jcms.class_Add(name, data, jcorp)
 		jcms.classes[ name ] = data
 		data.jcorp = not not jcorp

@@ -1572,5 +1572,6 @@ end)
 -- // Post {{{
 
 	hook.Run("MapSweepersReady") -- If you want to make an addon that adds new content into Map Sweepers, use this hook.
+	jcms.firstTimeInited = true
 
 -- // }}}

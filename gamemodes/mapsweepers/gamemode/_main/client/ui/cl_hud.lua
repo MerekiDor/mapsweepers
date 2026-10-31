@@ -290,7 +290,7 @@
 		if jcms.spawnmenu_scrolled then
 			jcms.hud_spawnmenuAnimScrollTip = math.max(0, jcms.hud_spawnmenuAnimScrollTip - dt * 4)
 		else
-			jcms.hud_spawnmenuAnimScrollTip = (jcms.spawnmenu_selectedOption and jcms.hud_spawnmenuAnim > 0.99) and (jcms.hud_spawnmenuAnimScrollTip*6 + 1)/7 or math.min(jcms.hud_spawnmenuAnim, jcms.hud_spawnmenuAnimScrollTip)
+			jcms.hud_spawnmenuAnimScrollTip = (jcms.spawnmenu_wheelCurrentIndex and jcms.hud_spawnmenuAnim > 0.99) and (jcms.hud_spawnmenuAnimScrollTip*6 + 1)/7 or math.min(jcms.hud_spawnmenuAnim, jcms.hud_spawnmenuAnimScrollTip)
 		end
 
 		jcms.hud_recycleAnim = math.max(jcms.hud_recycleAnim - dt*0.666, 0)
@@ -3456,7 +3456,7 @@
 		table.Empty(jcms.hud_locators)
 		
 		jcms.spawnmenu_isOpen = false
-		jcms.spawnmenu_selectedOption = nil
+		jcms.spawnmenu_wheelCurrentIndex = nil
 		
 		if IsValid(jcms.spawnmenu_mouseCapturePanel) then
 			jcms.spawnmenu_mouseCapturePanel:Remove()

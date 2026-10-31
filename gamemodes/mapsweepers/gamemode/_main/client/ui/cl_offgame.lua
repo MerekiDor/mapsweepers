@@ -3199,8 +3199,8 @@ jcms.offgame = jcms.offgame or NULL
 								label:SetFont("jcms_small_bolder")
 								label:SetTextColor(jcms.color_bright)
 
-								local mat = jcms.orders_categoryMats[ orderData.category + 1 ]
-								if mat then
+								local mat = jcms.orders_GetCategoryMat(orderData.category)
+								if mat and not mat:IsError() then
 									local img = pnl:Add("DImage")
 									img:SetImage(mat:GetName() .. ".png")
 									img:SetSize(32, 32)

@@ -311,14 +311,12 @@ jcms.missions.miningoperations = {
 	
 	orders = { --mission-specific call-ins
 		--TODO: Too much repeated code in the funcs, separate out.
-		mo_smallcrate = {
-			category = jcms.SPAWNCAT_MISSION,
+		smallcrate = {
+			category = "mission",
 			cost = 500,
 			cooldown = 120,
 			slotPos = 1,
 			argparser = "orbital_fixed",
-
-			missionSpecific = true,
 
 			func = function(ply, pos, angle)
 				local faction = "jcorp"
@@ -347,14 +345,12 @@ jcms.missions.miningoperations = {
 			end
 		},
 		
-		mo_mediumcrate = {
-			category = jcms.SPAWNCAT_MISSION,
+		mediumcrate = {
+			category = "mission",
 			cost = 1500,
 			cooldown = 120,
 			slotPos = 2,
 			argparser = "orbital_fixed",
-
-			missionSpecific = true,
 
 			func = function(ply, pos, angle)
 				local faction = "jcorp"
@@ -383,14 +379,12 @@ jcms.missions.miningoperations = {
 			end
 		},
 		
-		mo_largecrate = {
-			category = jcms.SPAWNCAT_MISSION,
+		largecrate = {
+			category = "mission",
 			cost = 3500,
 			cooldown = 120,
 			slotPos = 3,
 			argparser = "orbital_fixed",
-
-			missionSpecific = true,
 
 			func = function(ply, pos, angle)
 				local faction = "jcorp"
@@ -417,7 +411,7 @@ jcms.missions.miningoperations = {
 					crate:CPPISetOwner( game.GetWorld() )
 				end
 			end
-		},
+		}
 	}
 
 

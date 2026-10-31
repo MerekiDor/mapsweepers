@@ -29,18 +29,42 @@ end
 -- // Orders {{{
 
 	jcms.orders = jcms.orders or {}
+	jcms.orders_submenus = jcms.orders_submenus or {}
+	jcms.orders_lists = jcms.orders_lists or {}
+
 	jcms.spawnmenu_scrolled = false
 	
 	function jcms.orders_Hash()
 		return jcms.util_Hash(jcms.orders)
 	end
-	
-	jcms.orders_lists = {}
 
+	function jcms.orders_IsCurrentlyUnavailable(orderId) -- for excluding from the lists
+		local orderData = jcms.orders[ orderId ]
+		if not orderData then return true end 
+
+		local isPvp = jcms.util_IsPVP()
+		if (isPvp and orderData.pvpBlacklisted) or (not isPvp and orderData.pvpExclusive)  then
+			return true
+		end
+
+		if orderData.forClass and jcms.locPly:GetNWString("jcms_class", "infantry") ~= orderData.forClass then
+			return true
+		end
+
+		if orderData.missionSpecific and jcms.util_GetMissionType() ~= orderData.missionSpecific then
+			return true
+		end
+
+		return false
+	end
 	
 	function jcms.orders_CanUse(orderId)
 		local orderData = jcms.orders[ orderId ]
 		if not orderData then return false end 
+
+		if jcms.orders_IsCurrentlyUnavailable(orderId) then
+			return false
+		end
 
 		local costMult, coolDownMult = jcms.class_GetCostMultipliers(jcms.class_GetLocPlyData(), orderData)
 		local timeUntilUse = (orderData.nextUse or 0) - CurTime()
@@ -49,43 +73,85 @@ end
 		return (affordable and timeUntilUse <= 0)
 	end
 	
-	function jcms.orders_RebuildLists()
-		for i = 1, 8 do
-			if not jcms.orders_lists[i] then
-				jcms.orders_lists[i] = {}
+	function jcms.orders_RebuildLists(preserveSelections)
+		if jcms.orders_lists then table.Empty(jcms.orders_lists) else jcms.orders_lists = {} end
+
+		if not preserveSelections then
+			if jcms.spawnmenu_selectedOrders then table.Empty(jcms.spawnmenu_selectedOrders) else jcms.spawnmenu_selectedOrders = {} end
+		end
+
+		for orderid, data in pairs(jcms.orders) do
+			if jcms.orders_IsCurrentlyUnavailable(orderid) then continue end
+			local category = tostring(data.category or "mission")
+
+			if jcms.orders_lists[ category ] then
+				table.insert(jcms.orders_lists[ category ], orderid)
 			else
-				table.Empty(jcms.orders_lists[i])
+				jcms.orders_lists[ category ] = { orderid }
+
+				if (not preserveSelections) or (not jcms.spawnmenu_selectedOrders[ category ]) then
+					jcms.spawnmenu_selectedOrders[ category ] = 1
+				end
 			end
 		end
-		
-		for orderid, data in pairs(jcms.orders) do
-			table.insert(jcms.orders_lists[(data.category or jcms.SPAWNCAT_UTILITY) + 1], orderid)
-		end
+
 		for _, catTbl in pairs(jcms.orders_lists) do --Consistent sorting/order.
-			table.sort(catTbl, function(A, B) 
+			table.sort(catTbl, function(A, B)
 				return jcms.orders[A].slotPos < jcms.orders[B].slotPos
 			end)
+		end
+
+		-- Inserting submenus
+		local sortedSubmenuNames = table.GetKeys(jcms.orders_submenus)
+		table.sort(sortedSubmenuNames)
+		for _, submenuName in ipairs(sortedSubmenuNames) do
+			local submenuData = jcms.orders_submenus[ submenuName ]
+			local category = submenuData.rootCategory
+			if category then
+				if jcms.orders_lists[ category ] then
+					table.insert(jcms.orders_lists[ category ], "/" .. submenuName)
+				else
+					jcms.orders_lists[ category ] = { "/" .. submenuName }
+					
+					if (not preserveSelections) or (not jcms.spawnmenu_selectedOrders[ category ]) then
+						jcms.spawnmenu_selectedOrders[ category ] = 1
+					end
+				end
+			end
+		end
+
+		if type(jcms.spawnmenu_selectedOrders) == "table" then
+			for catName in pairs(jcms.spawnmenu_selectedOrders) do
+				local orders = jcms.orders_lists[ catName ]
+				if not orders then
+					jcms.spawnmenu_selectedOrders[ catName ] = nil
+				elseif preserveSelections then
+					jcms.spawnmenu_selectedOrders[ catName ] = math.Clamp(jcms.spawnmenu_selectedOrders[ catName ], 1, #orders)
+				end
+			end
 		end
 	end
 	
 	jcms.orders_RebuildLists()
-
-	
 
 -- // }}}
 
 -- // Order category materials {{{
 
 	jcms.orders_categoryMats = {
-		Material "jcms/orderwheel/turrets.png",
-		Material "jcms/orderwheel/utility.png",
-		Material "jcms/orderwheel/mines.png",
-		Material "jcms/orderwheel/mobility.png",
-		Material "jcms/orderwheel/orbitals.png",
-		Material "jcms/orderwheel/supplies.png",
-		Material "jcms/orderwheel/mission.png",
-		Material "jcms/orderwheel/defensive.png"
+		turrets = Material "jcms/orderwheel/turrets.png",
+		utility = Material "jcms/orderwheel/utility.png",
+		mines = Material "jcms/orderwheel/mines.png",
+		mobility = Material "jcms/orderwheel/mobility.png",
+		orbitals = Material "jcms/orderwheel/orbitals.png",
+		supplies = Material "jcms/orderwheel/supplies.png",
+		-- no mat for mission
+		defensive = Material "jcms/orderwheel/defensive.png"
 	}
+
+	function jcms.orders_GetCategoryMat(name)
+		return jcms.orders_categoryMats[ name ]
+	end
 
 -- // }}}
 
@@ -140,12 +206,72 @@ end
 	jcms.spawnmenu_isOpen = false
 	jcms.spawnmenu_isContext = false
 	jcms.spawnmenu_mouseCapturePanel = NULL
-	jcms.spawnmenu_selectedOption = nil
-	jcms.spawnmenu_selectedOrders = { 1, 1, 1, 1, 1, 1, 1, 1 }
+	jcms.spawnmenu_wheelCurrentIndex = nil
+	jcms.spawnmenu_selectedOrders = jcms.spawnmenu_selectedOrders or {}
 	jcms.spawnmenu_lastUseTime = 0
 	jcms.spawnmenu_tagKeyTranslation = { 7, 1, 3, 5, 8, 2, 4, 6 }
 	jcms.spawnmenu_tagKeyTranslationAlt = { 2, 6, 3, 7, 4, 8, 1, 5 }
 	jcms.spawnmenu_usedReloadScroll = false
+	jcms.spawnmenu_currentSubmenuStack = nil -- table of keys from 'jcms.orders_submenus'
+	jcms.spawnmenu_enteredSubmenu = false
+	jcms.spawnmenu_rightClicked = false
+
+	function jcms.spawnmenu_InsertSubmenuIntoStack(sm)
+		local stack = jcms.spawnmenu_currentSubmenuStack
+		if type(stack) == "table" then
+			table.insert(stack, sm)
+			
+			-- check for repeats in the stack and cut them out
+			local n = #stack
+			for l=1, n do
+				local id1 = n-l+1
+				local id2 = n-(l*2)+1
+				if id2 < 1 then break end
+
+				local repeats = true
+				for i=1, l do
+					local cmp1 = id1 + i - 1
+					local cmp2 = id2 + i - 1
+					if stack[cmp1] ~= stack[cmp2] then
+						repeats = false
+						break
+					end
+				end
+
+				if repeats then
+					for i=id1, n do
+						stack[i] = nil
+					end
+					break
+				end
+			end
+		else
+			jcms.spawnmenu_currentSubmenuStack = { sm }
+		end
+	end
+
+	function jcms.spawnmenu_GetCurrentCategories()
+		local smstack = jcms.spawnmenu_currentSubmenuStack
+
+		if type(smstack) == "table" then
+			local sm = jcms.orders_submenus[ smstack[#smstack] ]
+			if sm then
+				return sm
+			end
+		end
+
+		jcms.spawnmenu_currentSubmenuStack = nil
+		return jcms.class_GetOrderCategories( jcms.class_GetLocPlyData() )
+	end
+
+	function jcms.spawnmenu_GetEntryLocalized(entry)
+		entry = tostring(entry)
+		if entry:sub(1, 1) == "/" then
+			return language.GetPhrase("jcms.cat" .. entry:gsub("/", "_"))
+		else
+			return language.GetPhrase("jcms." .. entry)
+		end
+	end
 
 	function jcms.spawnmenu_Update()
 		if (not jcms.spawnmenu_isOpen) then 
@@ -174,28 +300,36 @@ end
 		if not selectedOption and math.DistanceSqr(mx, my, ScrW()/2, ScrH()/2) > (jcms.spawnmenu_isContext and 8*8 or 64*64) then
 			local a = math.atan2(my-ScrH()/2, mx-ScrW()/2)
 			if jcms.spawnmenu_isContext then
+				-- Selecting one of the call-outs
 				local sector = math.floor( (a+math.pi/8)/(math.pi/4) )%8 + 1
 				selectedOption = sector
 			else
-				local sector = math.floor( (a+math.pi/8)/(math.pi/4) )%8 + 1
-				selectedOption = sector
+				-- Selecting an order
+				local classOrderCategories = jcms.spawnmenu_GetCurrentCategories()
+				local catCount = #classOrderCategories
+
+				local selOrdersTbl = jcms.spawnmenu_selectedOrders
+				local sectorId = math.floor( (a+math.pi/catCount)/(math.pi/catCount*2) )%catCount + 1
+				local sector = classOrderCategories[ sectorId ]
+				selectedOption = sectorId
 				
-				if jcms.spawnmenu_selectedOrders[sector] then
+				if selOrdersTbl[sector] then
 					local scrolled = false
 
 					if jcms.mousewheel > 0 then
-						jcms.spawnmenu_selectedOrders[sector] = math.min(jcms.spawnmenu_selectedOrders[sector] + 1, #jcms.orders_lists[sector])
+						selOrdersTbl[sector] = math.min(selOrdersTbl[sector] + 1, #jcms.orders_lists[sector])
 						scrolled = true
 					elseif jcms.mousewheel < 0 then
-						jcms.spawnmenu_selectedOrders[sector] = math.max(jcms.spawnmenu_selectedOrders[sector] - 1, 1)
+						selOrdersTbl[sector] = math.max(selOrdersTbl[sector] - 1, 1)
 						scrolled = true
 					elseif jcms.locPly:KeyDown(IN_RELOAD) then
 						if not jcms.spawnmenu_usedReloadScroll then
 							jcms.spawnmenu_usedReloadScroll = true
-							jcms.spawnmenu_selectedOrders[sector] = (jcms.spawnmenu_selectedOrders[sector] % (#jcms.orders_lists[sector]) ) + 1
+							selOrdersTbl[sector] = (selOrdersTbl[sector] % (#jcms.orders_lists[sector]) ) + 1
 							scrolled = true
 						end
 					else
+						selOrdersTbl[sector] = math.Clamp(selOrdersTbl[sector], 1, #jcms.orders_lists[sector])
 						jcms.spawnmenu_usedReloadScroll = false
 					end
 
@@ -207,24 +341,60 @@ end
 			end
 		end
 
-		jcms.spawnmenu_selectedOption = selectedOption
-		if selectedOption and (fromKeyboard or input.IsMouseDown(MOUSE_LEFT)) then
-			if jcms.spawnmenu_isContext then
-				GAMEMODE:OnContextMenuClose()
-			else
-				if CurTime() - jcms.spawnmenu_lastUseTime > 0.25 then
-					local selectionId = jcms.spawnmenu_selectedOrders[selectedOption]
-					local ordersList = jcms.orders_lists[selectedOption]
-					local selectedOrder = ordersList and jcms.orders_lists[selectedOption][ selectionId ]
-					
-					if selectedOrder then
-						RunConsoleCommand("jcms_order", selectedOrder)
-						GAMEMODE:OnSpawnMenuOpen()
+		jcms.spawnmenu_wheelCurrentIndex = selectedOption
+		if input.IsMouseDown(MOUSE_RIGHT) then
+			if not jcms.spawnmenu_rightClicked then
+				jcms.spawnmenu_rightClicked = true
+
+				if jcms.spawnmenu_currentSubmenuStack then
+					table.remove(jcms.spawnmenu_currentSubmenuStack)
+					if #jcms.spawnmenu_currentSubmenuStack <= 0 then
+						jcms.spawnmenu_currentSubmenuStack = nil
 					end
+					jcms.hud_spawnmenuAnim = 0.66
+					surface.PlaySound("buttons/combine_button7.wav")
 				end
 			end
-		end
+		else
+			jcms.spawnmenu_rightClicked = false
+			if selectedOption and (fromKeyboard or input.IsMouseDown(MOUSE_LEFT)) then
+				if jcms.spawnmenu_isContext then
+					GAMEMODE:OnContextMenuClose()
+				else
+					if CurTime() - jcms.spawnmenu_lastUseTime > 0.25 then
+						local classOrderCategories = jcms.spawnmenu_GetCurrentCategories()
+						local selectedOrder
 
+						if classOrderCategories.isBasicSubmenu then
+							-- Wheel consists of orders rather than categores
+							selectedOrder = classOrderCategories[selectedOption]
+						else
+							-- Wheel consists of categories with orders inside
+							local categoryName = classOrderCategories[ selectedOption ]
+							local orderList = jcms.orders_lists[ categoryName ]
+							local selectionId = jcms.spawnmenu_selectedOrders[ categoryName ]
+							selectedOrder = orderList and orderList[ selectionId ]
+						end
+
+						if selectedOrder and not jcms.spawnmenu_enteredSubmenu then
+							if selectedOrder:sub(1, 1) == "/" then
+								-- enter the submenu
+								jcms.spawnmenu_InsertSubmenuIntoStack(selectedOrder:sub(2, -1))
+								jcms.spawnmenu_enteredSubmenu = true
+								surface.PlaySound("buttons/combine_button1.wav")
+								jcms.hud_spawnmenuAnim = 0.66
+							else
+								-- use an order
+								RunConsoleCommand("jcms_order", selectedOrder)
+								GAMEMODE:OnSpawnMenuOpen()
+							end
+						end
+					end
+				end
+			else
+				jcms.spawnmenu_enteredSubmenu = false
+			end
+		end
 	end
 
 	local lasertracer = Material "effects/laser_tracer.vmt"
@@ -272,7 +442,7 @@ end
 			for i=1, #commands do
 				local clr = jcms.color_bright
 				local clr_dark = jcms.color_dark
-				if i == jcms.spawnmenu_selectedOption then
+				if i == jcms.spawnmenu_wheelCurrentIndex then
 					clr = jcms.color_bright_alt
 					clr_dark = jcms.color_dark_alt
 				end
@@ -293,22 +463,43 @@ end
 				ca = ca + span
 			end
 		else
-			local span = math.pi*2/8
-			local ca = -span/2*blend
-			local dist = 150
-			
 			local myCash = jcms.cash_Get( LocalPlayer() )
 			local classData = jcms.class_GetLocPlyData()
+			local classOrderCategories = jcms.spawnmenu_GetCurrentCategories()
+			local isBasicSubmenu = classOrderCategories.isBasicSubmenu
+
+			local count = #classOrderCategories
+			local span = (math.pi*2) / count
+			local spanPad = 0
+
+			if count <= 4 then
+				spanPad = 1 - count/8
+			end
+
+			local ca = -span/2*blend
+			local dist = 164
+
+			local spanAdd1 = span*(spanPad/2)
+			local spanAdd2 = span*(1-spanPad/2)
 			
-			for i=1, 8 do
+			for i, categoryName in ipairs(classOrderCategories) do
 				local clr = jcms.color_bright
 				local clr_dark = jcms.color_dark
 				local off, inset = 2, 4
 				local alphamul = 1
 				local cos, sin = math.cos(ca + span/2), math.sin(ca + span/2)
 				
-				local selectionId = jcms.spawnmenu_selectedOrders[i]
-				local selectedOrder = jcms.orders_lists[i][ selectionId ]
+				local selectedOrder
+				if isBasicSubmenu then
+					-- no categories, wheel consists of orders only
+					selectedOrder = classOrderCategories[ i ]
+				else
+					-- categories
+					local orderList = jcms.orders_lists[ categoryName ]
+					local selectionId = jcms.spawnmenu_selectedOrders[ categoryName ]
+					selectedOrder = orderList and orderList[ selectionId ]
+				end
+
 				if not selectedOrder then
 					alphamul = 0.25
 				end
@@ -317,120 +508,182 @@ end
 					local alignX = cos > 0.2 and TEXT_ALIGN_LEFT or cos < -0.2 and TEXT_ALIGN_RIGHT or TEXT_ALIGN_CENTER
 
 					local orderData = jcms.orders[ selectedOrder ]
-					local orderName = language.GetPhrase("jcms." .. selectedOrder)
+					local orderName = jcms.spawnmenu_GetEntryLocalized(selectedOrder)
 
-					local costMult, coolDownMult = jcms.class_GetCostMultipliers(classData, orderData)
-					local timeUntilUse = (orderData.nextUse or 0) - CurTime()
-					local affordable = math.ceil(orderData.cost*costMult) <= myCash
+					if orderData then
+						-- Rendering an order
+						local costMult, coolDownMult = jcms.class_GetCostMultipliers(classData, orderData)
+						local timeUntilUse = (orderData.nextUse or 0) - CurTime()
+						local affordable = math.ceil(orderData.cost*costMult) <= myCash
+						local canUse = jcms.orders_CanUse(selectedOrder)
 
-					if (timeUntilUse > 0) or (not affordable) then
-						alphamul = 0.25
-					end
-
-					if affordable and timeUntilUse <= 0 and i == jcms.spawnmenu_selectedOption then
-						clr = jcms.color_bright_alt
-						clr_dark = jcms.color_dark_alt
-						off = 0
-						inset = 2
-					end
-
-					surface.SetDrawColor(clr.r, clr.g, clr.b, 60*alphamul)
-					drawSegment(sw, sh, ca, ca+span, 128, 128 + 64, 4)
-					surface.SetDrawColor(clr, clr, clr, 255*alphamul)
-					drawSegment(sw, sh, ca, ca+span, 128 - 4 - off, 128 - off, inset)
-
-					if (i == jcms.spawnmenu_selectedOption or timeUntilUse >= 0 or i-1 == jcms.SPAWNCAT_MISSION) then
-						local tx, ty = sw + cos*dist, sh + sin*dist - 2 - 16
-						-- Detailed view
-
-						if not affordable then
-							surface.SetAlphaMultiplier(0.5 * blend^2)
+						if not canUse then
+							alphamul = 0.25
 						end
 
-						local tw, th = draw.SimpleTextOutlined(orderName, "jcms_medium", tx, ty, clr, alignX, TEXT_ALIGN_BOTTOM, 1, clr_dark)
-						if timeUntilUse <= 0 then
-							ty = ty + th - 8
-							tw, th = draw.SimpleTextOutlined(jcms.util_CashFormat(math.ceil(orderData.cost*costMult)) .. " (J)", "jcms_missiondesc", tx, ty-4, clr, alignX, TEXT_ALIGN_CENTER, 1, clr_dark)
+						if (canUse) and (i == jcms.spawnmenu_wheelCurrentIndex) then
+							clr = jcms.color_bright_alt
+							clr_dark = jcms.color_dark_alt
+							off = 0
+							inset = 2
+						end
 
-							ty = ty + th + 4
-							draw.SimpleTextOutlined(language.GetPhrase("jcms.cooldown"):format(string.FormattedTime(math.ceil(orderData.cooldown*coolDownMult), "%02i:%02i")), "jcms_small", tx, ty, clr, alignX, TEXT_ALIGN_BOTTOM, 1, clr_dark)
+						surface.SetDrawColor(clr.r, clr.g, clr.b, 60*alphamul)
+						drawSegment(sw, sh, ca+spanAdd1, ca+spanAdd2, 128, 128 + 64, 4)
+						surface.SetDrawColor(clr, clr, clr, 255*alphamul)
+						drawSegment(sw, sh, ca+spanAdd1, ca+spanAdd2, 128 - 4 - off, 128 - off, inset)
+
+						local mat = jcms.orders_GetCategoryMat(categoryName)
+						if (i == jcms.spawnmenu_wheelCurrentIndex) or (timeUntilUse >= 0) or (not mat or mat:IsError()) then
+							local tx, ty = sw + cos*dist, sh + sin*dist - 2 - 16
+							-- Detailed view
+
+							if not affordable then
+								surface.SetAlphaMultiplier(0.5 * blend^2)
+							end
+
+							local tw, th = draw.SimpleTextOutlined(orderName, "jcms_medium", tx, ty, clr, alignX, TEXT_ALIGN_BOTTOM, 1, clr_dark)
+							if timeUntilUse <= 0 then
+								ty = ty + th - 8
+								tw, th = draw.SimpleTextOutlined(jcms.util_CashFormat(math.ceil(orderData.cost*costMult)) .. " (J)", "jcms_missiondesc", tx, ty-4, clr, alignX, TEXT_ALIGN_CENTER, 1, clr_dark)
+
+								ty = ty + th + 4
+								draw.SimpleTextOutlined(language.GetPhrase("jcms.cooldown"):format(string.FormattedTime(math.ceil(orderData.cooldown*coolDownMult), "%02i:%02i")), "jcms_small", tx, ty, clr, alignX, TEXT_ALIGN_BOTTOM, 1, clr_dark)
+							else
+								ty = ty + th - 4
+								draw.SimpleTextOutlined(language.GetPhrase("jcms.cooldown"):format(string.FormattedTime(timeUntilUse, "%02i:%02i")), "jcms_missiondesc", tx, ty, jcms.color_alert, alignX, TEXT_ALIGN_BOTTOM, 1, clr_dark)
+							end
+
+							if not affordable then
+								surface.SetAlphaMultiplier(blend^2)
+							end
 						else
-							ty = ty + th - 4
-							draw.SimpleTextOutlined(language.GetPhrase("jcms.cooldown"):format(string.FormattedTime(timeUntilUse, "%02i:%02i")), "jcms_missiondesc", tx, ty, jcms.color_alert, alignX, TEXT_ALIGN_BOTTOM, 1, clr_dark)
-						end
-
-						if not affordable then
-							surface.SetAlphaMultiplier(blend^2)
+							local tx, ty = sw + cos*(dist + 16), sh + sin*(dist + 16) - 2
+							surface.SetMaterial(mat)
+							surface.SetDrawColor(clr)
+							surface.DrawTexturedRectRotated(tx, ty, 64, 64, 0)
 						end
 					else
-						local tx, ty = sw + cos*(dist + 16), sh + sin*(dist + 16) - 2
+						-- Rendering a submenu
+						local isSelected = (i == jcms.spawnmenu_wheelCurrentIndex)
+						local hintText = ("#jcms.submenuhint") .. (isSelected and 2 or 1)
 
-						surface.SetMaterial(jcms.orders_categoryMats[i])
-						surface.SetDrawColor(clr)
-						surface.DrawTexturedRectRotated(tx, ty, 64, 64, 0)
+						if isSelected then
+							clr = jcms.color_bright_alt
+							clr_dark = jcms.color_dark_alt
+						end
+
+						surface.SetDrawColor(clr.r, clr.g, clr.b, 60*alphamul)
+						drawSegment(sw, sh, ca + spanAdd1, ca + spanAdd2, 150, 160, 4)
+
+						local tx, ty = sw + cos*dist, sh + sin*dist - 6
+						local tw, th = draw.SimpleTextOutlined(orderName, "jcms_medium", tx, ty, clr, alignX, TEXT_ALIGN_CENTER, 1, clr_dark)
+						draw.SimpleTextOutlined(orderName, "jcms_medium", tx, ty, clr, alignX, TEXT_ALIGN_CENTER, 1, clr_dark)
+						draw.SimpleTextOutlined(hintText, "jcms_small_bolder", tx, ty + th, clr, alignX, TEXT_ALIGN_CENTER, 1, clr_dark)
 					end
 				else
 					surface.SetDrawColor(clr.r, clr.g, clr.b, 60*alphamul)
-					drawSegment(sw, sh, ca, ca+span, 128, 128 + 64, 4)
+					drawSegment(sw, sh, ca + spanAdd1, ca + spanAdd2, 128, 128 + 64, 4)
 				end
 				
 				ca = ca + span
 			end
 			
-			if jcms.spawnmenu_selectedOption then
-				local selectedOption = jcms.spawnmenu_selectedOption
-				local selectionId = jcms.spawnmenu_selectedOrders[selectedOption]
-				local orderList = jcms.orders_lists[selectedOption]
+			if jcms.spawnmenu_wheelCurrentIndex then
+				local selectedCategoryId = jcms.spawnmenu_wheelCurrentIndex
 				
-				local selectedOrder = orderList[selectionId]
-				local orderData = jcms.orders[ orderList[selectionId] ]
-				if orderData then
-					local orderDesc = language.GetPhrase("jcms." .. selectedOrder .. "_desc")
-					draw.SimpleTextOutlined(orderDesc, "jcms_small", ScrW()/2, ScrH()/2 - 228, jcms.color_bright, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 0.5, jcms.color_dark)
+				local selectedOrder
+				local orderList
+				local selectionId
+				if isBasicSubmenu then
+					selectedOrder = classOrderCategories[ selectedCategoryId ]
+				else
+					local selectedCategoryName = classOrderCategories[ selectedCategoryId ]
+					orderList = jcms.orders_lists[ selectedCategoryName ]
+					selectionId = jcms.spawnmenu_selectedOrders[ selectedCategoryName ]
+					selectedOrder = orderList and orderList[ selectionId ]
 				end
 				
-				local maxDisplayed = 11
-				local th = 20
-
-				local oldAlphaMul = surface.GetAlphaMultiplier()
-				for i, order in ipairs(orderList) do
-					local iOff = i - selectionId + 1
-					if iOff < -maxDisplayed/2+1 or iOff > maxDisplayed/2+1 then
-						continue
-					end
-					
-					local orderData = jcms.orders[ order ]
-					local orderName = language.GetPhrase("jcms." .. order)
-					
-					local costMult, coolDownMult = jcms.class_GetCostMultipliers(classData, orderData)
-					local timeUntilUse = (orderData.nextUse or 0) - CurTime()
-					local affordable = math.ceil(orderData.cost*costMult) <= myCash
-					
-					if ((timeUntilUse > 0) or (not affordable)) and (i == selectionId) then
-						surface.SetAlphaMultiplier(oldAlphaMul*0.25)
-					end
-				
-					local clr = jcms.color_bright
-					local clr_dark = jcms.color_dark
-					
-					if i == selectionId then
-						clr = jcms.color_bright_alt
-						clr_dark = jcms.color_dark_alt
-					end
-				
-					if (affordable and timeUntilUse <= 0) or (i == selectionId) then
-						local tw, th = draw.SimpleTextOutlined(orderName, "jcms_small", ScrW()/2, ScrH()/2 - (iOff-1)*th, clr, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, clr_dark)
-						
-						if i == selectionId then
-							local pulse = Lerp(math.abs(math.cos(CurTime()*4)), 6, 12) + tw/2
-							draw.SimpleTextOutlined("[", "jcms_small", ScrW()/2 - pulse, ScrH()/2 - (iOff-1)*th, clr, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, clr_dark)
-							draw.SimpleTextOutlined("]", "jcms_small", ScrW()/2 + pulse, ScrH()/2 - (iOff-1)*th, clr, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, clr_dark)
+				if selectedOrder then
+					local orderData = jcms.orders[ selectedOrder ]
+					if orderData then
+						local keyDesc = "jcms." .. selectedOrder .. "_desc"
+						local orderDesc = language.GetPhrase(keyDesc)
+						local _, dth = draw.SimpleTextOutlined(orderDesc, "jcms_small", ScrW()/2, ScrH()/2 - 238, jcms.color_bright, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 0.5, jcms.color_dark)
+						if jcms.isPlayerEngineer(jcms.locPly) then
+							local keyBoostDesc = "jcms." .. selectedOrder .. "_boostdesc"
+							local orderBoostDesc = language.GetPhrase(keyBoostDesc)
+							if keyBoostDesc ~= orderBoostDesc then
+								draw.SimpleTextOutlined(language.GetPhrase("jcms.orderboost") .. " " .. orderBoostDesc, "jcms_small", ScrW()/2, ScrH()/2 - 238 + dth, jcms.color_bright_alt, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 0.5, jcms.color_dark_alt)
+							end
 						end
-					else
-						draw.SimpleText(orderName, "jcms_small", ScrW()/2, ScrH()/2 - (iOff-1)*th, clr_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 					end
+					
+					if type(orderList) == "table" then -- Displaying orders in category. Doesn't work with basic submenus.
+						local maxDisplayed = 11
+						local th = 20
 
-					surface.SetAlphaMultiplier(oldAlphaMul)
+						local oldAlphaMul = surface.GetAlphaMultiplier()
+						for i, order in ipairs(orderList) do
+							local iOff = i - selectionId + 1
+							if iOff < -maxDisplayed/2+1 or iOff > maxDisplayed/2+1 then
+								continue
+							end
+							
+							local orderData = jcms.orders[ order ]
+							
+							if orderData then
+								-- Selected an order
+								local orderName = jcms.spawnmenu_GetEntryLocalized(order)
+								local costMult, coolDownMult = jcms.class_GetCostMultipliers(classData, orderData)
+								local canUse = jcms.orders_CanUse(order)
+								
+								if (not canUse) and (i == selectionId) then
+									surface.SetAlphaMultiplier(oldAlphaMul*0.25)
+								end
+							
+								local clr = jcms.color_bright
+								local clr_dark = jcms.color_dark
+								
+								if i == selectionId then
+									clr = jcms.color_bright_alt
+									clr_dark = jcms.color_dark_alt
+								end
+							
+								if (canUse) or (i == selectionId) then
+									local tw, th = draw.SimpleTextOutlined(orderName, "jcms_small", ScrW()/2, ScrH()/2 - (iOff-1)*th, clr, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, clr_dark)
+									
+									if i == selectionId then
+										local pulse = Lerp(math.abs(math.cos(CurTime()*4)), 6, 12) + tw/2
+										draw.SimpleTextOutlined("[", "jcms_small", ScrW()/2 - pulse, ScrH()/2 - (iOff-1)*th, clr, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, clr_dark)
+										draw.SimpleTextOutlined("]", "jcms_small", ScrW()/2 + pulse, ScrH()/2 - (iOff-1)*th, clr, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, clr_dark)
+									end
+								else
+									draw.SimpleText(orderName, "jcms_small", ScrW()/2, ScrH()/2 - (iOff-1)*th, clr_dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+								end
+							else
+								-- Selected a submenu
+								local clr = jcms.color_bright
+								local clr_dark = jcms.color_dark
+
+								if i == selectionId then
+									clr = jcms.color_bright_alt
+									clr_dark = jcms.color_dark_alt
+								end
+
+								local orderName = jcms.spawnmenu_GetEntryLocalized(order) .. " ..."
+								local tw, th = draw.SimpleTextOutlined(orderName, "jcms_small", ScrW()/2, ScrH()/2 - (iOff-1)*th, clr, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, clr_dark)
+
+								if i == selectionId then
+									local pulse = Lerp(math.abs(math.cos(CurTime()*4)), 6, 12) + tw/2
+									draw.SimpleTextOutlined(">", "jcms_small", ScrW()/2 - pulse, ScrH()/2 - (iOff-1)*th, clr, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, clr_dark)
+									draw.SimpleTextOutlined("<", "jcms_small", ScrW()/2 + pulse, ScrH()/2 - (iOff-1)*th, clr, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, clr_dark)
+								end
+							end
+
+							surface.SetAlphaMultiplier(oldAlphaMul)
+						end
+					end
 				end
 			end
 
@@ -492,7 +745,7 @@ end
 	function GM:OnSpawnMenuOpen()
 		if jcms.spawnmenu_isOpen then
 			jcms.spawnmenu_isOpen = false
-			jcms.spawnmenu_selectedOption = nil
+			jcms.spawnmenu_wheelCurrentIndex = nil
 
 			if IsValid(jcms.spawnmenu_mouseCapturePanel) then
 				jcms.spawnmenu_mouseCapturePanel:Remove()
@@ -507,8 +760,10 @@ end
 				if jcms.team_JCorp_player(ply) then
 					jcms.spawnmenu_isOpen = true
 					jcms.spawnmenu_isContext = false
+					jcms.spawnmenu_currentSubmenuStack = nil
 					jcms.spawnmenu_MakeMouseCapturePanel()
 					surface.PlaySound("ambient/levels/citadel/pod_open1.wav")
+					jcms.orders_RebuildLists(true)
 				elseif jcms.team_NPC(ply) then
 					RunConsoleCommand("jcms_order")
 				end
@@ -520,7 +775,7 @@ end
 	function GM:OnSpawnMenuClose()
 		--[[if not jcms.spawnmenu_isContext then
 			jcms.spawnmenu_isOpen = false
-			jcms.spawnmenu_selectedOption = nil
+			jcms.spawnmenu_wheelCurrentIndex = nil
 		end
 
 		if IsValid(jcms.spawnmenu_mouseCapturePanel) then
@@ -546,10 +801,10 @@ end
 		if jcms.spawnmenu_isContext then
 			jcms.spawnmenu_isOpen = false
 
-			if jcms.spawnmenu_selectedOption then
+			if jcms.spawnmenu_wheelCurrentIndex then
 				surface.PlaySound("buttons/lightswitch2.wav")
-				RunConsoleCommand("jcms_signal", tostring(jcms.spawnmenu_selectedOption))
-				jcms.spawnmenu_selectedOption = nil
+				RunConsoleCommand("jcms_signal", tostring(jcms.spawnmenu_wheelCurrentIndex))
+				jcms.spawnmenu_wheelCurrentIndex = nil
 			end
 		end
 

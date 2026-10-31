@@ -154,30 +154,6 @@
 					-- Give free respawns to both teams
 					jcms.mission_GivePVPRespawns( math.ceil(player.GetCount()/2) )
 				end
-				
-				for k, order in pairs(jcms.orders) do
-					if (isPVP and order.pvpBlacklisted) or (not isPVP and order.pvpExclusive) then
-						jcms.net_RemoveOrder(k)
-					elseif (isPVP and order.pvpExclusive) or (not isPVP and order.pvpBlacklisted) then
-						jcms.net_SendOrder(k, order)
-					end
-				end
-				
-				-- // Mission-Specific Orders {{{
-					for k, order in pairs(jcms.orders) do 
-						if order.missionSpecific then 
-							jcms.orders[k] = nil
-							jcms.net_RemoveOrder(k)
-						end
-					end
-
-					if data.orders then
-						for k, order in pairs(data.orders) do 
-							jcms.orders[k] = order
-							jcms.net_SendOrder(k, order)
-						end
-					end
-				-- // }}}
 
 				if jcms.director.commander and jcms.director.commander.placePrefabs then 
 					jcms.director.commander:placePrefabs(data)

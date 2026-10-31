@@ -306,7 +306,7 @@
 	jcms.orders = {
 		-- Turrets
 		turret_smg = {
-			category = jcms.SPAWNCAT_TURRETS,
+			category = "turrets",
 			cost = 350,
 			cooldown = 10,
 			argparser = "turret",
@@ -315,7 +315,7 @@
 		},
 		
 		turret_bolter = {
-			category = jcms.SPAWNCAT_TURRETS,
+			category = "turrets",
 			cost = 600,
 			cooldown = 20,
 			argparser = "turret",
@@ -324,7 +324,7 @@
 		},
 		
 		turret_shotgun = {
-			category = jcms.SPAWNCAT_TURRETS,
+			category = "turrets",
 			cost = 550,
 			cooldown = 15,
 			argparser = "turret",
@@ -333,7 +333,7 @@
 		},
 		
 		turret_gatling = {
-			category = jcms.SPAWNCAT_TURRETS,
+			category = "turrets",
 			cost = 950,
 			cooldown = 30,
 			argparser = "turret",
@@ -342,7 +342,7 @@
 		},
 		
 		turret_smrls = {
-			category = jcms.SPAWNCAT_TURRETS,
+			category = "turrets",
 			cost = 1100,
 			cooldown = 45,
 			argparser = "turret_static_attach",
@@ -380,7 +380,7 @@
 		
 		-- Orbitals
 		carpetbombing = {
-			category = jcms.SPAWNCAT_ORBITALS,
+			category = "orbitals",
 			cost = 300,
 			cooldown = 60,
 			slotPos = 1,
@@ -417,7 +417,7 @@
 		},
 		
 		shelling = {
-			category = jcms.SPAWNCAT_ORBITALS,
+			category = "orbitals",
 			cost = 450,
 			cooldown = 90,
 			slotPos = 2,
@@ -490,7 +490,7 @@
 		},
 
 		antiairmissile = {
-			category = jcms.SPAWNCAT_ORBITALS,
+			category = "orbitals",
 			cost = 250,
 			cooldown = 15,
 			slotPos = 6,
@@ -520,7 +520,7 @@
 		},
 		
 		orbitalbeam = {
-			category = jcms.SPAWNCAT_ORBITALS,
+			category = "orbitals",
 			cost = 750,
 			cooldown = 120,
 			slotPos = 3,
@@ -550,7 +550,7 @@
 		},
 
 		smoke = {
-			category = jcms.SPAWNCAT_ORBITALS,
+			category = "orbitals",
 			cost = 150,
 			cooldown = 30,
 			slotPos = 5,
@@ -607,7 +607,7 @@
 		
 		-- Mobility
 		jumppad = {
-			category = jcms.SPAWNCAT_MOBILITY,
+			category = "mobility",
 			cost = 150,
 			cooldown = 10,
 			slotPos = 1,
@@ -645,7 +645,7 @@
 		},
 		
 		vtol = {
-			category = jcms.SPAWNCAT_MOBILITY,
+			category = "mobility",
 			cost = 1200,
 			cooldown = 240,
 			slotPos = 2,
@@ -682,7 +682,7 @@
 		},
 
 		apc = {
-			category = jcms.SPAWNCAT_MOBILITY,
+			category = "mobility",
 			cost = 600,
 			cooldown = 420,
 			slotPos = 3,
@@ -719,7 +719,7 @@
 		},
 
 		hovertank = {
-			category = jcms.SPAWNCAT_MOBILITY,
+			category = "mobility",
 			cost = 4000,
 			cooldown = 420,
 			slotPos = 4,
@@ -756,7 +756,7 @@
 
 		-- Supplies
 		firstaid = {
-			category = jcms.SPAWNCAT_SUPPLIES,
+			category = "supplies",
 			cost = 500,
 			cooldown = 300,
 			slotPos = 2,
@@ -795,7 +795,7 @@
 		},
 		
 		restock = {
-			category = jcms.SPAWNCAT_SUPPLIES,
+			category = "supplies",
 			cost = 300,
 			cooldown = 90,
 			slotPos = 1,
@@ -834,7 +834,7 @@
 		},
 
 		antirad = {
-			category = jcms.SPAWNCAT_SUPPLIES,
+			category = "supplies",
 			cost = 300,
 			cooldown = 5 * 60,
 			slotPos = 3,
@@ -876,7 +876,7 @@
 		
 		-- Mines
 		mine_multiblast = {
-			category = jcms.SPAWNCAT_MINES,
+			category = "mines",
 			cost = 100,
 			cooldown = 10,
 			slotPos = 1,
@@ -915,7 +915,7 @@
 		},
 		
 		mine_c4 = {
-			category = jcms.SPAWNCAT_MINES,
+			category = "mines",
 			cost = 200,
 			cooldown = 40,
 			slotPos = 4,
@@ -974,7 +974,7 @@
 		},
 		
 		mine_breach = {
-			category = jcms.SPAWNCAT_MINES,
+			category = "mines",
 			cost = 100,
 			cooldown = 10,
 			slotPos = 3,
@@ -1029,7 +1029,7 @@
 		
 		-- Defensives
 		shieldcharger = {
-			category = jcms.SPAWNCAT_DEFENSIVE,
+			category = "defensive",
 			cost = 650,
 			cooldown = 90,
 			slotPos = 2,
@@ -1065,7 +1065,7 @@
 		},
 
 		tesla = {
-			category = jcms.SPAWNCAT_DEFENSIVE,
+			category = "defensive",
 			cost = 300,
 			cooldown = 45,
 			slotPos = 1,
@@ -1105,7 +1105,7 @@
 
 		-- Utility
 		respawnbeacon = {
-			category = jcms.SPAWNCAT_UTILITY,
+			category = "utility",
 			cost = 1000,
 			cooldown = 240,
 			slotPos = 1,
@@ -1138,7 +1138,7 @@
 		},
 		
 		autohacker = {
-			category = jcms.SPAWNCAT_UTILITY,
+			category = "utility",
 			cost = 500,
 			cooldown = 160,
 			slotPos = 2,
@@ -1167,7 +1167,7 @@
 		},
 		
 		locator = {
-			category = jcms.SPAWNCAT_UTILITY,
+			category = "utility",
 			cost = 100,
 			cooldown = 20,
 			slotPos = 3,
@@ -1194,7 +1194,7 @@
 					device:CPPISetOwner( game.GetWorld() )
 				end
 			end
-		},
+		}
 	}
 	
 	jcms.orders_lastused = {}
@@ -1213,10 +1213,22 @@
 				return false, 0
 			end
 
+			if orderData.forClass and ply:GetNWString("jcms_class", "infantry") ~= orderData.forClass then
+				return false, 7
+			end
+
+			if orderData.missionSpecific and jcms.util_GetMissionType() ~= orderData.missionSpecific then
+				return false, 7
+			end
+
 			local cooldown = orderData.cooldown_override or orderData.cooldown
 
 			if jcms.cash_Get(ply) < math.ceil(cost*costMult) then 
 				return false, 1, ("%d / %d"):format(jcms.cash_Get(ply), math.ceil(cost*costMult))
+			end
+
+			if not jcms.util_IsOrderReachable(ply, orderId)  then
+				return false, 7
 			end
 			
 			if not jcms.orders_lastused[orderId] then return true end
@@ -1338,6 +1350,38 @@
 				file.Delete(orderOverridesFile, "DATA")
 			end
 		end)
+	end
+
+-- // }}}
+
+-- // Submenus {{{
+
+	jcms.orders_submenus = {}
+	function jcms.order_CreateSubmenu(name, rootCategory, entries, isBasicSubmenu)
+		name = tostring(name)
+		rootCategory = tostring(rootCategory)
+		assert(type(entries) == "table", "entries must be a table")
+
+		-- Basic submenu has no categories. Each order gets its own slot on the wheel.
+		-- 8 orders means the wheel will consist of 8 pieces
+
+		-- Non-basic submenu consists of categories of orders
+		-- Yes, you can put even more submenus under those, just specify them in rootCategory.
+
+		jcms.orders_submenus[ name ] = {
+			rootCategory = rootCategory,
+			isBasicSubmenu = not not isBasicSubmenu,
+			entries = entries
+		}
+	end
+
+	function jcms.order_CreateSubmenuAndNetwork(name, ...) -- same args as CreateSubmenu
+		jcms.order_CreateSubmenu(name, ...)
+		jcms.net_SendSubmenu(name)
+	end
+
+	if jcms.firstTimeInited then -- Send submenus in case of hotloading
+		jcms.net_SendAllSubmenus(ply)
 	end
 
 -- // }}}

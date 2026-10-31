@@ -175,14 +175,12 @@ jcms.missions.infestation = {
 	end,
 	
 	orders = { --mission-specific call-ins
-		i_umbrella = {
-			category = jcms.SPAWNCAT_MISSION,
+		umbrella = {
+			category = "mission",
 			cost = 250,
 			cooldown = 40,
 			slotPos = 1,
 			argparser = "turret_static",
-
-			missionSpecific = true,
 
 			func = function(ply, pos, angle, attachEnt)
 				local umbrella = ents.Create("jcms_zombieumbrella")

@@ -135,14 +135,12 @@ jcms.missions.thumpersabotage = {
 	end,
 
 	orders = { --mission-specific call-ins
-		ts_sapper = {
-			category = jcms.SPAWNCAT_MISSION,
+		sapper = {
+			category = "mission",
 			cost = 75,
 			cooldown = 40,
 			slotPos = 1,
 			argparser = "mine",
-
-			missionSpecific = true,
 
 			func = function(ply, pos, angle, attachEnt)
 				local device = ents.Create("jcms_sapper")

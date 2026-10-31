@@ -48,6 +48,7 @@ local bits_ply, bits_ent, bits_wld = 2, 2, 5
 		local WLD_LEADERBOARD = 14
 		local WLD_CREEP = 15
 		local WLD_CREEP_INITIAL = 16
+		local WLD_ORDER_SUBMENU = 17
 
 	-- // }}}
 
@@ -332,10 +333,27 @@ if SERVER then
 			net.WriteUInt(WLD_ORDERS, bits_wld)
 			net.WriteBool(true) -- true: Sending, false: Removing
 			net.WriteString(orderId)
-			net.WriteUInt(orderData.category or jcms.SPAWNCAT_UTILITY, 3)
+			net.WriteString(orderData.category or "mission")
 			net.WriteUInt(orderData.cost_override or orderData.cost or 0, 24)
 			net.WriteUInt(orderData.cooldown_override or orderData.cooldown or 0, 12)
 			net.WriteUInt(orderData.slotPos or 1, 4)
+
+			if type(orderData.missionSpecific) == "string" then
+				net.WriteBool(true)
+				net.WriteString(orderData.missionSpecific)
+			else
+				net.WriteBool(false)
+			end
+
+			if type(orderData.forClass) == "string" then
+				net.WriteBool(true)
+				net.WriteString(orderData.forClass)
+			else
+				net.WriteBool(false)
+			end
+
+			net.WriteBool(not not orderData.pvpBlacklisted)
+			net.WriteBool(not not orderData.pvpExclusive)
 
 		if IsValid(onlyToPlayer) and onlyToPlayer:IsPlayer() then
 			net.Send(onlyToPlayer)
@@ -348,15 +366,11 @@ if SERVER then
 		local delay = 0.015
 		local count = table.Count(orders)
 		local i = 0
-		
-		local isPvp = jcms.util_IsPVP() 
 
 		for orderId, orderData in pairs(orders) do
 			local _i =  i + 1
 			timer.Simple(i*delay, function()
-				if (isPvp and not orderData.pvpBlacklisted) or (not isPvp and not orderData.pvpExclusive) then
-					jcms.net_SendOrder(orderId, orderData, onlyToPlayer)
-				end
+				jcms.net_SendOrder(orderId, orderData, onlyToPlayer)
 			end)
 			i = i + 1
 		end
@@ -1004,6 +1018,56 @@ if SERVER then
 			end
 		net.Send(toPly)
 	end
+
+	function jcms.net_SendSubmenu(submenuName, ply)
+		local submenuData = assert(jcms.orders_submenus[ submenuName ], "invalid submenu '"..tostring(submenuName).."'")
+		net.Start("jcms_msg")
+			net.WriteBool(false)
+			net.WriteEntity(game.GetWorld())
+			net.WriteUInt(WLD_ORDER_SUBMENU, bits_wld)
+			
+			net.WriteBool(true) -- adding
+			net.WriteString(submenuName)
+			net.WriteString(submenuData.rootCategory)
+			net.WriteBool(submenuData.isBasicSubmenu)
+			net.WriteUInt(#submenuData.entries, 6)
+			for i, entry in ipairs(submenuData.entries) do
+				net.WriteString(entry)
+			end
+		if ply then
+			net.Send(ply)
+		else
+			net.Broadcast()
+		end
+	end
+
+	function jcms.net_SendAllSubmenus(ply)
+		local delay = 0.015
+		local count = table.Count(jcms.orders_submenus)
+		local i = 0
+
+		for submenuName in pairs(jcms.orders_submenus) do
+			timer.Simple(i*delay, function()
+				jcms.net_SendSubmenu(submenuName, ply)
+			end)
+			i = i + 1
+		end
+	end
+
+	function jcms.net_RemoveSubmenu(submenuName, ply)
+		net.Start("jcms_msg")
+			net.WriteBool(false)
+			net.WriteEntity(game.GetWorld())
+			net.WriteUInt(WLD_ORDER_SUBMENU, bits_wld)
+			
+			net.WriteBool(false) -- removing
+			net.WriteString(submenuName)
+		if ply then
+			net.Send(ply)
+		else
+			net.Broadcast()
+		end
+	end
 end
 
 if CLIENT then
@@ -1136,10 +1200,25 @@ if CLIENT then
 			local orderId = net.ReadString()
 			
 			if adding then
-				local category = net.ReadUInt(3)
+				local category = net.ReadString()
 				local cost = net.ReadUInt(24)
 				local cooldown = net.ReadUInt(12)
 				local slotPos = net.ReadUInt(4) --For sorting
+				
+				local forMission
+				local hasForMission = net.ReadBool()
+				if hasForMission then
+					forMission = net.ReadString()
+				end
+
+				local forClass
+				local hasForClass = net.ReadBool()
+				if hasForClass then
+					forClass = net.ReadString()
+				end
+
+				local pvpBlacklisted = net.ReadBool() or nil
+				local pvpExclusive = net.ReadBool() or nil
 				
 				local nextUse = nil
 				if jcms.orders[ orderId ] then
@@ -1152,7 +1231,11 @@ if CLIENT then
 					cost = cost,
 					cooldown = cooldown,
 					slotPos = slotPos,
-					nextUse = nextUse
+					nextUse = nextUse,
+					missionSpecific = forMission,
+					forClass = forClass,
+					pvpBlacklisted = pvpBlacklisted,
+					pvpExclusive = pvpExclusive
 				}
 				
 				jcms.printf("Order '%s' added", orderId)
@@ -1485,7 +1568,7 @@ if CLIENT then
 			jcms.announcer_Set(net.ReadString())
 		end,
 
-		[WLD_NUKE] = function()
+		[ WLD_NUKE ] = function()
 			jcms.effect_skyNuke(net.ReadVector(), 3)
 		end,
 
@@ -1623,6 +1706,25 @@ if CLIENT then
 				jcms.zombieCreep_OccupyCell(net.ReadUInt(jcms.zombieCreep_BitCount))
 			end
 			hook.Call("jcms_ZombieCreep_RebuildMesh")
+		end,
+
+		[ WLD_ORDER_SUBMENU ] = function()
+			local isAdding = net.ReadBool()
+			local name = net.ReadString()
+			if isAdding then
+				local rootCategory = net.ReadString()
+				local isBasicSubmenu = net.ReadBool()
+				local entryCount = net.ReadUInt(6)
+				local data = { rootCategory = rootCategory, isBasicSubmenu = isBasicSubmenu }
+				-- unlike the serverside counterpart, does not have a dedicated 'entries' table
+				-- for consistency with jcms.class_defaultOrderCategories
+				for i=1, entryCount do
+					data[i] = net.ReadString()
+				end
+				jcms.orders_submenus[ name ] = data
+			else
+				jcms.orders_submenus[ name ] = nil
+			end
 		end
 	}
 

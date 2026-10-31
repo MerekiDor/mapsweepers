@@ -56,18 +56,18 @@ class.repairMul = 2.5
 
 --Engineer's cost offset behaviours.
 class.engineer_discounts = {
-	[jcms.SPAWNCAT_ORBITALS] = 0.5,
-	[jcms.SPAWNCAT_MINES] = 0.5
+	["orbitals"] = 0.5,
+	["mines"] = 0.5
 }
 
 class.engineer_cooldowns = {
-	[jcms.SPAWNCAT_TURRETS] = 0.5,
-	[jcms.SPAWNCAT_ORBITALS] = 0.5,
-	[jcms.SPAWNCAT_MOBILITY] = 1,
-	[jcms.SPAWNCAT_SUPPLIES] = 1,
-	[jcms.SPAWNCAT_MINES] = 0.5,
-	[jcms.SPAWNCAT_DEFENSIVE] = 0.5,
-	[jcms.SPAWNCAT_UTILITY] = 0.5
+	["turrets"] = 0.5,
+	["orbitals"] = 0.5,
+	["mobility"] = 1,
+	["supplies"] = 1,
+	["mines"] = 0.5,
+	["defensive"] = 0.5,
+	["utility"] = 0.5
 }
 
 function class.getCostMult(orderData)

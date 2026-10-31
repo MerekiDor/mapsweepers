@@ -76,14 +76,16 @@ local nmt = FindMetaTable("NPC")
 	jcms.LOCATOR_WARNING = 2
 	jcms.LOCATOR_TIMED = 3
 
-	jcms.SPAWNCAT_TURRETS = 0
-	jcms.SPAWNCAT_UTILITY = 1
-	jcms.SPAWNCAT_MINES = 2
-	jcms.SPAWNCAT_MOBILITY = 3
-	jcms.SPAWNCAT_ORBITALS = 4
-	jcms.SPAWNCAT_SUPPLIES = 5
-	jcms.SPAWNCAT_MISSION = 6
-	jcms.SPAWNCAT_DEFENSIVE = 7
+	-- Backwards compatibility with orders that use the old enums.
+	-- These enums used to be numbers, now they're strings, and orders just use strings directly bypassing enums.
+	jcms.SPAWNCAT_TURRETS = "turrets"
+	jcms.SPAWNCAT_UTILITY = "utility"
+	jcms.SPAWNCAT_MINES = "mines"
+	jcms.SPAWNCAT_MOBILITY = "mobility"
+	jcms.SPAWNCAT_ORBITALS = "orbitals"
+	jcms.SPAWNCAT_SUPPLIES = "supplies"
+	jcms.SPAWNCAT_MISSION = "mission"
+	jcms.SPAWNCAT_DEFENSIVE = "defensive"
 
 	jcms.NOTIFY_DESTROYED = 1
 	jcms.NOTIFY_OBTAINED = 2
@@ -1616,7 +1618,6 @@ local nmt = FindMetaTable("NPC")
 		return largest
 	end
 
-	
 	function jcms.util_GetLargestAlivePvpTeamCount()
 		local teamCounts = {}
 
@@ -1631,6 +1632,61 @@ local nmt = FindMetaTable("NPC")
 		end
 
 		return largest
+	end
+
+	function jcms.util_IsOrderReachable(ply, orderId)
+		-- I feel like I'm missing something here, so if there are any issus, please alert MerekiDor
+		local orderData = jcms.orders[ orderId ]
+
+		if orderData then
+			local classData = jcms.class_GetData(ply)
+
+			local category = orderData.category
+			local categories = jcms.class_GetOrderCategories( classData )
+			if #categories <= 0 then return false end
+
+			-- first lets look through the root wheel
+			for i, cat in ipairs(categories) do
+				if cat == category then
+					return true
+				end
+			end
+
+			-- ok bitch do it the hard way
+			local submenusByCategories = {}
+			for k, v in pairs(jcms.orders_submenus) do
+				local cat = v.rootCategory
+				if not submenusByCategories[ cat ] then
+					submenusByCategories[ cat ] = { k }
+				else
+					table.insert(submenusByCategories[ cat ], k)
+				end
+			end
+
+			for i, cat in ipairs(categories) do
+				local submenus = submenusByCategories[ cat ]
+				if not submenus then continue end
+				for j, submenuName in ipairs(submenus) do
+					local submenu = jcms.orders_submenus[submenuName]
+					if not submenu then continue end
+					--print("", j, submenuName)
+					for k, entry in ipairs(submenu.entries or submenu) do -- Accounts for server and client (server has .entries)
+						--print("","",k,entry)
+						if submenu.isBasicSubmenu then
+							if entry == orderId then
+								return true -- we found an order in a basic submenu
+							end
+						else
+							if category == entry then
+								return true -- we found an order in one of the categories in a submenu
+							end
+						end
+					end
+				end
+			end
+		end
+
+		return false
 	end
 -- }}}
 

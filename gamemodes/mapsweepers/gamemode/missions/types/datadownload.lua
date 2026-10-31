@@ -691,14 +691,12 @@ jcms.missions.datadownload = {
 	end,
 	
 	orders = { --mission-specific call-ins
-		dd_rb = {
-			category = jcms.SPAWNCAT_MISSION,
+		recallbeacon = {
+			category = "mission",
 			cost = 1,
 			cooldown = 90,
 			slotPos = 1,
 			argparser = "respawn_beacon",
-			
-			missionSpecific = true,
 
 			func = function(ply, pos, angle)
 				local beacon = ents.Create("jcms_recallbeacon")

@@ -64,6 +64,18 @@ include "_main/sh_deprecatedcode.lua"
 		for i, v in ipairs(missionFiles) do 
 			include("missions/types/" .. v)
 		end
+
+		-- Add mission-specific orders
+		for missionName, missionData in pairs( jcms.missions ) do
+			if type(missionData.orders) ~= "table" then continue end
+
+			for orderName, orderData in pairs(missionData.orders) do
+				orderData.missionSpecific = missionName
+				local fullOrderName = missionName .. "." .. orderName
+				jcms.orders[ fullOrderName ] = orderData
+				jcms.printf("Mission '%s': registered order '%s' as '%s'", missionName, orderName, fullOrderName)
+			end
+		end
 	end
 -- // }}}
 
@@ -91,6 +103,18 @@ include "_main/sh_deprecatedcode.lua"
 			local idFirst, idLast = jcms.classesOrderIndices[first] or 10, jcms.classesOrderIndices[last] or 10
 			return idFirst < idLast
 		end)
+
+		-- Add class-only orders
+		for className, classData in pairs( jcms.classes ) do
+			if type(classData.orders) ~= "table" then continue end
+
+			for orderName, orderData in pairs(classData.orders) do
+				orderData.forClass = className
+				local fullOrderName = className .. "." .. orderName
+				jcms.orders[ fullOrderName ] = orderData
+				jcms.printf("Class '%s': registered order '%s' as '%s'", className, orderName, fullOrderName)
+			end
+		end
 	end
 -- // }}}
 
@@ -305,6 +329,7 @@ AddCSLuaFile "_main/sh_deprecatedcode.lua"
 		jcms.net_NotifySquadChange(ply, true)
 		jcms.net_SendFogData(ply) --Currently doesn't update/assumes the fog stays static. Might cause weird behaviour on maps that edit their fog. 
 		jcms.net_SendManyOrders(jcms.orders, ply)
+		jcms.net_SendAllSubmenus(ply)
 		jcms.net_SendWeaponPrices(jcms.weapon_prices, ply)
 		jcms.net_SendAllCreep(ply)
 
@@ -3115,5 +3140,6 @@ AddCSLuaFile "_main/sh_deprecatedcode.lua"
 	end
 
 	hook.Run("MapSweepersReady") -- If you want to make an addon that adds new content into Map Sweepers, use this hook.
+	jcms.firstTimeInited = true
 
 -- // }}}
