@@ -182,6 +182,9 @@ local prefabs = jcms.prefabs
 								ed2:SetRadius(i==1 and 220 or math.random(64, 128))
 								ed2:SetNormal(self:GetAngles():Up())
 								ed2:SetFlags(i==1 and 3 or 1)
+								if i == 1 then
+									ed2:SetColor(jcms.util_ColorInteger(Color(200, 200, 200, 255)))
+								end
 								util.Effect("jcms_blast", ed2)
 								
 								ed2:SetOrigin(self:WorldSpaceCenter() + VectorRand(-64, 64))
