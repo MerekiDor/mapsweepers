@@ -45,7 +45,7 @@
 		tagEntities = function(director, missionData, tags)
 			for i, fp in ipairs(missionData.flashpoints) do
 				if IsValid(fp) then
-					tags[fp] = { name = "#jcms.flashpoint", moving = false, active = not fp:GetIsComplete() }
+					tags[fp] = { name = "#jcms.flashpoint", moving = false, active = not fp:GetIsComplete(), landmarkIcon = "flashpoint" }
 				end
 			end
 		end,

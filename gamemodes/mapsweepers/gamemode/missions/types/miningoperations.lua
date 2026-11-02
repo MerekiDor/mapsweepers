@@ -190,7 +190,7 @@ jcms.missions.miningoperations = {
 	tagEntities = function(director, missionData, tags)
 		for i, refinery  in ipairs(missionData.refineries_main) do 
 			if IsValid(refinery) then
-				tags[refinery] = { name = "#jcms.refinery", moving = false, active = not missionData.evacuating }
+				tags[refinery] = { name = "#jcms.refinery", moving = false, active = not missionData.evacuating, landmarkIcon = "pickaxe" }
 			end
 		end
 
