@@ -123,6 +123,10 @@ if SERVER then
 			ed:SetColor( jcms.util_ColorIntegerFast(185, 220, 255) )
 			util.Effect("jcms_blast", ed)
 			util.Effect("Explosion", ed)
+
+			self:PrecacheGibs()
+			local force = dmg:GetDamageForce() / 128
+			self:GibBreakClient(force)
 			self:Remove()
 		end
 	end
