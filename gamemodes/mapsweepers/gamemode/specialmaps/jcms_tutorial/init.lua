@@ -25,6 +25,7 @@
 jcms.specialmap_missionType = "tutorialmission"
 jcms.specialmap_dontUseWeaponPrices = true
 jcms.specialmap_dontUseOrderOverrides = true
+jcms.specialmap_noMissesAnnouncer = true
 
 hook.Add("InitPostEntity", "jcms_TutorialBuild", function()
 	jcms.tutorialPhase = 0

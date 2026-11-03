@@ -983,7 +983,7 @@ AddCSLuaFile "_main/sh_deprecatedcode.lua"
 
 					ent.jcms_consecMisses = -2
 				end
-			elseif not jcms.inSpecialMap then
+			elseif not jcms.specialmap_noMissesAnnouncer then
 				-- Misses tracker for the announcer
 				local time = CurTime()
 				if (not ent.jcms_lastMissTime) or (time - ent.jcms_lastMissTime > 0.75) then
