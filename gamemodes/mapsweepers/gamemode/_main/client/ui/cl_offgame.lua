@@ -1688,7 +1688,7 @@ jcms.offgame = jcms.offgame or NULL
 				gui.OpenURL("https://discord.gg/m5DBJrXjUf")
 			end
 			discord:SetSize(bsize, 32)
-			discord:SetPos(32, 32)
+			discord:SetPos(32, 64-8)
 			discord.jText = "Discord"
 			discord.jColor = Color(114,137,218)
 			discord.Paint = jcms.offgame_paint_SocialMediaButton
@@ -1713,7 +1713,7 @@ jcms.offgame = jcms.offgame or NULL
 			vk.jColor = Color(0,119,255)
 			vk.Paint = jcms.offgame_paint_SocialMediaButton
 
-			local fetter = socialmedia:Add("DButton")
+			--[[local fetter = socialmedia:Add("DButton")
 			function fetter:DoClick()
 				gui.OpenURL("https://discord.gg/ThqwGkkZPz")
 			end
@@ -1721,7 +1721,7 @@ jcms.offgame = jcms.offgame or NULL
 			fetter:SetSize(vk:GetX() - fetter:GetX() + vk:GetWide() / 2, 32)
 			fetter.jText = language.GetPhrase("jcms.ourgame")
 			fetter.jColor = Color(150, 150, 150)
-			fetter.Paint = jcms.offgame_paint_SocialMediaButton
+			fetter.Paint = jcms.offgame_paint_SocialMediaButton--]]
 
 			return socialmedia
 		end
