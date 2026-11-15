@@ -922,7 +922,7 @@ jcms.offgame = jcms.offgame or NULL
 							bJoinTeam2:SetEnabled(populations[1] >= populations[2])
 						end
 					else
-						bJoinNPC:SetVisible(jcms.cvar_npcteam_restrict:GetInt() == 0)
+						bJoinNPC:SetVisible(jcms.cvar_npcteam_restrict:GetInt() == 0 and jcms.statistics_GetLevel() > 5) --unrestricted and at least lvl 5 to start as npc team
 					end
 
 					local pvpMode = jcms.cvar_pvpallowed:GetInt()
