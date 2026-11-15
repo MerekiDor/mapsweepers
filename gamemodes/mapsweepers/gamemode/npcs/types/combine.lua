@@ -67,7 +67,7 @@
 	function jcms.npc_Gunship_Setup(npc, strafeDelay)
 		npc:Fire("DisableGroundAttack") --Disable the default belly cannon
 
-		npc:SetMaxHealth(npc:GetMaxHealth()*50) --5k hp, makes cone targeting treat us with proper priority.
+		npc:SetMaxHealth(npc:GetMaxHealth()*30) --3k hp, makes cone targeting treat us with proper priority.
 		npc:SetHealth(npc:GetMaxHealth())
 		npc.jcms_gunship_hits = 0 --Set by NPC, here to avoid a lua error.
 		npc.jcms_gunship_maxHits = 0 --ditto
@@ -350,7 +350,7 @@ jcms.npc_types.combine_gunship = {
 		jcms.npc_Gunship_Setup(npc, 50)
 		npc:SetNWString("jcms_boss", "combine_gunship")
 
-		local healthMult = npc:GetMaxHealth() / (100 * 50) --Keep us scaling with default boss HP Scaling
+		local healthMult = npc:GetMaxHealth() / (100 * 30) --Keep us scaling with default boss HP Scaling
 		npc.jcms_gunship_maxHits = math.floor(math.max(2 * healthMult, 2)) --2 Hits
 		npc.jcms_gunship_hits = npc.jcms_gunship_maxHits
 
@@ -441,7 +441,7 @@ jcms.npc_types.combine_cybergunship = {
 		jcms.npc_Gunship_Setup(npc, 20)
 		npc:SetNWString("jcms_boss", "combine_cybergunship")
 		
-		local healthMult = npc:GetMaxHealth() / (100 * 50) --Keep us scaling with default boss HP Scaling
+		local healthMult = npc:GetMaxHealth() / (100 * 30) --Keep us scaling with default boss HP Scaling
 		npc.jcms_gunship_maxHits = math.floor(3 * healthMult) -- 3 Hits
 		npc.jcms_gunship_hits = npc.jcms_gunship_maxHits
 
