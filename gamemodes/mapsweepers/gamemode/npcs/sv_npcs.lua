@@ -348,6 +348,7 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 		local nodeDistDict = {}
 		local validNodePositions = {}
 		for i, node in ipairs(ainReader.nodePositions) do --"node" is a vector. I wrote this before realising nodes didn't exist at runtime.
+			if ainReader.nodeTypes[i] ~= 2 then continue end -- Ignore non-ground nodes
 			local area = jcms.mapdata.nodeAreas[node]
 			local zone = zoneDict[area]
 
@@ -364,7 +365,7 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 				if nearest > dist2_min and nearest < dist2_max then 
 					local visible = false
 
-					if nearest > dist2_tovis then --Check if we can be seen, but only within 3000u
+					if nearest < dist2_tovis then --Check if we can be seen, but only within 3000u
 						trData.start = nodePos
 						for i, eyePos in ipairs(swpEyes) do 
 							trData.endpos = eyePos
@@ -386,10 +387,10 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 
 		table.sort(validNodePositions, function(a,b) return nodeDistDict[a] < nodeDistDict[b] end )
 
-
 		--Try to relocate our NPCs
 		local vTrRes = {}
 		local vTrData = {MASK_NPCSOLID, output = vTrRes}
+		local handled = 0
 		for i, npc in ipairs(npcs) do
 			if #validNodePositions == 0 then break end  --If we can't relocate any more enemies, stop trying. 
 
@@ -402,9 +403,16 @@ jcms.npcSquadSize = 4 -- Let's see if smaller squads fix their strange behavior.
 				if not vTrRes.Hit then 
 					jcms.SendStragglerAfterDelay(npc, nPos, 1, patrollingNPCs) --Send with a portal effect/etc
 					table.remove(validNodePositions, i) --Don't spawn other npcs here.
+					handled = handled + 1
 					break --On-to the next npc
 				end
 			end
+		end
+
+		if jcms.debugSpawns then
+			str = string.format("Stragglers #%d", handled)
+			PrintMessage(HUD_PRINTCENTER, str)
+			print(str)
 		end
 	end
 

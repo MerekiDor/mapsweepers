@@ -1899,6 +1899,13 @@
 				end
 				
 				local queue = jcms.director_MakeQueue(d, swarmCost, d.swarmDanger)
+
+				if jcms.debugSpawns then
+					local str = string.format("Swarm c=%.2f D=%d (#%d)", swarmCost, d.swarmDanger, #queue)
+					PrintMessage(HUD_PRINTCENTER, str)
+					print(str)
+				end
+
 				jcms.director_SpawnSwarm(d, queue)
 			elseif jcms.director_ShouldForceSpawnNPCPlayers() then
 				local npcPlayers = jcms.npc_GetPlayersToRespawn()
@@ -1934,11 +1941,12 @@
 
 				local curNpcCount = #d.npcs
 				
-				if curNpcCount > jcms.cvar_softcap:GetInt() then
+				if (curNpcCount > jcms.cvar_softcap:GetInt()) or (d.npcs_alarm > 0.5) then
+					d.encounterTriggerLast = CurTime()
 					return
 				end
 				
-				if (CurTime() - d.encounterTriggerLast) >= ((patrollingNPCs and 2.75 or 6)/difficulty_freq) then
+				if (CurTime() - d.encounterTriggerLast) >= ((patrollingNPCs and 4 or 10)/difficulty_freq) then
 					local sweepers = jcms.GetAliveSweepers()
 					
 					-- for i, enc in ipairs(d.encounters) do
@@ -1988,6 +1996,7 @@
 						if mustTrigger then
 							local worked = jcms.director_TriggerEncounter(d, enc)
 							table.remove(d.encounters, i)
+							break
 						end
 					end
 				end
@@ -2042,6 +2051,12 @@
 				if isstring(enemyType) then
 					jcms.npc_SpawnFancy(enemyType, pos, delay + i * 0.1)
 				end
+			end
+
+			if jcms.debugSpawns and #queue >= 1 then
+				local str = string.format("Encounter #%d", #queue)
+				PrintMessage(HUD_PRINTCENTER, str)
+				print(str)
 			end
 			
 			return #queue >= 1 and #allVectors >= 1
@@ -2103,6 +2118,22 @@
 					jcms.director_ThinkSwarm(d)
 					jcms.director_ThinkTags(d)
 					jcms.director_ThinkPvp(d) --Doesn't do anything unless pvpMode is on
+
+					if jcms.debugSpawns then
+						local dangerStrings = {
+							[0] = "Unknown",
+							[1] = "Fodder",
+							[2] = "Strong",
+							[3] = "Boss",
+							[4] = "Champion"
+						}
+
+						local dangerString = tostring(dangerStrings[d.swarmDanger or 0] or dangerStrings[0])
+
+						DebugInfo(0, "NPCs in combat: " .. (d.npcs_inCombat or 0) .. "/" .. #d.npcs)
+						DebugInfo(1, "Heat level: " .. math.Round((d.npcs_alarm or 0)*100) .. "%")
+						DebugInfo(3, "Swarm #" .. (d.swarmCount or 0) .. " (" .. dangerString .. ") | Next in " .. math.Round((d.swarmNext or 0) - jcms.director_GetMissionTime()) .. "s")
+					end
 
 					jcms.director_DebrisClear(d)
 				end
