@@ -207,14 +207,14 @@ table.Empty(jcms.classesOrderIndices)
 		end
 	end
 
-	function jcms.class_GetCostMultipliers(data, orderData)
+	function jcms.class_GetCostMultipliers(data, orderData, orderId)
 		local costMult, coolDownMult = 1, 1
 		if data then
 			if data.getCostMult then
-				costMult = data.getCostMult(orderData)
+				costMult = data.getCostMult(orderData, orderId)
 			end
 			if data.getCoolDownMult then
-				coolDownMult = data.getCoolDownMult(orderData)
+				coolDownMult = data.getCoolDownMult(orderData, orderId)
 			end
 		end
 		return costMult, coolDownMult

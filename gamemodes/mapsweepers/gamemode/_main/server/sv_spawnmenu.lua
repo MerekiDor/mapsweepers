@@ -1206,7 +1206,7 @@
 	function jcms.orders_CanUse(ply, orderId)
 		local orderData = jcms.orders[ orderId ]
 		if orderData then
-			local costMult, coolDownMult = jcms.class_GetCostMultipliers(jcms.class_GetData(ply), orderData)
+			local costMult, coolDownMult = jcms.class_GetCostMultipliers(jcms.class_GetData(ply), orderData, orderId)
 			local cost = orderData.cost_override or orderData.cost
 			local isPvp = jcms.util_IsPVP()
 			if cost <= 0 or (isPvp and orderData.pvpBlacklisted) or (not isPvp and orderData.pvpExclusive)  then
@@ -1245,7 +1245,7 @@
 	function jcms.orders_ForceUse(ply, orderId, ...)
 		local orderData = assert(jcms.orders[ orderId ], "unknown order '"..tostring(orderId).."'")
 		
-		local costMult, coolDownMult = jcms.class_GetCostMultipliers(jcms.class_GetData(ply), orderData)
+		local costMult, coolDownMult = jcms.class_GetCostMultipliers(jcms.class_GetData(ply), orderData, orderId)
 		local cost = orderData.cost_override or orderData.cost
 		local cooldown = orderData.cooldown_override or orderData.cooldown
 

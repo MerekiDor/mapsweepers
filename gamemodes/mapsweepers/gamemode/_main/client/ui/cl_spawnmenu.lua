@@ -66,7 +66,7 @@ end
 			return false
 		end
 
-		local costMult, coolDownMult = jcms.class_GetCostMultipliers(jcms.class_GetLocPlyData(), orderData)
+		local costMult, coolDownMult = jcms.class_GetCostMultipliers(jcms.class_GetLocPlyData(), orderData, orderId)
 		local timeUntilUse = (orderData.nextUse or 0) - CurTime()
 		local affordable = math.ceil(orderData.cost*costMult) <= jcms.cash_Get(jcms.locPly)
 
@@ -512,7 +512,7 @@ end
 
 					if orderData then
 						-- Rendering an order
-						local costMult, coolDownMult = jcms.class_GetCostMultipliers(classData, orderData)
+						local costMult, coolDownMult = jcms.class_GetCostMultipliers(classData, orderData, selectedOrder)
 						local timeUntilUse = (orderData.nextUse or 0) - CurTime()
 						local affordable = math.ceil(orderData.cost*costMult) <= myCash
 						local canUse = jcms.orders_CanUse(selectedOrder)
@@ -635,7 +635,7 @@ end
 							if orderData then
 								-- Selected an order
 								local orderName = jcms.spawnmenu_GetEntryLocalized(order)
-								local costMult, coolDownMult = jcms.class_GetCostMultipliers(classData, orderData)
+								local costMult, coolDownMult = jcms.class_GetCostMultipliers(classData, orderData, order)
 								local canUse = jcms.orders_CanUse(order)
 								
 								if (not canUse) and (i == selectionId) then
