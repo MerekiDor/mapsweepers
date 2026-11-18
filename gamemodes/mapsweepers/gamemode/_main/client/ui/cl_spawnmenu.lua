@@ -357,43 +357,44 @@ end
 			end
 		else
 			jcms.spawnmenu_rightClicked = false
-			if selectedOption and (fromKeyboard or input.IsMouseDown(MOUSE_LEFT)) then
-				if jcms.spawnmenu_isContext then
-					GAMEMODE:OnContextMenuClose()
-				else
-					if CurTime() - jcms.spawnmenu_lastUseTime > 0.25 then
-						local classOrderCategories = jcms.spawnmenu_GetCurrentCategories()
-						local selectedOrder
+		end
 
-						if classOrderCategories.isBasicSubmenu then
-							-- Wheel consists of orders rather than categores
-							selectedOrder = classOrderCategories[selectedOption]
+		if selectedOption and ( fromKeyboard or input.IsMouseDown(MOUSE_LEFT) ) then
+			if jcms.spawnmenu_isContext then
+				GAMEMODE:OnContextMenuClose()
+			else
+				if CurTime() - jcms.spawnmenu_lastUseTime > 0.25 then
+					local classOrderCategories = jcms.spawnmenu_GetCurrentCategories()
+					local selectedOrder
+
+					if classOrderCategories.isBasicSubmenu then
+						-- Wheel consists of orders rather than categores
+						selectedOrder = classOrderCategories[selectedOption]
+					else
+						-- Wheel consists of categories with orders inside
+						local categoryName = classOrderCategories[ selectedOption ]
+						local orderList = jcms.orders_lists[ categoryName ]
+						local selectionId = jcms.spawnmenu_selectedOrders[ categoryName ]
+						selectedOrder = orderList and orderList[ selectionId ]
+					end
+
+					if selectedOrder and not jcms.spawnmenu_enteredSubmenu then
+						if selectedOrder:sub(1, 1) == "/" then
+							-- enter the submenu
+							jcms.spawnmenu_InsertSubmenuIntoStack(selectedOrder:sub(2, -1))
+							jcms.spawnmenu_enteredSubmenu = true
+							surface.PlaySound("buttons/combine_button1.wav")
+							jcms.hud_spawnmenuAnim = 0.66
 						else
-							-- Wheel consists of categories with orders inside
-							local categoryName = classOrderCategories[ selectedOption ]
-							local orderList = jcms.orders_lists[ categoryName ]
-							local selectionId = jcms.spawnmenu_selectedOrders[ categoryName ]
-							selectedOrder = orderList and orderList[ selectionId ]
-						end
-
-						if selectedOrder and not jcms.spawnmenu_enteredSubmenu then
-							if selectedOrder:sub(1, 1) == "/" then
-								-- enter the submenu
-								jcms.spawnmenu_InsertSubmenuIntoStack(selectedOrder:sub(2, -1))
-								jcms.spawnmenu_enteredSubmenu = true
-								surface.PlaySound("buttons/combine_button1.wav")
-								jcms.hud_spawnmenuAnim = 0.66
-							else
-								-- use an order
-								RunConsoleCommand("jcms_order", selectedOrder)
-								GAMEMODE:OnSpawnMenuOpen()
-							end
+							-- use an order
+							RunConsoleCommand("jcms_order", selectedOrder)
+							GAMEMODE:OnSpawnMenuOpen()
 						end
 					end
 				end
-			else
-				jcms.spawnmenu_enteredSubmenu = false
 			end
+		else
+			jcms.spawnmenu_enteredSubmenu = false
 		end
 	end
 
