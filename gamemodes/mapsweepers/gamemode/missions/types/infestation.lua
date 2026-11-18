@@ -82,7 +82,7 @@ jcms.missions.infestation = {
 		end
 		
 		if (not missionData.lastObjectiveCount or missionData.lastObjectiveCount < totalComplete) then
-			jcms.net_SendTip("all", true, "#jcms.infestation_completion", totalComplete / #beacons)
+			jcms.net_SendTip("all", true, "#jcms.infestation_completion", totalComplete / #beacons, { totalComplete, #beacons })
 			missionData.lastObjectiveCount = totalComplete
 		elseif (missionData.lastTotalObjectiveCount and #beacons < missionData.lastTotalObjectiveCount) then
 			if not jcms.util_IsPVP() then

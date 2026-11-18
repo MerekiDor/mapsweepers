@@ -60,7 +60,7 @@ jcms.missions.thumperreactivation = {
 		if (missionData.workingThumpers < #missionData.thumpers) or (CurTime() - jcms.director.missionStartTime) < 10 then
 			
 			if (not missionData.lastObjectiveCount or missionData.lastObjectiveCount < missionData.workingThumpers) then
-				jcms.net_SendTip("all", true, "#jcms.thumperreactivation_completion", missionData.workingThumpers / #missionData.thumpers)
+				jcms.net_SendTip("all", true, "#jcms.thumperreactivation_completion", missionData.workingThumpers / #missionData.thumpers, { missionData.workingThumpers, #missionData.thumpers })
 				missionData.lastObjectiveCount = missionData.workingThumpers
 			end
 

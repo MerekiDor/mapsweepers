@@ -88,7 +88,7 @@
 				local objectives = {}
 
 				if (not missionData.lastObjectiveCount or missionData.lastObjectiveCount < chargedCount) then
-					jcms.net_SendTip("all", true, "#jcms.flashpoint_completion", chargedCount / #flashpoints)
+					jcms.net_SendTip("all", true, "#jcms.flashpoint_completion", math.Clamp(chargedCount / totalCount, 0, 1), { chargedCount, totalCount })
 					missionData.lastObjectiveCount = chargedCount
 				end
 

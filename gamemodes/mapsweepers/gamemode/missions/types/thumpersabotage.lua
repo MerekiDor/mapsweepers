@@ -64,7 +64,8 @@ jcms.missions.thumpersabotage = {
 				local progress = 1 - missionData.workingThumpers / #missionData.thumpers
 
 				if progress > 0 then
-					jcms.net_SendTip("all", true, "#jcms.thumpersabotage_completion", progress)
+					local totalCount = #missionData.thumpers
+					jcms.net_SendTip("all", true, "#jcms.thumpersabotage_completion", progress, { totalCount - missionData.workingThumpers, totalCount })
 				end
 				
 				missionData.lastObjectiveCount = missionData.workingThumpers
