@@ -1197,12 +1197,15 @@
 		}
 	}
 	
-	jcms.orders_lastused = {}
+	--Both of these are steamid indexed but in different orders
+	jcms.orders_lastused = {} -- orderid = {steamid = lastUsed}						--Legacy functionality, unused
+	jcms.orders_plyCooldowns = {} --steamid = {orderid = offColldown}
 	
 	function jcms.orders_Hash()
 		return jcms.util_Hash(jcms.orders)
 	end
 	
+	--TODO: Magic numbers! Bad! Enum needed
 	function jcms.orders_CanUse(ply, orderId)
 		local orderData = jcms.orders[ orderId ]
 		if orderData then
@@ -1221,8 +1224,6 @@
 				return false, 7
 			end
 
-			local cooldown = orderData.cooldown_override or orderData.cooldown
-
 			if jcms.cash_Get(ply) < math.ceil(cost*costMult) then 
 				return false, 1, ("%d / %d"):format(jcms.cash_Get(ply), math.ceil(cost*costMult))
 			end
@@ -1231,14 +1232,12 @@
 				return false, 7
 			end
 			
-			if not jcms.orders_lastused[orderId] then return true end
 			local id = ply:SteamID64()
-			local lastUse = jcms.orders_lastused[orderId][id]
-			if not lastUse then return true end
+			if not(jcms.orders_plyCooldowns[id] and jcms.orders_plyCooldowns[id][orderId]) then return true end
+			local nextUse = jcms.orders_plyCooldowns[id][orderId]
 
-			local timeSinceUse = CurTime() - lastUse
-			local cooldown = math.ceil(cooldown*coolDownMult)
-			return timeSinceUse >= cooldown, 6, math.floor(cooldown - timeSinceUse)
+			local timeLeft = nextUse - CurTime()
+			return timeLeft <= 0, 6, math.floor(timeLeft)
 		end
 	end
 	
@@ -1257,32 +1256,59 @@
 	end
 	
 	function jcms.orders_SetCooldown(ply, orderId, cooldown)
-		if jcms.orders[ orderId ] then
-			if not jcms.orders_lastused[ orderId ] then
-				jcms.orders_lastused[ orderId ] = {}
-			end
-			
-			local id = ply:SteamID64()
-			
-			jcms.orders_lastused[ orderId ][ id ] = CurTime()
-			jcms.net_SendOrderCooldown(ply, orderId, tonumber(cooldown) or 0)
+		if not jcms.orders[ orderId ] then return end 
+	
+		local id = ply:SteamID64()
+
+		--Last used (legacy)
+		if not jcms.orders_lastused[ orderId ] then
+			jcms.orders_lastused[ orderId ] = {}
 		end
+		jcms.orders_lastused[ orderId ][ id ] = CurTime()
+
+		--Next use
+		if not jcms.orders_plyCooldowns[id] then 
+			jcms.orders_plyCooldowns[id] = {}
+		end
+		jcms.orders_plyCooldowns[id][orderId] = CurTime() + cooldown
+
+		jcms.net_SendOrderCooldown(ply, orderId, tonumber(cooldown) or 0)
+	end
+	
+	function jcms.orders_AddCooldown(ply, orderId, change)
+		if not jcms.orders[ orderId ] then return end 
+
+		local id = ply:SteamID64()
+		if not(jcms.orders_plyCooldowns[id] and jcms.orders_plyCooldowns[id][orderId]) then return end
+
+		local newCooldownEnd = jcms.orders_plyCooldowns[id][orderId] + change
+		jcms.orders_plyCooldowns[id][orderId] = newCooldownEnd
+		jcms.net_SendOrderCooldown(ply, orderId, newCooldownEnd - CurTime())
 	end
 
-	function jcms.orders_ClearCooldown(ply, orderId)
-		if jcms.orders[ orderId ] then
-			if not jcms.orders_lastused[ orderId ] then
-				jcms.orders_lastused[ orderId ] = {}
-			end
 
-			local id = ply:SteamID64()
-			jcms.orders_lastused[ orderId ][ id ] = nil
-			jcms.net_SendOrderCooldown(ply, orderId, 0)
+	function jcms.orders_ClearCooldown(ply, orderId)
+		if not jcms.orders[ orderId ] then return end
+		local id = ply:SteamID64()
+
+		--Last used (legacy)
+		if not jcms.orders_lastused[ orderId ] then
+			jcms.orders_lastused[ orderId ] = {}
 		end
+		jcms.orders_lastused[ orderId ][ id ] = nil
+		
+		--Next use
+		if not jcms.orders_plyCooldowns[id] then 
+			jcms.orders_plyCooldowns[id] = {}
+		end
+		jcms.orders_plyCooldowns[id][orderId] = nil
+
+		jcms.net_SendOrderCooldown(ply, orderId, 0)
 	end
 	
 	function jcms.orders_ClearAllCooldowns()
 		table.Empty(jcms.orders_lastused)
+		table.Empty(jcms.orders_plyCooldowns)
 		
 		for i, ply in ipairs( player.GetHumans() ) do
 			jcms.net_SendOrderClearCooldowns(ply)
