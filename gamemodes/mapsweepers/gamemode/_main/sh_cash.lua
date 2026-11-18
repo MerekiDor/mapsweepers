@@ -68,7 +68,10 @@ if SERVER then
 			cost = cost or jcms.weapon_ammoCosts._DEFAULT
 			
 			costMultiplier = tonumber(costMultiplier) or 0.25
-			jcms.cash_Add(ply, math.floor(ammoCount * cost * costMultiplier))
+			local amount = math.floor(ammoCount * cost * costMultiplier)
+			if amount > 0 then
+				jcms.cash_Add(ply, amount)
+			end
 			-- todo Play sound
 		end
 	end
