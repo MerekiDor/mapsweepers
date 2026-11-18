@@ -70,6 +70,11 @@ jcms.missions.hell = {
 			local progress = math.floor( missionData.progress / missionData.duration * 100 )
 
 			if progress < 100 then
+				if (progress >= 80) and (not missionData.almostThereSent) then
+					missionData.almostThereSent = true
+					jcms.net_SendTip("all", true, "#jcms.almostthere", progress/100)
+				end
+
 				return {
 					{ type = "j", progress = 0, total = 0 },
 					

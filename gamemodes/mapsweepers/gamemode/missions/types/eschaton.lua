@@ -113,7 +113,12 @@ jcms.missions.eschaton = {
 				{ type = "prep", progress = 60 - math.floor(time), style = 1, completed = true },
 			}
 		else
-			local progress = math.floor( missionData.evacEnt:GetCharge() / missionData.evacEnt:GetMaxCharge() )
+			local progress = math.floor( missionData.evacEnt:GetCharge() / missionData.evacEnt:GetMaxCharge() * 100 )
+
+			if (progress >= 80) and (not missionData.almostThereSent) then
+				missionData.almostThereSent = true
+				jcms.net_SendTip("all", true, "#jcms.almostthere", progress/100)
+			end
 
 			if progress >= 100 then --Don't stop new spawns until we're charged 
 				missionData.evacuating = true
