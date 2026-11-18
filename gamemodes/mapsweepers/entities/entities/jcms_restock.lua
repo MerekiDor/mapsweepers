@@ -270,7 +270,7 @@ if SERVER then
 		local pos = self:WorldSpaceCenter()
 		local shareRadius2 = self.ShareRadius^2
 		for i, sweeper in ipairs(jcms.GetAliveSweepers()) do
-			if (sweeper ~= mainPly) and (sweeper:WorldSpaceCenter():DistToSqr(pos) <= shareRadius2) and (sweeper:Visible(self)) then
+			if (sweeper ~= mainPly) and (sweeper:WorldSpaceCenter():DistToSqr(pos) <= shareRadius2) and (sweeper:Visible(self)) and (jcms.team_SameTeam(sweeper, mainPly)) then
 				if self:TryGiveAmmo(sweeper, shareAmmoCashAmount) then
 					timer.Simple(0.02, function()
 						if IsValid(sweeper) then
