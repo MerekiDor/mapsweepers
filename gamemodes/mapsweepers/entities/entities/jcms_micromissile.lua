@@ -65,7 +65,6 @@ function ENT:Initialize()
 		end
 		
 		self:SetColor( Color(255, 120, 120) )
-		self.spinoutCycle = math.random()*64
 
 		self.creationTime = CurTime()
 		
@@ -90,11 +89,6 @@ if SERVER then
 	function ENT:PhysicsUpdate(phys)
 		local selfTbl = self:GetTable()
 		local selfPos = self:GetPos()
-		selfTbl.spinoutCycle = ( (selfTbl.spinoutCycle or 0) + FrameTime()*5 ) % 15
-		local spinout = (math.sin(selfTbl.spinoutCycle) * math.cos(selfTbl.spinoutCycle/math.pi)) / (selfTbl.spinoutCycle+1)
-		if selfTbl.spinoutCycle > 5 then
-			spinout = 0
-		end
 	
 		local pathCond = selfTbl.Path and #selfTbl.Path > 0 and not (isentity(selfTbl.Target) and IsValid(selfTbl.Target) and self:Visible(selfTbl.Target))
 		local targetVector = selfTbl.lastTargetVector
@@ -168,9 +162,6 @@ if SERVER then
 				self:Detonate(isentity(selfTbl.Target) and selfTbl.Target or nil)
 			else
 				local norm = dif:GetNormalized()
-				local rand = VectorRand(-2, 2)
-				rand:Mul(spinout)
-				norm:Add(rand)
 
 				local frac = dif:Length() / 2500
 				local arc = Lerp(frac, 0, selfTbl.Arc )
