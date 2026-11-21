@@ -1891,7 +1891,7 @@ AddCSLuaFile "_main/sh_deprecatedcode.lua"
 		end
 	end, nil, "Gives you a gravity gun", FCVAR_CHEAT)
 
-	concommand.Add("jcms_debug_changeclass", function(ply, cmd, args)
+	concommand.Add("jcms_debug_setclass", function(ply, cmd, args)
 		if ply:IsAdmin() then
 			local classname = tostring(args[1])
 			local classdata = jcms.classes[ classname ]
@@ -1910,6 +1910,15 @@ AddCSLuaFile "_main/sh_deprecatedcode.lua"
 		end
 	end, nil, "Instantly respawns you as another class, including player-NPC classes")
 	
+	concommand.Add("jcms_debug_resetcooldowns", function(ply, cmd, args)
+		if ply:IsAdmin() then
+			jcms.orders_ClearAllCooldowns()
+		else
+			print(ply:Nick() .. ", this command is admin only")
+		end
+	end, nil, "Instantly respawns you as another class, including player-NPC classes")
+	
+
 	concommand.Add("jcms_ready", function(ply, cmd, args)
 		if jcms.pvp_vote_IsOngoing() then return end
 
