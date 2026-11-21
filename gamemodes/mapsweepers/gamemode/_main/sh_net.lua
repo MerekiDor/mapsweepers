@@ -541,10 +541,16 @@ if SERVER then
 				return false
 			end
 
-			if type(name) == "table" and #name == 2 then
+			if type(name) == "table" then
 				net.WriteBool(true)
 				net.WriteString(tostring(name[1] or id or "???"))
-				net.WriteString(tostring(name[2] or id or "???"))
+
+				local count = math.Clamp(#name-1, 0, 7)
+				net.WriteUInt(count, 3)
+
+				for i=1, count do
+					net.WriteString(tostring(name[i+1] or "???"))
+				end
 			else
 				net.WriteBool(false)
 				net.WriteString(tostring(name or id or "???"))
@@ -1415,7 +1421,33 @@ if CLIENT then
 				end
 
 				if formatted then
-					name = language.GetPhrase(name):format( language.GetPhrase(net.ReadString()) )
+					name = language.GetPhrase(name)
+
+					local fmtCount = net.ReadUInt(3)
+					local fmtTbl = {}
+					for i=1, fmtCount do
+						table.insert(fmtTbl, language.GetPhrase( net.ReadString() ))
+					end
+
+					if #fmtTbl > 1 then
+						local first = fmtTbl[1]
+						table.remove(fmtTbl, 1)
+
+						local s1, rtn1 = pcall(string.format, first, unpack(fmtTbl)) -- Args past #2 format the FIRST ARG, not the name!!!
+						if s1 then
+							local s2, rtn2 = pcall(string.format, name, rtn1)
+							if s2 then
+								name = rtn2 
+							else
+								ErrorNoHalt("error formatting tag: " .. tostring(rtn1))
+							end
+						else 
+							ErrorNoHalt("error formatting tag: " .. tostring(rtn1))
+						end
+					else
+						local s, rtn = pcall(string.format, name, fmtTbl[1])
+						if s then name = rtn else ErrorNoHalt("error formatting tag: " .. tostring(rtn)) end
+					end
 				end
 				
 				local locatorType = net.ReadUInt(2)

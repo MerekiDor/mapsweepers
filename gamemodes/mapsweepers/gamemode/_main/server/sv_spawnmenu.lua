@@ -785,6 +785,7 @@
 				crate:SetMaterial("models/jcms/"..faction.."_crate_heal")
 				crate:SetColor(col)
 				crate:SetNWInt("jcms_pvpTeam", teamInt)
+				crate.jcms_signalName = "#jcms.firstaid"
 
 				jcms.announcer_SpeakChance(0.4, jcms.ANNOUNCER_SUPPLIES)
 				jcms.net_NotifyGeneric(ply, jcms.NOTIFY_ORDERED, "#jcms.firstaid")
@@ -824,6 +825,7 @@
 				crate:SetMaterial("models/jcms/"..faction.."_crate_ammo")
 				crate:SetColor(col)
 				crate:SetNWInt("jcms_pvpTeam", teamInt)
+				crate.jcms_signalName = "#jcms.restock"
 
 				jcms.announcer_SpeakChance(0.4, jcms.ANNOUNCER_SUPPLIES_AMMO)
 				jcms.net_NotifyGeneric(ply, jcms.NOTIFY_ORDERED, "#jcms.restock")
@@ -865,6 +867,7 @@
 				crate:SetMaterial("models/jcms/"..faction.."_crate_heal")
 				crate:SetColor(col)
 				crate:SetNWInt("jcms_pvpTeam", teamInt)
+				crate.jcms_signalName = "#jcms.antirad"
 
 				jcms.announcer_SpeakChance(0.4, jcms.ANNOUNCER_SUPPLIES)
 				jcms.net_NotifyGeneric(ply, jcms.NOTIFY_ORDERED, "#jcms.antirad")
@@ -1929,18 +1932,41 @@
 			
 			local signalData = jcms.signals[ tonumber(signalId) ]
 			if signalData then
-				local text = tostring(signalData.text or "")
-				local arg = ply:Nick()
+				local locatorArgs = {
+					tostring(signalData.text or ""), -- main text
+					ply:Nick() -- user's name as argument by default (e.g. Help Mingebag!)
+				}
 
 				if IsValid(at) then
 					if signalData.textEnt then
-						text = tostring(signalData.textEnt)
+						locatorArgs[1] = tostring(signalData.textEnt) -- Switch to "on entity" text variant (e.g. Reinforce! -> Defend X!)
 					end
 
-					arg = tostring( at.jcms_localization or at:GetClass() )
+					if (at.jcms_localization) and (not at.jcms_signalName) then -- DEPRECATED
+						ErrorNoHalt("'ent.jcms_localization' is deprecated, please use 'ent.jcms_signalName' instead")
+						at.jcms_signalName = at.jcms_localization
+					end
+
+					if type(at.jcms_SetupSignalArgs) == "function" then
+						at:jcms_SetupSignalArgs(ply, locatorArgs, signalData, signalId)
+					else
+						if at.jcms_signalName then
+							locatorArgs[2] = tostring( at.jcms_signalName )
+						elseif at.jcms_enemyType then
+							locatorArgs[2] = "jcms.bestiary_" .. tostring(at.jcms_enemyType)
+						elseif at:IsPlayer() then
+							locatorArgs[2] = at:Nick()
+						else
+							locatorArgs[2] = tostring( at:GetClass() )
+						end
+
+						if at.jcms_signalArg then
+							locatorArgs[3] = tostring( at.jcms_signalArg )
+						end
+					end
 				end
 
-				jcms.net_SendLocator("all", "Signal"..ply:EntIndex(), { text, arg }, at, jcms.LOCATOR_SIGNAL, 10, nil, ply)
+				jcms.net_SendLocator("all", "Signal"..ply:EntIndex(), locatorArgs, at, jcms.LOCATOR_SIGNAL, 10, nil, ply)
 
 				if signalData.act then
 					RunConsoleCommand("act", signalData.act)

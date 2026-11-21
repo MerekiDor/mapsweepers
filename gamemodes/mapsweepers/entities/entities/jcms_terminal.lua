@@ -188,6 +188,7 @@ if SERVER then
 		local info = jcms.terminal_modelInfos[ mdl ]
 		jcms.terminal_Setup(self, purpose, info and info.theme)
 		self.jcms_terminal_Callback = linkCallback or function() return "" end
+		self.jcms_signalName = "jcms.terminalname_" .. tostring(purpose)
 	end
 
 	function ENT:Think()

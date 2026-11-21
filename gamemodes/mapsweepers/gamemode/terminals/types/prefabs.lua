@@ -65,12 +65,15 @@ if SERVER then
 					local plyCash = jcms.cash_Get(ply)
 					count = math.min(count, plyCash)
 					jcms.cash_Add(ply, -count)
-					return count > 0, (tonumber(data) or 0) + count
+					local finalCount = (tonumber(data) or 0) + count
+					ent.jcms_signalArg = jcms.util_CashFormat(finalCount) .. " J"
+					return count > 0, finalCount
 				else
 					local terminalCash = tonumber(data) or 0
 					count = math.min(count, terminalCash)
 					jcms.cash_Add(ply, count)
 					ent:SetNWInt("cash", terminalCash - count)
+					ent.jcms_signalArg = jcms.util_CashFormat(terminalCash - count) .. " J"
 					return count > 0, terminalCash - count
 				end
 			end
@@ -78,7 +81,9 @@ if SERVER then
 		
 		generate = function(ent)
 			local rn = ent:EntIndex()%6
-			return (4+rn) * 500
+			local finalCount = (4 + rn) * 500
+			ent.jcms_signalArg = jcms.util_CashFormat(finalCount) .. " J"
+			return finalCount
 		end
 	}
 
@@ -291,6 +296,7 @@ if SERVER then
 				end
 
 				ent.jcms_weaponTaken = true
+				ent.jcms_signalArg = "#jcms.empty"
 				return true, ""
 			elseif cmd == 2 and locked then
 				jcms.terminal_ToUnlock(ent)
@@ -299,8 +305,12 @@ if SERVER then
 		end,
 		
 		generate = function(ent)
-			if ent.jcms_weaponTaken then return "" end
+			if ent.jcms_weaponTaken then 
+				ent.jcms_signalArg = "#jcms.empty"
+				return ""
+			end
 
+			local gunNames = {}
 			if not ent.jcms_weaponclass then
 				local starterCash = jcms.util_IsPVP() and jcms.cvar_cash_start_pvp:GetInt() or jcms.cvar_cash_start:GetInt()
 				local evacCash = jcms.cvar_cash_evac:GetInt()
@@ -312,7 +322,8 @@ if SERVER then
 				local weights = {}
 				for k,v in pairs(jcms.weapon_prices) do
 					if v <= 0 then continue end
-					if not jcms.gunstats_Get(k) then continue end
+					local gunStats = jcms.gunstats_Get(k)
+					if not gunStats then continue end
 					--weights[k] = (v <= 3200 and (v/5) or (math.min(20000, v)^1.12 + 6000)) / 100
 					local cost = v * jcms.util_GetLobbyWeaponCostMultiplier()
 
@@ -325,6 +336,8 @@ if SERVER then
 					else												--Fall-off but never reach 0
 						weights[k] = 1 / (cost / totalCash - 1)
 					end
+
+					gunNames[k] = gunStats.name
 				end
 
 				local chosen = jcms.util_ChooseByWeight(weights)
@@ -334,6 +347,12 @@ if SERVER then
 				end
 
 				ent.jcms_weaponclass = chosen
+			end
+
+			if (not ent.jcms_weaponclass) or (ent.jcms_weaponclass == "") then
+				ent.jcms_signalArg = "#jcms.empty"
+			else
+				ent.jcms_signalArg = tostring(gunNames[ ent.jcms_weaponclass ] or ent.jcms_weaponclass)
 			end
 
 			return ent.jcms_weaponclass

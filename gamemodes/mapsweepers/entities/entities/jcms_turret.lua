@@ -227,6 +227,7 @@ if SERVER then
 		self:SetTurretTurnSpeed(Vector(data.turnSpeedPitch, data.turnSpeedYaw, 0))
 		self:SetTurretPitchLock(Vector(data.pitchLockMin, data.pitchLockMax, 0))
 		self.targetingMode = data.targetingMode or "closest"
+		self.jcms_signalName = "#jcms.turret_" .. kind
 	end
 	
 	function ENT:TurretVisible(target)
