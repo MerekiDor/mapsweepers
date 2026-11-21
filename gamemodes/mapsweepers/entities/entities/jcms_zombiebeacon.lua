@@ -88,6 +88,25 @@ if SERVER then
 			self:StartCountdown()
 			self.jcms_activator = ply
 			jcms.net_NotifyGeneric(ply, jcms.NOTIFY_ACTIVATED, "#jcms.zombiebeacon")
+
+			local plyPvpTeam = ply:GetNWInt("jcms_pvpTeam", -1)
+			local sameTeam, notSameTeam = {}, {}
+			for j, otherPly in ipairs(jcms.GetAliveSweepers()) do
+				if jcms.team_pvpSameTeam_optimised(plyPvpTeam, otherPly:GetNWInt("jcms_pvpTeam", -1)) then
+					table.insert(sameTeam, ply)
+				else
+					table.insert(notSameTeam, ply)
+				end
+			end
+
+			if #sameTeam > 0 then
+				jcms.net_SendTip(sameTeam, true, "#jcms.infestation_started", 0)
+			end
+
+			if #notSameTeam > 0 then
+				jcms.net_SendTip(notSameTeam, true, "#jcms.infestation_started_enemy", 0)
+			end
+
 			return true, tostring( CurTime() + 60 )
 		else
 			return false
