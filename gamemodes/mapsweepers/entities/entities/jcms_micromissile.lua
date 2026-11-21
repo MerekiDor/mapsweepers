@@ -86,7 +86,7 @@ end
 
 
 if SERVER then
-	function ENT:PhysicsUpdate(phys)
+	function ENT:Think()
 		local selfTbl = self:GetTable()
 		local selfPos = self:GetPos()
 	
@@ -155,7 +155,18 @@ if SERVER then
 				self:SetBlinkPeriod(0.2)
 			end
 		end
-		
+
+		selfTbl.lastPathCond = pathCond
+		selfTbl.lastTargetVector = targetVector
+	end
+
+	function ENT:PhysicsUpdate(phys)
+		local selfTbl = self:GetTable()
+		local selfPos = self:GetPos()
+
+		local pathCond = selfTbl.lastPathCond
+		local targetVector = selfTbl.lastTargetVector 
+
 		if (IsValid(selfTbl.Target) or isvector(selfTbl.Target)) and isvector(targetVector) then
 			local dif = targetVector - selfPos
 			if not pathCond and (dif:LengthSqr() < (selfTbl.Proximity)^2) and selfTbl.ActivationTime < CurTime() then
