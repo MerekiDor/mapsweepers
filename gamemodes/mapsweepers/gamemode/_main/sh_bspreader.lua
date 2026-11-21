@@ -1,6 +1,9 @@
 -- BspReader Module by JonahSoldier.
 AddCSLuaFile()
 
+local vmt = FindMetaTable("Vector")
+local VECTOR_Unpack = vmt.Unpack
+
 bspReader = bspReader or {} --Likely to use this in other addons, don't want to store redundant data.
 
 -- // Data {{{
@@ -241,17 +244,20 @@ bspReader = bspReader or {} --Likely to use this in other addons, don't want to 
 -- // }}}
 
 -- // Utilities {{{
+	local pvsCache = {}
 	function bspReader.getPVS( clusterIndex )
 		assert(bspReader.pvsDataRead, "[BSPReader] : Tried to use GetPVS without having read PVSData")
 
 		if not clusterIndex or clusterIndex == -1 then return {} end
+		if pvsCache[clusterIndex] then return pvsCache[clusterIndex] end
+
 		local pvsOffset = bspReader.pvsIndices[clusterIndex+1]
 		local numClusters = bspReader.clusterCount
 
 		local hitClusters = 0
 		local PVS = {}
 
-		 --PVSOffset is bits from start of chunk, so we need to convert to our table index.
+		--PVSOffset is bits from start of chunk, so we need to convert to our table index.
 		local offs = ((bspReader.clusterCount * 2 * 4) + 4)
 		local iter = 0
 
@@ -272,13 +278,15 @@ bspReader = bspReader or {} --Likely to use this in other addons, don't want to 
 				hitClusters = hitClusters + 8
 			end
 		end
+		pvsCache[clusterIndex] = PVS
+
 		return PVS
 	end
 
 	function bspReader.getPVSAtPoint( point ) --Reduce repeated code
 		local leaf = bspReader.getVisLeaf( point )
 		local cluster =  bspReader.getVisLeafCluster( leaf )
-	
+
 		return bspReader.getPVS( cluster )
 	end
 
@@ -295,7 +303,7 @@ bspReader = bspReader or {} --Likely to use this in other addons, don't want to 
 		local normal = bspReader.planeNormals[planeIndex + 1]
 		local dist = bspReader.planeDistances[planeIndex + 1]
 
-		local nx, ny, nz = normal:Unpack()
+		local nx, ny, nz = VECTOR_Unpack(normal)
 		if (nx * px) + (ny * py) + (nz * pz) - dist > 0 then
 			local child = bspReader.nodeChildren1[nodeIndex + 1]
 			return bspReader._getVisLeafRecurse(px, py, pz, child)
@@ -306,7 +314,7 @@ bspReader = bspReader or {} --Likely to use this in other addons, don't want to 
 	end
 
 	function bspReader.getVisLeaf( point ) --we're basically just using BSP for what it's meant for here.
-		local x, y, z = point:Unpack()
+		local x, y, z = VECTOR_Unpack(point)
 		return bspReader._getVisLeafRecurse(x, y, z, 0)
 	end
 

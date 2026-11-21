@@ -19,6 +19,9 @@
 	Contact E-Mail: merekidorian@gmail.com
 --]]
 
+local vmt = FindMetaTable("Vector")
+local VECTOR_DistToSqr = vmt.DistToSqr
+
 jcms.pathfinder = jcms.pathfinder or {}
 
 -- // Generating Our Air Nodes {{{
@@ -108,7 +111,7 @@ jcms.pathfinder = jcms.pathfinder or {}
 			--]]
 			for j=i, #jcms.pathfinder.airNodes, 1 do 
 				local endNode = jcms.pathfinder.airNodes[j]
-				if not(startNode == endNode) and startNode.pos:DistToSqr(endNode.pos) < maxRange then
+				if not(startNode == endNode) and VECTOR_DistToSqr(startNode.pos, endNode.pos) < maxRange then
 					local tr = util.TraceLine({
 						start = startNode.pos,
 						endpos = endNode.pos,
@@ -177,7 +180,7 @@ function jcms.pathfinder.getNearestNode( point )
 	local closestNode
 
 	for i, node in ipairs(jcms.pathfinder.airNodes) do
-		local dist = node.pos:DistToSqr(point)
+		local dist = VECTOR_DistToSqr(node.pos, point)
 		if dist < closestDist then 
 			closestNode = node
 			closestDist = dist
@@ -194,7 +197,7 @@ function jcms.pathfinder.getNearestNodePVS( point )
 	local closestNode
 
 	for i, node in ipairs(jcms.pathfinder.getNodesInPVS( point )) do
-		local dist = node.pos:DistToSqr(point)
+		local dist = VECTOR_DistToSqr(node.pos, point)
 		if dist < closestDist then 
 			closestNode = node
 			closestDist = dist
