@@ -208,20 +208,14 @@ if SERVER then
 			local vis = false
 			if hasAir then
 				local pos = candidate:WorldSpaceCenter()
-				local _, isUnderSky = jcms.util_GetSky(pos)
-				if isUnderSky then
-					targetsVisibleByAirgraph[candidate] = true -- bold assumption here, but is 3-4 times faster
-					vis = true
-				else
-					local nearestNode = jcms.pathfinder.getNearestNodePVS(pos)
-					if nearestNode then
-						traceData.start = nearestNode.pos
-						traceData.endpos = pos
-						util.TraceHull(traceData)
-						if not traceRes.Hit or traceRes.Entity == candidate then
-							targetsVisibleByAirgraph[candidate] = true 
-							vis = true
-						end
+				local nearestNode = jcms.pathfinder.getNearestNodePVS(pos)
+				if nearestNode then
+					traceData.start = nearestNode.pos
+					traceData.endpos = pos
+					util.TraceHull(traceData)
+					if not traceRes.Hit or traceRes.Entity == candidate then
+						targetsVisibleByAirgraph[candidate] = nearestNode 
+						vis = true
 					end
 				end
 			end
@@ -247,18 +241,24 @@ if SERVER then
 		end)
 
 		for i, turret in ipairs(turrets) do
-			local isHacked = turret:GetHackedByRebels()
+			local turretTbl = turret:GetTable()
+			local isHacked = turretTbl.GetHackedByRebels(turret)
 			local pvpTeam = turret:GetNWInt("jcms_pvpTeam", -1)
-			local dmg = turret:TurretDamage() * 1.5
+			local dmg = turretTbl.TurretDamage(turret) * 1.5
 
 			for j, target in ipairs(targetsSorted) do
 				if targetHealthBuffer[j] ~= true and jcms.turret_IsDifferentTeam_Optimised(isHacked, target, pvpTeam) then
-					local directlyVisible = turret:TurretVisibleTrace(target)
-					local canFire = (turret.startNode and targetsVisibleByAirgraph[target]) or directlyVisible
+					local directlyVisible = turretTbl.TurretVisibleTrace(turret, target)
+					local targetNearestNode = targetsVisibleByAirgraph[target]
+					local canFire = (turretTbl.startNode and targetNearestNode) or directlyVisible
 
 					if canFire then
-						turret.CurrentTarget = target
-						turret.CurrentTargetDirectlyVisible = directlyVisible
+						turretTbl.CurrentTarget = target
+						turretTbl.CurrentTargetDirectlyVisible = directlyVisible
+
+						if targetNearestNode then
+							turretTbl.CurrentTargetNearestNode = targetNearestNode
+						end
 
 						targetHealthBuffer[j] = (targetHealthBuffer[j] or 0) + dmg
 						if targetHealthBuffer[j] >= target:Health() then
@@ -283,10 +283,10 @@ if SERVER then
 			local targetPos
 			if selfTbl.CurrentTargetDirectlyVisible then
 				targetPos = jcms.turret_GetTargetPos(self, target, origin)
-			elseif self.extraStartPos then
-				targetPos = self.extraStartPos
-			elseif self.startNode then
-				targetPos = self.startNode.pos
+			elseif selfTbl.extraStartPos then
+				targetPos = selfTbl.extraStartPos
+			elseif selfTbl.startNode then
+				targetPos = selfTbl.startNode.pos
 			end
 
 			if targetPos then
@@ -307,7 +307,7 @@ if SERVER then
 		jcms.turret_GlobalMissilePlatformSlowThink()
 
 		local alert = selfTbl.GetTurretAlert(self)
-		local target = self.CurrentTarget
+		local target = selfTbl.CurrentTarget
 		if IsValid(target) and (selfTbl.lastSFXTarget ~= target) then -- Performing "target acquired" sound
 			local hacked = selfTbl.GetHackedByRebels(self)
 			local level = (hacked and 90) or 75
@@ -357,8 +357,8 @@ if SERVER then
 
 			if IsValid(self.CurrentTarget) then
 				if not self:TurretVisibleTrace(self.CurrentTarget) then
-					if self.startNode then --Lua error prevention. Some maps don't have an airgraph at all.
-						missile.Path = jcms.pathfinder.navigate(self.startNode, self.CurrentTarget:WorldSpaceCenter())
+					if self.startNode and self.CurrentTargetNearestNode then --Lua error prevention. Some maps don't have an airgraph at all.
+						missile.Path = jcms.pathfinder.navigate(self.startNode, self.CurrentTargetNearestNode)
 					end
 					if missile.Path and self.extraStartPos then
 						table.insert(missile.Path, { pos = self.extraStartPos })
