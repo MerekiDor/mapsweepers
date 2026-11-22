@@ -407,6 +407,48 @@ if SERVER then
 			return false
 		end
 	}
+
+	-- Secret/shitpost ones {{{
+		terms.areyoustupid = {
+			weight = 0.001,
+
+			generate = function(ent)
+				return "1"
+			end,
+
+			command = function(ent, cmd, data, ply)
+				if not ent:GetNWBool("jcms_terminal_locked") then return end
+
+				if data == "1" then
+					return true, "2"
+				elseif data == "2" then
+					if cmd == 1 then
+						jcms.terminal_Unlock(ent, ply, true)
+						return true, "3"
+					elseif cmd == 2 then
+						-- saying "no" to "do you love jcorp" blasts you far away
+						local pos = ply:GetPos()
+						util.BlastDamage(ent, ent, pos, 200, 10)
+						local ed = EffectData()
+						ed:SetMagnitude(1)
+						ed:SetOrigin(pos)
+						ed:SetRadius(450)
+						ed:SetNormal(jcms.vectorUp)
+						ed:SetFlags(1)
+						util.Effect("Explosion", ed)
+						local awayVector = ply:EyeAngles():Forward()
+						awayVector:Mul(-3000)
+						awayVector.z = 2000
+						ply:SetVelocity(awayVector)
+						ply.noFallDamage = true -- idk if this is too lenient, feel free to remove to punish heretics though
+						return true, data
+					end
+				end
+
+				return false
+			end
+		}
+	-- }}}
 end
 
 if CLIENT then
@@ -875,5 +917,46 @@ if CLIENT then
 		if isInside then
 			return cx + cy*10
 		end
+	end
+
+	terms.areyoustupid = function(ent, mx, my, w, h, modedata)
+		h = h/2
+		local color_bg, color_fg, color_accent = jcms.terminal_GetColors(ent)
+		local str1 = "#jcms.terminal_areyoustupid_title" .. modedata
+
+		local drawButtons = modedata ~= "3"
+		draw.SimpleText(str1, "jcms_hud_medium", w/2, h/2, color_bg, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+
+		local bId
+		local bw, bh = 150, 40
+		local bx1, bx2 = w/2 - bw - 24, w/2 + 24
+		local by = h/2 + 4
+
+		if drawButtons then
+			surface.SetDrawColor(color_bg)
+			surface.DrawRect(bx1, by, bw, bh)
+			surface.DrawRect(bx2, by, bw, bh)
+
+			if my >= by and my <= by + bh then
+				bId = mx < w/2 and 1 or 2
+			end
+		end
+
+		cam.PushModelMatrix(jcms.terminal_getGlitchMatrix(4, 0.05), true)
+		render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
+			draw.SimpleText(str1, "jcms_hud_medium", w/2, h/2, color_fg, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+			if drawButtons then
+				draw.SimpleText("#jcms.terminal_areyoustupid_btn1", "jcms_hud_small", bx1+bw/2, by+bh/2, bId==1 and color_accent or color_fg, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+				draw.SimpleText("#jcms.terminal_areyoustupid_btn2", "jcms_hud_small", bx2+bw/2, by+bh/2, bId==2 and color_accent or color_fg, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+				if bId then
+					surface.SetDrawColor(color_accent)
+					surface.DrawOutlinedRect(bId==1 and bx1 or bx2, by, bw, bh, 2)
+				end
+			end
+		render.OverrideBlend( false, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
+		cam.PopModelMatrix()
+
+		return bId
 	end
 end
