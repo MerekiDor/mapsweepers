@@ -594,7 +594,7 @@ jcms.npc_types.antlion_burrowerguard = {
 			if IsValid(npc) then
 				npc:SetNWFloat("HealthFraction", npc:Health() / npc:GetMaxHealth())
 
-				if npc:Health() <= 0 then --Burst on death (Ragdolling doesn't work right due to our smaller size)
+				if (npc:Health() <= 0) and (not npc.jcms_burrowerguard_dead) then --Burst on death (Ragdolling doesn't work right due to our smaller size)
 					npc.jcms_burrowerguard_dead = true
 					timer.Simple(1.45, function() 	
 						if IsValid(npc) then	
