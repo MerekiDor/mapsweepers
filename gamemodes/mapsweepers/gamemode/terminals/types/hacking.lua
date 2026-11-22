@@ -448,6 +448,46 @@ if SERVER then
 				return false
 			end
 		}
+
+		terms.mafiahackoffer = {
+			weight = 0.01,
+
+			generate = function(ent)
+				ent:StopSound("jcms/mafiahack.mp3")
+				ent:EmitSound("jcms/mafiahack.mp3")
+				ent.jcms_hackSoundToStop = "jcms/mafiahack.mp3"
+				return "0"
+			end,
+
+			command = function(ent, cmd, data, ply)
+				if not ent:GetNWBool("jcms_terminal_locked") then return end
+
+				if cmd == 1 then
+					if jcms.cash_Get(ply) >= 899 then
+						jcms.cash_Add(ply, -899)
+						ent:StopSound("jcms/mafiahack.mp3")
+						jcms.terminal_Unlock(ent, ply, true)
+						return true
+					else
+						return false
+					end
+				elseif cmd == 2 then
+					-- a different hack mode, but dont include any rare/secret ones
+					ent:StopSound("jcms/mafiahack.mp3")
+
+					local weighed = {}
+					for modeType, mode in pairs(jcms.terminal_modeTypes) do
+						if mode.weight and mode.weight >= 0.5 and modeType ~= ent.jcms_hackType then
+							weighed[ modeType ] = mode.weight
+						end
+					end
+
+					local hackType = jcms.util_ChooseByWeight(weighed)
+					ent.jcms_hackType = hackType
+					jcms.terminal_ToHack(ent, true)
+				end
+			end
+		}
 	-- }}}
 end
 
@@ -911,7 +951,7 @@ if CLIENT then
 					surface.DrawOutlinedRect(sx - 32, math.Remap(i, 1, roundMax, sy + screenSize - signalCellSize, sy), 16, signalCellSize, 2)
 				end
 			end
-		render.OverrideBlend( false, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
+		render.OverrideBlend(false)
 		cam.PopModelMatrix()
 
 		if isInside then
@@ -956,6 +996,71 @@ if CLIENT then
 			end
 		render.OverrideBlend( false, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
 		cam.PopModelMatrix()
+
+		return bId
+	end
+
+	terms.mafiahackoffer = function(ent, mx, my, w, h, modedata)
+		local phase = (CurTime() % 1)*math.pi*2
+		local c1 = Color(255, 100 + 40*math.sin(phase), 32, 72)
+		local c2 = Color(32, 12, 8, 253)
+		local c3 = Color(255, 170 + 50*math.sin(phase), 110, 200)
+
+		local bw, bh = w, 300
+		local bx, by = (w - bw)/2, (h - bh)/2
+		local pad = 12
+
+		local str1 = "Ml 899,999"
+		local str2 = "899 J"
+		local str3 = "#jcms.terminal_termaway_text1"
+		local str4 = language.GetPhrase("jcms.terminal_termaway_text2")
+		local str5 = "#jcms.terminal_termaway_text3"
+		local str6 = "#jcms.terminal_termaway_btn1"
+		local str7 = "#jcms.terminal_termaway_btn2"
+
+		surface.SetDrawColor(c1)
+		render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
+		jcms.hud_DrawStripedRect(bx, by, bw, bh, 128, phase/math.pi*64)
+		render.OverrideBlend(false)
+
+		draw.RoundedBox(32, bx+pad, by+pad, bw-pad*2, bh-pad*2, c2) -- I have to make them look as hostile as possible so I'm using rounded graphics
+
+		local font4 = "jcms_hud_small"
+		surface.SetFont(font4)
+		if surface.GetTextSize(str4) > bw - pad*2 then
+			font4 = "jcms_medium"
+		end
+
+		local tw4, th4 = draw.SimpleText(str4, font4, bx + bw/2, by + 36, c3, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+		local fancyx = bx + bw/2
+		local fancyy = by + 36 + th4
+
+		render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
+		for i=1, 3 do
+			local phasei = ((CurTime() + i/18)%1)*math.pi*2
+			local cos, sin = math.cos(phasei)*24, math.sin(phasei*2)*4
+			draw.SimpleText(str3, "jcms_hud_medium", fancyx + cos, fancyy + sin, HSVToColor(CurTime()*360 - i*24, 0.8, 1/(4-i)), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+		end
+		render.OverrideBlend(false)
+		local tw5, th5 = draw.SimpleText(str5, "jcms_medium", bx + bw/2, fancyy + 64, c1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+
+		local pricesy = fancyy + 128
+		local tw1, th1 = draw.SimpleText(str1, "jcms_medium", bx + bw/4, pricesy, c1, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		surface.SetDrawColor(c1)
+		surface.DrawRect(bx + bw/4 - tw1/2 - 12, pricesy, tw1 + 24, 2)
+		local tw2, th2 = draw.SimpleText(str2, "jcms_hud_medium", bx + bw/4 + math.Rand(-2, 2), pricesy + math.Rand(-2, 2), c3, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+
+		local btnw, btnh = w*0.33, 32
+		local btnx, btny = bx + bw*3/4 - btnw/2, pricesy - 8
+		local bId = nil
+
+		draw.RoundedBox(btnh/2, btnx, btny, btnw, btnh, c1)
+		draw.SimpleText(str6, "jcms_medium", btnx+btnw/2, btny+btnh/2, c3, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		if (mx >= btnx and my >= btny and mx <= btnx + btnw and my <= btny + btnh) then bId = 1 end
+			
+		btny = btny + btnh + 8
+		draw.SimpleText(str7, "jcms_medium", btnx+btnw/2, btny+btnh/2, c1, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		if (not bId) and (mx >= btnx and my >= btny and mx <= btnx + btnw and my <= btny + btnh) then bId = 2 end
 
 		return bId
 	end

@@ -128,14 +128,20 @@ function jcms.terminal_ToUnlock(ent)
 	end)]]
 end
 
-function jcms.terminal_ToHack(ent)
-	ent:EmitSound("weapons/stunstick/alyx_stunner" .. math.random(1,2) .. ".wav", 80, 104)
-	timer.Simple(math.Rand(0.05, 0.15), function()
-		if not IsValid(ent) then return end
+function jcms.terminal_ToHack(ent, instant)
+	if instant then
 		ent:SetNWString("jcms_terminal_modeType", ent.jcms_hackType)
 		local hack = jcms.terminal_modeTypes[ ent.jcms_hackType ]
 		ent:SetNWString("jcms_terminal_modeData", hack.generate(ent))
-	end)
+	else
+		ent:EmitSound("weapons/stunstick/alyx_stunner" .. math.random(1,2) .. ".wav", 80, 104)
+		timer.Simple(math.Rand(0.05, 0.15), function()
+			if not IsValid(ent) then return end
+			ent:SetNWString("jcms_terminal_modeType", ent.jcms_hackType)
+			local hack = jcms.terminal_modeTypes[ ent.jcms_hackType ]
+			ent:SetNWString("jcms_terminal_modeData", hack.generate(ent))
+		end)
+	end
 end
 
 function jcms.terminal_ToPurpose(ent)
@@ -158,6 +164,10 @@ hook.Add("EntityTakeDamage", "jcms_HackerStunstick", function(ent, dmg)
 
 		if ent:GetNWString("jcms_terminal_modeType") == ent.jcms_hackType then
 			jcms.terminal_ToPurpose(ent)
+
+			if ent.jcms_hackSoundToStop then
+				ent:StopSound(ent.jcms_hackSoundToStop)
+			end
 		else
 			jcms.terminal_ToHack(ent)
 		end
