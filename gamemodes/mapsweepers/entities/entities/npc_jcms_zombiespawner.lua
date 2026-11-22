@@ -393,7 +393,9 @@ if CLIENT then
 			end
 		end
 
-		util.ScreenShake(self:GetPos(), 4, 60, 2, 500, false)
+		if not jcms.cachedValues.motionSickness then
+			util.ScreenShake(self:GetPos(), 4, 60, 2, 500, false)
+		end
 		self:EmitSound("Explo.ww2bomb")
 	end
 	

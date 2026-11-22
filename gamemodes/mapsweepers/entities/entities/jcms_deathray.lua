@@ -290,7 +290,9 @@ if CLIENT then
 		jcms.colormod_Hold("jcms_deathray#"..self:EntIndex(), selfTbl.BlindColor, intensity + visibility*intensity*0.05, 1, 2)
 
 		local rad = self:GetBeamRadius()
-		util.ScreenShake(tr.HitPos, (rad/4)*intensity^10, rad*1.5, 0.1, rad*1.5*wm, true)
+		if not jcms.cachedValues.motionSickness then
+			util.ScreenShake(tr.HitPos, (rad/4)*intensity^10, rad*1.5, 0.1, rad*1.5*wm, true)
+		end
 
 		if beamTime <= prepTime then
 			if beamTime > prepTime - 0.5 and not selfTbl.sndPlayedPre then

@@ -868,7 +868,7 @@ if CLIENT then
 			local dist = self:WorldSpaceCenter():Distance(EyePos())
 			local distFrac = math.Clamp(1 - (dist / 1000), 0, 1)
 			
-			if distFrac > 0 then
+			if distFrac > 0 and (not jcms.cachedValues.motionSickness) then
 				util.ScreenShake(jcms.vectorOrigin, Lerp(self.throttle or 0, 1, 2)*distFrac*1.4, 5, 0.1, 512, true)
 			end
 		end

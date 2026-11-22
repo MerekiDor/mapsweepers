@@ -205,7 +205,10 @@ if CLIENT then
 
 	function ENT:Initialize()
 		jcms.colormod_Add(Color(50,0,0), 0.6, 0, 0.1, 0, 1)
-		util.ScreenShake(EyePos(), 10, 40, 1.75, 100)
+
+		if not jcms.cachedValues.motionSickness then
+			util.ScreenShake(EyePos(), 10, 40, 1.75, 100)
+		end
 		
 		hook.Add("PostDrawTranslucentRenderables", "jcms_ZombieSpewerEyes", jcms.zombieSpewer_DrawEyes)
 
