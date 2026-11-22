@@ -58,6 +58,8 @@
 		'6f', '72', '6c', '64', '2e', '20'
 	}
 
+	jcms.terminal_lastUsedAt = jcms.terminal_lastUsedAt or 0 -- used for animations, isnt unset when IN_USE is released
+
 -- }}}
 
 
@@ -129,6 +131,7 @@ function jcms.terminal_Render(ent, pos, angle, width, height)
 				if locPly:KeyDown(IN_USE) then
 					jcms.net_SendTerminalInput(ent, output)
 					locPly.jcms_terminalCooldown = CurTime()
+					jcms.terminal_lastUsedAt = CurTime()
 				end
 			end
 		cam.End3D2D()

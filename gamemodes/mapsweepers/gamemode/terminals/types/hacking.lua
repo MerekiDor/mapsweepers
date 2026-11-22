@@ -366,6 +366,47 @@ if SERVER then
 			end
 		end
 	}
+
+	terms.findsignal = {
+		weight = 1,
+
+		generate = function(ent)
+			local targetX = math.random(1, 10) - 1
+			local targetY = math.random(1, 10) - 1
+			return "14" .. tostring(targetX) .. tostring(targetY) -- current round, total rounds, target X, target Y
+		end,
+
+		command = function(ent, cmd, data, ply)
+			if not ent:GetNWBool("jcms_terminal_locked") then return end
+
+			local round = tonumber(data:sub(1,1))
+			local rounds = tonumber(data:sub(2,2)) -- you gotta do this puzzle that many times
+
+			local cx, cy = cmd%10, math.floor(cmd/10) -- cell we clicked at
+			local tx, ty = tonumber(data:sub(3,3)), tonumber(data:sub(4,4)) -- target cell coords
+
+			if cx == tx and cy == ty then
+				ent:EmitSound("ambient/levels/prison/radio_random1"..(round+1)..".wav")
+				if round >= rounds then
+					jcms.terminal_Unlock(ent, ply, true)
+					return true, data
+				else
+					local targetX = math.random(1, 10) - 1
+					local targetY = math.random(1, 10) - 1
+					return true, tostring(round + 1) .. tostring(rounds) .. tostring(targetX) .. tostring(targetY)
+				end
+			else
+				jcms.terminal_Punish(ent, ply)
+				ent:EmitSound("buttons/button8.wav", 75, 110, 1.0)
+
+				local targetX = math.random(1, 10) - 1
+				local targetY = math.random(1, 10) - 1
+				return true, tostring(round) .. tostring(rounds) .. tostring(targetX) .. tostring(targetY)
+			end
+
+			return false
+		end
+	}
 end
 
 if CLIENT then
@@ -715,5 +756,124 @@ if CLIENT then
 		end
 
 		return hoverIndex
+	end
+
+	terms.findsignal = function(ent, mx, my, w, h, modedata)
+		local color_bg, color_fg, color_accent = jcms.terminal_GetColors(ent)
+		local split = string.Split(modedata, "")
+		local done = (not ent:GetNWBool("jcms_terminal_locked"))
+
+		local round = tonumber(split[1]) or 0
+		local roundMax = tonumber(split[2]) or 0
+		local tx = tonumber(split[3]) or 0
+		local ty = tonumber(split[4]) or 0
+
+		local screenSize = math.ceil( math.min(w*0.8, h*0.8) )
+		local sx, sy = (w-screenSize)/2, (h-screenSize)/2
+		local isInside = mx >= sx and my >= sy and mx <= sx + screenSize and my <= sy + screenSize
+
+		local extraAnim = math.ease.InOutCirc( math.min(1, (CurTime() - jcms.terminal_lastUsedAt)) )
+
+		if isInside then
+			if not (ent.jcms_mx and ent.jcms_my) then
+				ent.jcms_mx = mx
+				ent.jcms_my = my
+			else
+				local delta = FrameTime() * screenSize / 2
+				ent.jcms_mx = math.Approach(ent.jcms_mx, mx, delta)
+				ent.jcms_my = math.Approach(ent.jcms_my, my, delta)
+				mx = ent.jcms_mx
+				my = ent.jcms_my
+			end
+		else
+			ent.jcms_mx = nil
+			ent.jcms_my = nil
+		end
+
+		local cellSize = screenSize/10
+		local fx = math.TimeFraction(sx, sx + screenSize, mx)
+		local fy = math.TimeFraction(sy, sy + screenSize, my)
+
+		if done then
+			fx, fy = (tx+0.5)/10, (ty+0.5)/10
+		end
+
+		local fx = math.Clamp(fx, 0, 0.999999)*10
+		local fy = math.Clamp(fy, 0, 0.999999)*10
+
+		local cx, cy = math.floor(fx), math.floor(fy)
+		local strength = extraAnim*(1 - math.Distance(tx, ty, fx-0.5, fy-0.5)/11)
+
+		local str1 = "#jcms.terminal_findsignal"
+		draw.SimpleText(str1, "jcms_hud_small", w/2, 0, color_bg, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+
+		local signalCellSize = math.ceil(screenSize / roundMax - 4)
+		for i=1, roundMax do
+			surface.SetDrawColor(color_bg)
+			surface.DrawRect(sx - 32, math.Remap(i, 1, roundMax, sy, sy + screenSize - signalCellSize), 16, signalCellSize)
+		end
+
+		surface.SetAlphaMultiplier(0.5 + strength*0.5)
+			surface.SetDrawColor(color_bg)
+			surface.DrawRect(sx, sy, screenSize, screenSize)
+			if isInside then
+				surface.SetAlphaMultiplier( math.max(0.1, strength - 0.5)/2 )
+				surface.SetDrawColor(color_fg)
+				surface.DrawRect(sx + fx*cellSize, sy, 2, screenSize)
+				surface.DrawRect(sx, sy + fy*cellSize, screenSize, 2)
+			end
+		surface.SetAlphaMultiplier(1)
+		
+		cam.PushModelMatrix(jcms.terminal_getGlitchMatrix(4, 0.05), true)
+		render.OverrideBlend( true, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
+			draw.SimpleText(str1, "jcms_hud_small", w/2, -2, color_fg, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+			surface.SetDrawColor(color_fg)
+			surface.DrawOutlinedRect(sx, sy, screenSize, screenSize, 2)
+			
+			surface.SetAlphaMultiplier(math.Clamp((strength-0.4)/0.6, 0, 1))
+				surface.SetDrawColor(color_fg)
+				jcms.hud_DrawNoiseRect(sx, sy, screenSize, screenSize, screenSize*(8 - strength*strength*6))
+			surface.SetAlphaMultiplier(1)
+			
+			if isInside and not done then
+				surface.SetAlphaMultiplier(strength*0.5)
+					surface.SetDrawColor(color_fg)
+					surface.DrawOutlinedRect(sx+cx*cellSize, sy+cy*cellSize, cellSize, cellSize, 1)
+				surface.SetAlphaMultiplier(strength*strength*0.9)
+					surface.SetDrawColor(color_accent)
+					local ct = (CurTime()%1)*math.pi*2
+					local circleSize = Lerp(strength^2, cellSize*2, cellSize/4)
+					jcms.draw_Circle(sx+fx*cellSize, sy+fy*cellSize, circleSize, circleSize, 2+strength, 1, ct, ct + math.pi/3)
+					ct = ct + math.pi*2/3
+					jcms.draw_Circle(sx+fx*cellSize, sy+fy*cellSize, circleSize, circleSize, 2+strength, 1, ct, ct + math.pi/3)
+					ct = ct + math.pi*2/3
+					jcms.draw_Circle(sx+fx*cellSize, sy+fy*cellSize, circleSize, circleSize, 2+strength, 1, ct, ct + math.pi/3)
+				surface.SetAlphaMultiplier(1)
+			end
+
+			if extraAnim < 1 then
+				surface.SetAlphaMultiplier(1-extraAnim)
+					surface.SetDrawColor(color_accent)
+					jcms.hud_DrawNoiseRect(sx, sy, screenSize, screenSize, screenSize*8)
+				surface.SetAlphaMultiplier(math.max(0, 0.5-extraAnim)*0.5)
+				surface.SetDrawColor(color_accent)
+					jcms.hud_DrawStripedRect(sx, sy, screenSize, screenSize, cellSize*3, extraAnim*screenSize)
+				surface.SetAlphaMultiplier(1)
+			end
+
+			for i=1, roundMax do
+				surface.SetDrawColor(color_accent)
+				if (round > i) or done then
+					surface.DrawRect(sx - 32, math.Remap(i, 1, roundMax, sy + screenSize - signalCellSize, sy), 16, signalCellSize)
+				elseif round == i then
+					surface.DrawOutlinedRect(sx - 32, math.Remap(i, 1, roundMax, sy + screenSize - signalCellSize, sy), 16, signalCellSize, 2)
+				end
+			end
+		render.OverrideBlend( false, BLEND_SRC_ALPHA, BLEND_ONE, BLENDFUNC_ADD )
+		cam.PopModelMatrix()
+
+		if isInside then
+			return cx + cy*10
+		end
 	end
 end
